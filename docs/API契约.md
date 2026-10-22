@@ -198,7 +198,7 @@ top_items[{name,quantity,revenue}], hourly[24], status[{status,count}]}`。
 | GET | `/workbench` | `{profile, stats, pool[], active[], pool_count}` |
 | GET | `/pool` | 可接单池：`status=ready AND rider_id IS NULL` |
 | POST | `/orders/<id>/claim` | **原子抢单**；未上线 409；被别人抢走 409 |
-| GET | `/orders` | 我的进行中配送 |
+| GET | `/orders` | 我的进行中配送（`ready` 已抢未取 + `delivering` 配送中） |
 | GET | `/orders/<id>` | 详情；池中的单也可看（供抢前判断） |
 | POST | `/orders/<id>/pickup` | ready → delivering |
 | POST | `/orders/<id>/deliver` | delivering → delivered |

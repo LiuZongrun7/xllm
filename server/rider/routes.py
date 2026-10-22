@@ -130,10 +130,12 @@ def _pool_card(order: Order) -> dict:
 
 
 def _active_cards(rider_id: int) -> list[dict]:
+    # 已抢到但还没取餐（ready + rider_id=我）也必须出现在"进行中"里，
+    # 否则抢单成功后这一单会从两个 Tab 里一起消失。
     orders = (Order.query.filter(
         Order.rider_id == rider_id,
-        Order.status.in_(("delivering",)),
-    ).order_by(Order.picked_up_at.asc()).all())
+        Order.status.in_(("ready", "delivering")),
+    ).order_by(Order.ready_at.asc(), Order.picked_up_at.asc()).all())
     cards = []
     for order in orders:
         card = _pool_card(order)

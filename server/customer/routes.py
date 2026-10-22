@@ -527,7 +527,8 @@ def my_orders():
     user = current_user()
     rows = (Order.query.filter_by(customer_id=user.id)
             .order_by(Order.created_at.desc()).limit(50).all())
-    active = [o.to_dict() for o in rows if o.is_active]
+    # active 也带 detail：卡片上的进度条直接用 steps，不必前端自己猜状态顺序
+    active = [o.to_dict(detail=True) for o in rows if o.is_active]
     past = [o.to_dict(detail=True) for o in rows if not o.is_active]
     return ok({"active": active, "past": past,
                "active_count": len(active)})

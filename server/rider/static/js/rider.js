@@ -988,11 +988,24 @@
       '</div>';
   }
 
+  /* 后端现在也会把「已抢未取」的 ready 单放进 active，
+     localStorage 里的 pending 只作为兜底，两边可能指向同一单 —— 必须去重。 */
+  function uniqueActive() {
+    var active = (wb.data && wb.data.active) || [];
+    var seen = {};
+    active.forEach(function (row) { seen[String(row.id)] = true; });
+    var pending = (wb.pending || []).filter(function (row) {
+      return !seen[String(row.id)];
+    });
+    return { active: active, pending: pending };
+  }
+
   function renderCounts() {
     if (!wb.data) return;
     var online = !!(wb.data.profile && wb.data.profile.is_online);
     var pool = (wb.data.pool || []).length;
-    var active = (wb.data.active || []).length + (wb.pending || []).length;
+    var merged = uniqueActive();
+    var active = merged.active.length + merged.pending.length;
     var poolEl = $('[data-count-available]');
     var activeEl = $('[data-count-active]');
     if (poolEl) poolEl.textContent = online ? pool : '–';
@@ -1130,8 +1143,9 @@
   function renderActivePanel() {
     var panel = $('#panel-active');
     if (!panel || !wb.data) return;
-    var active = wb.data.active || [];
-    var pending = wb.pending || [];
+    var merged = uniqueActive();
+    var active = merged.active;
+    var pending = merged.pending;
 
     if (!active.length && !pending.length) {
       panel.innerHTML = emptyState({
