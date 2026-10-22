@@ -1,0 +1,157 @@
+erDiagram
+    users {
+        bigint   id            PK "主键"
+        enum     role              "customer / restaurant / rider"
+        varchar  name              "姓名"
+        varchar  phone             "手机号(登录账号, 唯一)"
+        varchar  password_hash     "密码哈希"
+        tinyint  is_active         "封禁标记"
+        datetime created_at
+    }
+
+    restaurants {
+        bigint   id                 PK
+        bigint   owner_id           FK "→ users.id (1:1)"
+        varchar  name                  "店名"
+        varchar  phone                 "店铺电话"
+        varchar  address_text          "文字地址"
+        decimal  lng                   "经度(地图选点)"
+        decimal  lat                   "纬度"
+        decimal  min_order_amount      "起送价"
+        decimal  delivery_fee          "配送费"
+        decimal  delivery_radius_km    "配送范围(直线)"
+        tinyint  is_open               "营业总开关"
+    }
+
+    opening_hours {
+        bigint  id            PK
+        bigint  restaurant_id FK "→ restaurants.id"
+        tinyint weekday          "1=周一 ... 7=周日"
+        time    open_time
+        time    close_time
+        tinyint is_closed        "当天整天休息"
+    }
+
+    menu_items {
+        bigint  id            PK
+        bigint  restaurant_id FK "→ restaurants.id"
+        varchar name             "菜名"
+        decimal price            "当前售价"
+        int     calories         "热量(千卡)"
+        varchar category         "分类"
+        int     stock            "剩余份数, NULL=不限"
+        tinyint is_available     "上架/下架"
+    }
+
+    customer_addresses {
+        bigint  id            PK
+        bigint  user_id       FK "→ users.id"
+        varchar label            "家/公司/学校"
+        varchar contact_name     "收货人"
+        varchar contact_phone
+        varchar address_text     "格式化地址"
+        decimal lng
+        decimal lat
+        tinyint is_default
+    }
+
+    orders {
+        bigint   id            PK
+        varchar  order_no         "对外订单号"
+        bigint   customer_id   FK "→ users.id"
+        bigint   restaurant_id FK "→ restaurants.id"
+        bigint   rider_id      FK "→ users.id, 可空(未接单)"
+        enum     status           "pending/accepted/preparing/ready/delivering/delivered/cancelled"
+        enum     payment_status   "unpaid/paid/refunded"
+        varchar  delivery_address_text  "★地址快照"
+        decimal  delivery_lng           "★地址快照"
+        decimal  delivery_lat           "★地址快照"
+        varchar  delivery_contact_name
+        varchar  delivery_contact_phone
+        decimal  items_amount           "★金额快照"
+        decimal  delivery_fee
+        decimal  discount_amount
+        decimal  total_amount
+        decimal  distance_km            "直线距离"
+        datetime estimated_delivery_at  "预计送达"
+        varchar  remark                 "顾客备注"
+        varchar  cancel_reason
+        datetime created_at             "下单"
+        datetime accepted_at            "商家接单"
+        datetime ready_at               "备餐完成"
+        datetime picked_up_at           "骑手取餐"
+        datetime delivered_at           "送达"
+        datetime cancelled_at           "取消"
+    }
+
+    order_items {
+        bigint  id           PK
+        bigint  order_id     FK "→ orders.id"
+        bigint  menu_item_id FK "→ menu_items.id, 可空"
+        varchar name_snapshot   "★下单时菜名"
+        decimal unit_price      "★下单时单价"
+        int     quantity
+        decimal subtotal
+    }
+
+    reviews {
+        bigint  id          PK
+        bigint  order_id    FK "→ orders.id"
+        bigint  reviewer_id FK "→ users.id (顾客)"
+        enum    target_type    "restaurant / rider"
+        bigint  target_id      "多态: restaurants.id 或 users.id"
+        tinyint rating         "1-5 星"
+        varchar content
+    }
+
+    rider_locations {
+        bigint   id          PK
+        bigint   rider_id    FK "→ users.id"
+        bigint   order_id    FK "→ orders.id, 可空"
+        decimal  lng
+        decimal  lat
+        smallint accuracy_m     "浏览器自报精度"
+        datetime recorded_at
+    }
+
+    coupons {
+        bigint  id               PK
+        varchar code                "券码"
+        varchar title
+        enum    owner_type          "platform / restaurant"
+        bigint  owner_id            "多态: restaurants.id"
+        enum    discount_type       "fixed / percent"
+        decimal discount_value
+        decimal min_order_amount
+        int     total_quantity
+        int     claimed_count
+        datetime end_at
+        tinyint is_active
+    }
+
+    user_coupons {
+        bigint   id        PK
+        bigint   user_id   FK "→ users.id"
+        bigint   coupon_id FK "→ coupons.id"
+        enum     status       "unused / used / expired"
+        bigint   order_id  FK "→ orders.id (核销)"
+        datetime claimed_at
+        datetime used_at
+    }
+
+    users          ||--o| restaurants        : "拥有(仅 restaurant 角色)"
+    restaurants    ||--o{ opening_hours      : "每周营业时间"
+    restaurants    ||--o{ menu_items         : "提供菜品"
+    users          ||--o{ customer_addresses : "收货地址(仅 customer)"
+    users          ||--o{ orders             : "下单(customer_id)"
+    restaurants    ||--o{ orders             : "接单(restaurant_id)"
+    users          ||--o{ orders             : "配送(rider_id, 可空)"
+    orders         ||--o{ order_items        : "含明细"
+    menu_items     ||--o{ order_items        : "被点(可空)"
+    orders         ||--o{ reviews            : "被评价(最多2条)"
+    users          ||--o{ reviews            : "写评价(reviewer_id)"
+    users          ||--o{ rider_locations    : "上报位置(rider_id)"
+    orders         ||--o{ rider_locations    : "配送轨迹(可空)"
+    coupons        ||--o{ user_coupons       : "被领取"
+    users          ||--o{ user_coupons       : "领取(user_id)"
+    orders         ||--o| user_coupons       : "核销(order_id)"

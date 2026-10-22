@@ -1,0 +1,190 @@
+/* ============================================================
+   骑手端 · 设计系统
+   参考：Rider Dashboard（桌面 1024×572，但信息架构按手机单手操作设计）
+   语言：浅灰底 / 橙行动色 / 大方角 / 零投影纯描边 / **大字大按钮**
+   ────────────────────────────────────────────────────────────
+   和前两端的根本区别：
+     · 按钮最大（56px），一屏只有一个主动作 —— 移动中、戴手套、抢时间
+     · 字号整体更大、次要文字对比度更高 —— 户外强光下要能读
+     · 完全不使用投影 —— 扁平，减少视觉噪声
+   类名统一 r- 前缀。禁止引用顾客端(c-)或商家端(m-)的类。
+   ============================================================ */
+
+:root {
+  --r-bg:      #F4F5F4;
+  --r-surface: #FFFFFF;
+  --r-line:    #E4E6E4;
+  --r-text:    #1F1F1F;
+  --r-text-2:  #5A5A5A;    /* 比顾客端的 #9A9A9A 深得多：户外可读 */
+  --r-text-3:  #8A8A8A;
+
+  --r-primary:       #D08A38;   /* 实测行动橙 */
+  --r-primary-press: #B8762B;
+  --r-primary-weak:  #FBEEDC;
+
+  --r-success: #3F8F5F;  --r-success-bg: #E3F1E8;
+  --r-danger:  #B4232A;  --r-danger-bg:  #FBE3E3;
+  --r-warning: #8A5B00;  --r-warning-bg: #FCEFCB;
+
+  --r-card:  10px;
+  --r-btn:   10px;
+  --r-input: 10px;
+  --r-pill:  999px;
+
+  --fs-1: 22px; --fs-2: 18px; --fs-3: 17px;
+  --fs-4: 15px; --fs-5: 14px; --fs-6: 13px;
+
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 28px;
+}
+
+.r-page {
+  min-height: 100vh;
+  background: var(--r-bg);
+  color: var(--r-text);
+  font-size: var(--fs-4);
+  padding: var(--sp-4);
+}
+
+/* ── 顶栏：在线状态 + 消息，一眼可见 ── */
+.r-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--r-surface);
+  border: 1px solid var(--r-line);
+  border-radius: var(--r-card);
+}
+.r-online { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-5); font-weight: 600; }
+.r-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--r-success); }
+.r-dot--off { background: var(--r-text-3); }
+
+/* ── 排版：整体比顾客端大一号 ── */
+.r-h1 { font-size: var(--fs-1); font-weight: 700; }
+.r-h2 { font-size: var(--fs-2); font-weight: 700; }
+.r-h3 { font-size: var(--fs-3); font-weight: 600; }
+.r-meta { font-size: var(--fs-5); color: var(--r-text-2); }
+.r-big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+
+/* ── 按钮：56px 大方角，一屏一个 ── */
+.r-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: 56px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--r-btn);
+  background: var(--r-primary);
+  color: #fff;
+  font-size: var(--fs-3);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+}
+.r-btn:hover  { background: var(--r-primary-press); }
+.r-btn:active { transform: scale(.99); }
+.r-btn:disabled { background: #E2E2E2; color: #9E9E9E; cursor: not-allowed; transform: none; }
+
+.r-btn--ghost {
+  background: #fff;
+  border: 2px solid var(--r-line);
+  color: var(--r-text);
+}
+.r-btn--ghost:hover { background: #FAFAFA; }
+
+.r-btn--success { background: var(--r-success); }
+.r-btn--success:hover { background: #357A51; }
+
+.r-btn--sm { height: 40px; font-size: var(--fs-5); width: auto; padding: 0 var(--sp-4); }
+
+/* ── 卡片：10px + 1px 描边，**零投影** ── */
+.r-card {
+  background: var(--r-surface);
+  border: 1px solid var(--r-line);
+  border-radius: var(--r-card);
+  padding: var(--sp-4);
+}
+.r-card--flush { padding: 0; overflow: hidden; }
+.r-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+
+/* 地址行：图标 + 两行文字，地址要够大够清楚 */
+.r-addr { display: flex; gap: var(--sp-3); }
+.r-addr__icon { color: var(--r-primary); flex: none; margin-top: 2px; }
+.r-addr__icon svg { width: 18px; height: 18px; }
+.r-addr__label { font-size: var(--fs-6); color: var(--r-text-3); }
+.r-addr__value { font-size: var(--fs-3); font-weight: 600; line-height: 1.4; }
+
+/* ── 标签 ── */
+.r-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 26px;
+  padding: 0 var(--sp-3);
+  border-radius: 6px;
+  font-size: var(--fs-6);
+  font-weight: 600;
+  background: var(--r-success-bg);
+  color: var(--r-success);
+}
+.r-chip--warning { background: var(--r-warning-bg); color: var(--r-warning); }
+.r-chip--danger  { background: var(--r-danger-bg);  color: var(--r-danger); }
+.r-chip--neutral { background: #EDEDED;             color: var(--r-text-2); }
+
+/* ── 分段 Tab（选中白底 + 仅顶部圆角）── */
+.r-segmented { display: flex; background: #E6E8E6; border-radius: 10px 10px 0 0; overflow: hidden; }
+.r-segmented__item {
+  flex: 1;
+  padding: 14px var(--sp-3);
+  border: 0;
+  background: transparent;
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--r-text-2);
+  cursor: pointer;
+}
+.r-segmented__item.is-active { background: #fff; color: var(--r-text); }
+
+/* ── 输入框（大，方便单手点）── */
+.r-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--sp-3);
+  background: #fff;
+  border: 2px solid var(--r-line);
+  border-radius: var(--r-input);
+  font-size: var(--fs-4);
+}
+.r-input:focus { outline: none; border-color: var(--r-primary); box-shadow: 0 0 0 3px var(--r-primary-weak); }
+
+/* ── 步进器（骑手端很少用，但保持大点击区）── */
+.r-stepper { display: inline-flex; align-items: center; background: #EFEFEF; border-radius: var(--r-input); height: 40px; }
+.r-stepper__btn { width: 40px; height: 40px; border: 0; background: transparent; font-size: 18px; cursor: pointer; }
+.r-stepper__val {
+  min-width: 44px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 1px solid var(--r-line);
+  border-radius: var(--r-input);
+  font-size: var(--fs-4); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+
+/* ── 空状态 ── */
+.r-empty {
+  display: flex; flex-direction: column;
+  align-items: center; gap: var(--sp-3);
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+.r-empty__icon { width: 52px; height: 52px; color: #C4C7C4; }
+.r-empty__title { font-size: var(--fs-3); font-weight: 600; }
+.r-empty__desc { font-size: var(--fs-5); color: var(--r-text-2); line-height: 1.6; max-width: 280px; }
+
+/* ── 布局辅助 ── */
+.r-row { display: flex; align-items: center; gap: var(--sp-2); }
+.r-between { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.r-stack { display: flex; flex-direction: column; gap: var(--sp-3); }
+.r-divider { height: 1px; background: var(--r-line); }

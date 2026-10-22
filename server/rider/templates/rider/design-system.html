@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xLLM · Rider — Design System</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('rider.static', filename='css/rider.css') }}">
+<style>
+  /* Page chrome for this reference sheet only — not part of the design system */
+  .doc { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
+  .doc h1 { font-size: 18px; }
+  .doc p.lead { font-size: 13px; color: #5A5A5A; line-height: 1.7; margin-top: 6px; }
+  .doc section { margin-top: 24px; }
+  .doc h2 { font-size: 14px; font-weight: 700; padding-bottom: 8px; border-bottom: 1px solid #E4E6E4; margin-bottom: 14px; }
+  .doc .note { font-size: 12px; color: #8A8A8A; margin-bottom: 10px; }
+</style>
+</head>
+<body class="r-page">
+<div class="doc">
+
+  <h1>Rider · Design System</h1>
+  <p class="lead">
+    Imports <code>reset.css</code> + <code>rider.css</code> only. No styles shared with the customer
+    or merchant interfaces.<br>
+    Language: light grey surface / orange action colour / 10px squared corners /
+    <b>hairline borders and no shadows</b> / <b>56px buttons</b> / raised type scale and higher
+    contrast.<br>
+    The reason is physical: riders operate outdoors in bright light, one-handed, while moving —
+    tap targets must be large and secondary text must still be readable.
+  </p>
+
+  <section>
+    <div class="r-top">
+      <div class="r-row">
+        <span class="r-dot"></span>
+        <span class="r-online">Online · accepting orders</span>
+      </div>
+      <div class="r-row">
+        <span class="r-chip">12 today</span>
+        <button class="r-btn r-btn--ghost r-btn--sm">Messages</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Available orders</h2>
+    <p class="note">Segmented tabs on top — completely different navigation shape from the customer interface.</p>
+    <div class="r-segmented">
+      <button class="r-segmented__item is-active">Available · 3</button>
+      <button class="r-segmented__item">Mine · 1</button>
+    </div>
+
+    <div class="r-card" style="border-top-left-radius:0;border-top-right-radius:0;border-top:0">
+      <div class="r-card__head">
+        <div class="r-h3">Golden Wok Kitchen</div>
+        <span class="r-chip">Ready</span>
+      </div>
+
+      <div class="r-stack" style="gap:12px">
+        <div class="r-addr">
+          <span class="r-addr__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </span>
+          <div>
+            <div class="r-addr__label">Pick up</div>
+            <div class="r-addr__value">18 Xueyuan Rd · Golden Wok Kitchen, counter</div>
+          </div>
+        </div>
+        <div class="r-addr">
+          <span class="r-addr__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M6 21V8l6-4 6 4v13M10 21v-5h4v5"/></svg>
+          </span>
+          <div>
+            <div class="r-addr__label">Drop off</div>
+            <div class="r-addr__value">Zhiyuan Apartments, Bldg 3, Room 502</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="r-between" style="margin-top:16px;padding-top:14px;border-top:1px solid #E4E6E4">
+        <div>
+          <div class="r-meta">Distance</div>
+          <div class="r-big">1.9 km</div>
+        </div>
+        <div>
+          <div class="r-meta">ETA</div>
+          <div class="r-big">14 min</div>
+        </div>
+        <div style="width:150px">
+          <button class="r-btn">Grab order</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Active order — one primary action per screen</h2>
+    <div class="r-card">
+      <div class="r-card__head">
+        <div class="r-h3">Order #4821</div>
+        <span class="r-chip r-chip--warning">Ready</span>
+      </div>
+      <div class="r-meta">Note from the customer: call when you arrive, no need to come up.</div>
+      <div class="r-stack" style="margin-top:14px">
+        <button class="r-btn">Mark picked up</button>
+        <button class="r-btn r-btn--ghost">Contact customer</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Delivery confirmation</h2>
+    <div class="r-card">
+      <div class="r-card__head">
+        <div class="r-h3">Order #4821</div>
+        <span class="r-chip">On the way</span>
+      </div>
+      <div class="r-meta">Drop off: Zhiyuan Apartments, Bldg 3, Room 502</div>
+      <div style="margin-top:14px">
+        <button class="r-btn r-btn--success">Confirm delivered</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Input — 48px, reachable with one thumb</h2>
+    <input class="r-input" placeholder="Search restaurant or order number">
+  </section>
+
+  <section>
+    <h2>Empty state</h2>
+    <div class="r-card">
+      <div class="r-empty">
+        <svg class="r-empty__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="8" y="14" width="32" height="22" rx="3"/><path d="M16 14V9h16v5"/><path d="M18 25h12"/>
+        </svg>
+        <div class="r-empty__title">Nothing to pick up</div>
+        <div class="r-empty__desc">Orders appear here as soon as a restaurant marks them ready.</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

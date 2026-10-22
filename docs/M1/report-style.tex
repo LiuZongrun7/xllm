@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=22mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern,microtype,enumitem,titlesec,graphicx,caption,array,tabularx}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.2}
+\usepackage[hidelinks]{hyperref}
+\captionsetup{hypcap=false}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\renewcommand{\baselinestretch}{1.08}
+\setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=3pt,parsep=0pt}
+\setlist[enumerate]{leftmargin=1.6em,itemsep=4pt,topsep=3pt,parsep=0pt}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.65em}{}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+\pagestyle{plain}
+\clubpenalty=10000
+\widowpenalty=10000
+\raggedbottom
+\newcommand{\prompt}[1]{\textit{#1}}
+\newcommand{\reportheader}[3]{%
+\begin{center}
+{\small\bfseries COMP3019J Web Application Development}\par
+\vspace{2pt}\hrule\vspace{9pt}
+{\LARGE\bfseries #1}\par
+\vspace{2pt}Design Report
+\end{center}
+{\small\textbf{Team:} #2\par
+\textbf{Members:} #3\par}
+\vspace{3pt}}

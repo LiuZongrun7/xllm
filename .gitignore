@@ -1,0 +1,55 @@
+# ============================================================
+#  xLLM · COMP3019J Final Project
+#  ⚠️ 提交前务必确认这里没有漏掉任何密钥文件
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.python-version
+
+# --- 环境变量与密钥（绝对不能提交）---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.txt
+*credentials*.txt
+
+# --- 数据库 ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- 编辑器 / 系统 ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# --- 日志与临时文件 ---
+*.log
+tmp/
+
+# ============================================================
+#  第三方素材与课程材料 —— 不入库
+#  原因：66 张参考截图来自 DoorDash / Merchant Portal / Rider Dashboard
+#        三个第三方产品，brief 与 M1 说明 PDF 是课程材料。
+#        公开仓库里不再分发它们，本地保留即可。
+#  说明见 docs/reference/README.md
+# ============================================================
+docs/reference/*.pdf
+docs/reference/*.zip
+docs/reference/topic-*.jpg
+docs/reference/ui/用户/
+docs/reference/ui/商家/
+docs/reference/ui/骑手/
+docs/reference/ui/总览/
+
+# 高德本地调试用的真实 Key（把 tools/amap-check.html 复制一份再填值）
+tools/amap-check.local.html

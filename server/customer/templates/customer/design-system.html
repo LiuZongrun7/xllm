@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xLLM · Customer — Design System</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('customer.static', filename='css/customer.css') }}">
+<style>
+  /* Page chrome for this reference sheet only — not part of the design system */
+  .doc { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  .doc h1 { font-size: 20px; margin-bottom: 8px; }
+  .doc p.lead { font-size: 13px; color: #6B6B6B; line-height: 1.7; }
+  .doc section { margin-top: 32px; }
+  .doc h2 { font-size: 15px; font-weight: 700; padding-bottom: 8px; border-bottom: 1px solid #F0F0F0; margin-bottom: 16px; }
+  .doc .note { font-size: 12px; color: #9A9A9A; margin-bottom: 12px; }
+  .phone { width: 390px; max-width: 100%; border: 1px solid #E4E4E4; border-radius: 28px; overflow: hidden; background: #fff; }
+  .phone__screen { padding: 16px; }
+  .cols { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+</style>
+</head>
+<body class="c-page">
+<div class="doc">
+
+  <h1>Customer · Design System</h1>
+  <p class="lead">
+    Imports <code>reset.css</code> + <code>customer.css</code> only. No styles are shared with the
+    merchant or rider interfaces.<br>
+    Language: pure white / large imagery / 48px pill buttons / 14px card radius / the only role that
+    uses shadows / red primary action.
+  </p>
+
+  <section>
+    <h2>Restaurant cards</h2>
+    <div class="cols">
+      <div class="c-card">
+        <div class="c-card__img"></div>
+        <div class="c-card__body">
+          <div class="c-between">
+            <div class="c-h3">Golden Wok Kitchen</div>
+            <span class="c-chip">Open</span>
+          </div>
+          <div class="c-meta num">4.8 · 1.2 km · 25 min · ¥20 min order</div>
+          <div class="c-rest__tags">
+            <span class="c-chip c-chip--neutral">Chinese</span>
+            <span class="c-chip c-chip--accent">¥5 off ¥30</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="c-card">
+        <div class="c-card__body">
+          <div class="c-h3">Noodle House</div>
+          <div class="c-meta num">4.6 · 2.4 km · 35 min</div>
+          <div class="c-rest__tags">
+            <span class="c-chip c-chip--neutral">Noodles</span>
+            <span class="c-chip c-chip--danger">Closed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dish rows and quantity</h2>
+    <p class="note">Circular +/− buttons here — the merchant interface uses a three-part stepper instead.</p>
+    <div class="c-card">
+      <div class="c-card__body">
+        <div class="c-dish">
+          <div>
+            <div class="c-dish__name">Teriyaki Chicken Bowl</div>
+            <div class="c-dish__price num">¥26.00</div>
+            <div class="c-label num">640 kcal</div>
+          </div>
+          <div class="c-qty">
+            <button class="c-qty__btn" type="button" aria-label="Decrease">−</button>
+            <span class="c-qty__val num">1</span>
+            <button class="c-qty__btn" type="button" aria-label="Increase">+</button>
+          </div>
+        </div>
+        <div class="c-divider"></div>
+        <div class="c-dish">
+          <div>
+            <div class="c-dish__name">Spicy Beef Noodles</div>
+            <div class="c-dish__price num">¥32.00</div>
+            <div class="c-label num">720 kcal</div>
+          </div>
+          <span class="c-chip c-chip--danger">Sold out</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Buttons and inputs</h2>
+    <div class="cols">
+      <div class="c-stack">
+        <button class="c-btn">Checkout · ¥58.00</button>
+        <button class="c-btn" disabled>Out of stock</button>
+        <button class="c-btn c-btn--ghost">Add more items</button>
+      </div>
+      <div class="c-stack">
+        <input class="c-input" placeholder="Search restaurants or dishes">
+        <input class="c-input" placeholder="Promo code">
+        <div><button class="c-btn c-btn--text">See all 12 restaurants</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Order progress timeline</h2>
+    <p class="note">Maps <code>orders.status</code> onto five labels a customer can understand.</p>
+    <div class="c-card">
+      <div class="c-card__body">
+        <div class="c-timeline">
+          <div class="c-timeline__step is-done"><span class="c-timeline__dot"></span><span class="c-timeline__label">Placed</span></div>
+          <div class="c-timeline__step is-done"><span class="c-timeline__dot"></span><span class="c-timeline__label">Accepted</span></div>
+          <div class="c-timeline__step is-current"><span class="c-timeline__dot"></span><span class="c-timeline__label">Preparing</span></div>
+          <div class="c-timeline__step"><span class="c-timeline__dot"></span><span class="c-timeline__label">On the way</span></div>
+          <div class="c-timeline__step"><span class="c-timeline__dot"></span><span class="c-timeline__label">Delivered</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Bottom navigation (phone frame)</h2>
+    <div class="phone">
+      <div class="phone__screen">
+        <div class="c-h2">Nearby restaurants</div>
+        <div class="c-meta">12 places · sorted by distance</div>
+      </div>
+      <nav class="c-tabbar">
+        <a class="c-tabbar__item is-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>
+          <span>Home</span>
+        </a>
+        <a class="c-tabbar__item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>Orders</span>
+        </a>
+        <a class="c-tabbar__item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          <span>Account</span>
+        </a>
+      </nav>
+    </div>
+  </section>
+
+  <section>
+    <h2>Empty state</h2>
+    <div class="c-card">
+      <div class="c-empty">
+        <svg class="c-empty__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="21" cy="21" r="12"/><path d="M30.5 30.5 40 40"/>
+        </svg>
+        <div class="c-empty__title">No orders yet</div>
+        <div class="c-empty__desc">Once you place an order, its preparation and delivery progress will show up here.</div>
+        <button class="c-btn c-btn--ghost" style="width:auto;height:40px;padding:0 20px">Browse restaurants</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

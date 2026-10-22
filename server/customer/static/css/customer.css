@@ -1,0 +1,228 @@
+/* ============================================================
+   顾客端 · 设计系统
+   参考：DoorDash（iOS 1290×2796）
+   语言：纯白底 / 大图 / 胶囊按钮 / 大圆角 / 轻投影 / 红色主行动
+   ────────────────────────────────────────────────────────────
+   本文件自成一体，不依赖任何共享 token。
+   类名统一 c- 前缀。禁止引用商家端(m-)或骑手端(r-)的类。
+   ============================================================ */
+
+:root {
+  --c-bg:          #FFFFFF;
+  --c-surface:     #FFFFFF;
+  --c-line:        #F0F0F0;
+  --c-line-strong: #E4E4E4;
+  --c-text:        #191919;
+  --c-text-2:      #6B6B6B;
+  --c-text-3:      #9A9A9A;
+
+  --c-primary:       #EB1700;   /* 实测自 Continue 按钮 rgb(235,23,0) */
+  --c-primary-press: #C91300;
+  --c-primary-weak:  #FFF0ED;
+  --c-accent:        #5A31F4;   /* 会员 / 进度点缀 */
+
+  --c-success: #2F7A4D;  --c-success-bg: #E4F2E8;
+  --c-warning: #8A5B00;  --c-warning-bg: #FCEFCB;
+  --c-danger:  #B4232A;  --c-danger-bg:  #FBE3E3;
+
+  --r-card:  14px;
+  --r-img:   12px;
+  --r-input: 12px;
+  --r-pill:  999px;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, .06);
+  --shadow-pop:  0 10px 30px rgba(0, 0, 0, .12);
+
+  --fs-1: 24px; --fs-2: 18px; --fs-3: 16px;
+  --fs-4: 14px; --fs-5: 13px; --fs-6: 12px; --fs-7: 11px;
+
+  --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+}
+
+.c-page {
+  min-height: 100vh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: var(--fs-4);
+  padding: var(--sp-4);
+}
+
+/* ── 排版 ── */
+.c-h1 { font-size: var(--fs-1); font-weight: 700; letter-spacing: -.02em; }
+.c-h2 { font-size: var(--fs-2); font-weight: 700; }
+.c-h3 { font-size: var(--fs-3); font-weight: 600; }
+.c-meta { font-size: var(--fs-5); color: var(--c-text-2); }
+.c-label { font-size: var(--fs-6); color: var(--c-text-2); }
+
+/* ── 按钮：48px 完全胶囊，移动端唯一主动作 ── */
+.c-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+}
+.c-btn:hover  { background: var(--c-primary-press); }
+.c-btn:active { background: var(--c-primary-press); transform: scale(.985); }
+.c-btn:disabled { background: #EDEDED; color: #AEAEAE; cursor: not-allowed; transform: none; }
+
+.c-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--c-line-strong);
+  color: var(--c-text);
+  font-weight: 600;
+}
+.c-btn--ghost:hover { background: #FAFAFA; }
+
+.c-btn--text {
+  width: auto; height: auto; padding: 0;
+  background: none; color: var(--c-primary);
+  font-size: var(--fs-5); font-weight: 600;
+}
+
+/* ── 卡片：大圆角 + 轻投影（顾客端唯独有投影的一层）── */
+.c-card {
+  background: var(--c-surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.c-card__body { padding: var(--sp-4); }
+.c-card__img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #F2F2F2;
+  object-fit: cover;
+}
+
+/* ── 餐厅列表行 ── */
+.c-rest { display: flex; gap: var(--sp-3); padding: var(--sp-3) 0; }
+.c-rest__thumb {
+  width: 76px; height: 76px;
+  border-radius: var(--r-img);
+  background: #F2F2F2;
+  flex: none;
+}
+.c-rest__name { font-size: var(--fs-3); font-weight: 600; }
+.c-rest__meta { font-size: var(--fs-5); color: var(--c-text-2); margin-top: 2px; }
+.c-rest__tags { display: flex; gap: 6px; margin-top: var(--sp-2); flex-wrap: wrap; }
+
+/* ── 标签：柔和底 + 圆角 6，比商家端更圆更淡 ── */
+.c-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 var(--sp-2);
+  border-radius: 6px;
+  font-size: var(--fs-6);
+  font-weight: 500;
+  background: var(--c-success-bg);
+  color: var(--c-success);
+}
+.c-chip--warning { background: var(--c-warning-bg); color: var(--c-warning); }
+.c-chip--danger  { background: var(--c-danger-bg);  color: var(--c-danger); }
+.c-chip--neutral { background: #F4F4F4;             color: var(--c-text-2); }
+.c-chip--accent  { background: #EFEBFF;             color: var(--c-accent); }
+
+/* ── 菜品行 + 数量加减 ── */
+.c-dish { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: var(--sp-3) 0; }
+.c-dish__name { font-size: var(--fs-3); font-weight: 600; }
+.c-dish__price { font-size: var(--fs-4); font-weight: 600; margin-top: 2px; }
+.c-qty { display: inline-flex; align-items: center; gap: var(--sp-3); }
+.c-qty__btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--c-line-strong);
+  background: #fff;
+  font-size: 16px; line-height: 1;
+  cursor: pointer;
+}
+.c-qty__val { font-size: var(--fs-4); font-weight: 600; min-width: 14px; text-align: center; }
+
+/* ── 输入框 ── */
+.c-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 var(--sp-3);
+  background: #FAFAFA;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-input);
+  font-size: var(--fs-4);
+}
+.c-input::placeholder { color: var(--c-text-3); }
+.c-input:focus { outline: none; border-color: var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary-weak); }
+
+/* ── 订单进度时间轴（映射 orders.status）── */
+.c-timeline { display: flex; align-items: flex-start; }
+.c-timeline__step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.c-timeline__step::before {
+  content: "";
+  position: absolute;
+  top: 11px; right: 50%;
+  width: 100%; height: 2px;
+  background: var(--c-line);
+}
+.c-timeline__step:first-child::before { display: none; }
+.c-timeline__step.is-done::before,
+.c-timeline__step.is-current::before { background: var(--c-primary); }
+.c-timeline__dot {
+  position: relative; z-index: 1;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--c-line);
+}
+.c-timeline__step.is-done .c-timeline__dot { background: var(--c-primary); border-color: var(--c-primary); }
+.c-timeline__step.is-current .c-timeline__dot { border-color: var(--c-primary); box-shadow: 0 0 0 4px var(--c-primary-weak); }
+.c-timeline__label { font-size: var(--fs-6); color: var(--c-text-3); text-align: center; }
+.c-timeline__step.is-done .c-timeline__label { color: var(--c-text); font-weight: 500; }
+.c-timeline__step.is-current .c-timeline__label { color: var(--c-primary); font-weight: 600; }
+
+/* ── 底部 Tab ── */
+.c-tabbar { display: flex; height: 52px; background: #fff; border-top: 1px solid var(--c-line); }
+.c-tabbar__item {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px;
+  font-size: var(--fs-7);
+  color: var(--c-text-3);
+  cursor: pointer;
+}
+.c-tabbar__item.is-active { color: var(--c-primary); font-weight: 500; }
+.c-tabbar__item svg { width: 22px; height: 22px; }
+
+/* ── 空状态 ── */
+.c-empty {
+  display: flex; flex-direction: column;
+  align-items: center; gap: var(--sp-3);
+  padding: 40px var(--sp-5);
+  text-align: center;
+}
+.c-empty__icon { width: 56px; height: 56px; color: #C9C9C9; }
+.c-empty__title { font-size: var(--fs-3); font-weight: 600; }
+.c-empty__desc { font-size: var(--fs-5); color: var(--c-text-2); line-height: 1.6; max-width: 260px; }
+
+/* ── 布局辅助 ── */
+.c-row { display: flex; align-items: center; gap: var(--sp-2); }
+.c-between { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.c-stack { display: flex; flex-direction: column; gap: var(--sp-4); }
+.c-divider { height: 1px; background: var(--c-line); }

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高德地图 Key 验证 · xLLM</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+         display: flex; flex-direction: column; height: 100vh; background: #f5f6f8; }
+  header { padding: 12px 16px; background: #1f2937; color: #fff; font-size: 14px; }
+  header b { color: #7dd3fc; }
+  #status { padding: 10px 16px; font-size: 13px; background: #fff; border-bottom: 1px solid #e5e7eb;
+            font-family: ui-monospace, Menlo, monospace; line-height: 1.7;
+            max-height: 26vh; overflow-y: auto; }
+  .ok   { color: #15803d; }
+  .bad  { color: #b91c1c; font-weight: 600; }
+  .wait { color: #a16207; }
+  .dim  { color: #6b7280; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #map { flex: 1; background: #e8eaed; }
+  aside { width: 340px; background: #fff; border-left: 1px solid #e5e7eb; padding: 14px;
+          overflow-y: auto; font-size: 13px; }
+  aside h3 { margin: 0 0 10px; font-size: 12px; color: #374151; text-transform: uppercase;
+             letter-spacing: .04em; }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; color: #6b7280; font-size: 11px; margin-bottom: 3px; }
+  .field code { display: block; background: #f3f4f6; padding: 6px 8px; border-radius: 4px;
+                font-size: 12px; word-break: break-all; color: #111827;
+                white-space: pre-wrap; min-height: 26px; }
+  #hint { color: #6b7280; line-height: 1.7; }
+  button { width: 100%; padding: 10px; margin-bottom: 8px; border: 0; border-radius: 6px;
+           font-size: 13px; cursor: pointer; color: #fff; }
+  #geoBtn   { background: #2563eb; }
+  #clearBtn { background: #6b7280; margin-bottom: 10px; }
+  button:active { opacity: .85; }
+  hr { border: 0; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+  .warn { background: #fef3c7; border-left: 3px solid #f59e0b; padding: 8px 10px;
+          border-radius: 3px; color: #78350f; font-size: 12px; line-height: 1.6; margin-top: 14px; }
+  .warn code { background: #fde68a; padding: 1px 4px; border-radius: 3px; }
+  .legend { font-size: 11px; color: #6b7280; line-height: 1.9; margin-top: 10px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+</style>
+</head>
+<body>
+
+<header>高德地图 Key 验证 · <b>xLLM</b> / Food Delivery Website</header>
+
+<div id="status">
+  <div id="s1" class="wait">[ … ] 准备加载高德 JS API…</div>
+</div>
+
+<main>
+  <div id="map"></div>
+  <aside>
+    <h3>地图选点结果</h3>
+    <div class="field"><label>经度 lng</label><code id="lng">—</code></div>
+    <div class="field"><label>纬度 lat</label><code id="lat">—</code></div>
+    <div class="field"><label>格式化地址</label><code id="addr">—</code></div>
+    <div class="field"><label>省 / 市 / 区</label><code id="region">—</code></div>
+    <div class="field"><label>可直接入库的 JSON</label><code id="json">—</code></div>
+
+    <hr>
+
+    <h3>定位验证</h3>
+    <button id="geoBtn">测试本机定位</button>
+    <button id="clearBtn">清除定位标记</button>
+    <div class="field"><label>定位结果</label><code id="geo">未测试</code></div>
+
+    <div class="legend">
+      <span class="dot" style="background:#2563eb;"></span>蓝点 = 你在地图上点的位置<br>
+      <span class="dot" style="background:#dc2626;"></span>红点 = 浏览器认为你在的位置<br>
+      <span class="dot" style="background:#93c5fd;border:1px solid #3b82f6;"></span>浅蓝圈 = 定位精度范围
+    </div>
+
+    <p id="hint" style="margin-top:14px;">
+      <b>怎么判断定位准不准：</b>看红点是不是落在你实际坐的位置上，
+      以及圈有多大。圈越小、红点越贴近你，定位越可靠。
+    </p>
+
+    <div class="warn">
+      <b>地图不出来？</b>多半是 Key 的<b>域名白名单</b>没放行。高德控制台 →
+      应用管理 → 我的应用 → 设置 → 域名白名单，加上：<br>
+      <code>127.0.0.1</code> <code>localhost</code> <code>xllm.cloud</code>
+    </div>
+  </aside>
+</main>
+
+<script>
+/* ============================================================================
+   高德地图验证页  ·  xLLM / COMP3019J Final Project
+   ----------------------------------------------------------------------------
+   设计要点（踩过坑之后的版本）：
+   1. 全部逻辑放在一个 IIFE 里 —— 避免多个 <script> 块的 const 作用域冲突
+   2. 动态插入 <script> 加载高德（onload/onerror/超时）
+      —— 静态 <script src> 请求挂起会阻塞后续脚本，表现为"页面卡死"
+   3. 全局 error / unhandledrejection 捕获 —— 任何异常都显示在状态栏，不静默失败
+   4. 不调用 AMap.getVersion() —— JS API 2.0 里没有这个函数（踩过）
+   5. 可选的 Circle 用 try/catch 兜底 —— 万一它需要插件，也不能拖垮主流程
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var AMAP_KEY      = 'YOUR_AMAP_WEB_JS_KEY';        // ← 填自己的 Web端(JS API) Key
+  var AMAP_SECURITY = 'YOUR_AMAP_SECURITY_JS_CODE';  // ← 填配套的安全密钥
+  var LOAD_TIMEOUT  = 15000;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function say(msg, cls) {
+    var d = document.createElement('div');
+    if (cls) { d.className = cls; }
+    d.textContent = msg;
+    $('status').appendChild(d);
+  }
+  function headline(msg, cls) {
+    var el = $('s1');
+    el.className = cls || '';
+    el.textContent = msg;
+  }
+
+  /* ---- 全局错误捕获：让所有异常可见 ---- */
+  window.addEventListener('error', function (e) {
+    if (e.target && e.target.tagName === 'SCRIPT') {
+      say('[ ✗ ] 脚本加载失败: ' + (e.target.src || '(inline)'), 'bad');
+    } else if (e.message) {
+      say('[ ✗ ] JS 运行时错误: ' + e.message + (e.lineno ? '  (行 ' + e.lineno + ')' : ''), 'bad');
+    }
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    say('[ ✗ ] 未处理的 Promise 异常: ' + e.reason, 'bad');
+  });
+
+  /* ---- 安全上下文 ---- */
+  if (window.isSecureContext) {
+    say('[ ✓ ] 安全上下文：是（HTTPS）→ 浏览器定位可用', 'ok');
+  } else {
+    say('[ ✗ ] 安全上下文：否（HTTP）→ navigator.geolocation 会被浏览器拒绝', 'bad');
+  }
+
+  /* ---- 模块级状态：boot() 里赋值，定位处理函数里使用 ---- */
+  var map = null, geocoder = null;
+  var pickMarker = null, geoMarker = null, geoCircle = null;
+
+  /* ---- 动态加载高德 JS API ---- */
+  headline('[ … ] 正在加载高德 JS API…', 'wait');
+  window._AMapSecurityConfig = { securityJsCode: AMAP_SECURITY };
+
+  var settled = false;
+  var timer = setTimeout(function () {
+    if (settled) { return; }
+    settled = true;
+    headline('[ ✗ ] 加载超时（' + (LOAD_TIMEOUT / 1000) + ' 秒）—— 请求被挂起', 'bad');
+    say('    静态 <script> 挂起会阻塞后续代码，改成动态加载才能报出这个错。', 'dim');
+    say('    常见原因：广告拦截插件拦了 webapi.amap.com；代理/VPN 分流异常；DNS 污染。', 'dim');
+  }, LOAD_TIMEOUT);
+
+  var script = document.createElement('script');
+  script.src = 'https://webapi.amap.com/maps?v=2.0&key=' + AMAP_KEY + '&plugin=AMap.Geocoder';
+  script.onload = function () {
+    if (settled) { return; }
+    settled = true; clearTimeout(timer); boot();
+  };
+  script.onerror = function () {
+    if (settled) { return; }
+    settled = true; clearTimeout(timer);
+    headline('[ ✗ ] 高德 JS API 脚本加载失败', 'bad');
+    say('    检查网络能否访问 webapi.amap.com，以及是否有拦截插件。', 'dim');
+  };
+  document.head.appendChild(script);
+
+  /* ======================== 地图初始化 ======================== */
+  function boot() {
+    try {
+      if (typeof window.AMap === 'undefined') {
+        headline('[ ✗ ] AMap 对象不存在 —— Key 被拒绝或脚本异常', 'bad');
+        say('    可能原因：Key 拼写错误 / 域名白名单未放行 / Key 被删除', 'dim');
+        return;
+      }
+      headline('[ ✓ ] 高德 JS API 加载成功', 'ok');
+
+      map = new AMap.Map('map', {
+        zoom: 12,
+        center: [116.397428, 39.90923],   // 天安门
+        viewMode: '2D'
+      });
+      geocoder = new AMap.Geocoder({ radius: 1000, extensions: 'all' });
+
+      map.on('complete', function () {
+        say('[ ✓ ] 地图渲染完成 —— 点击地图拾取坐标', 'ok');
+      });
+
+      /* 点击地图 → 落蓝点 + 逆地理编码 */
+      map.on('click', function (e) {
+        var lng = +e.lnglat.getLng().toFixed(6);
+        var lat = +e.lnglat.getLat().toFixed(6);
+
+        if (pickMarker) { map.remove(pickMarker); }
+        pickMarker = new AMap.Marker({ position: [lng, lat], map: map });
+
+        $('lng').textContent = lng;
+        $('lat').textContent = lat;
+        $('addr').textContent = '查询中…';
+
+        geocoder.getAddress([lng, lat], function (status, result) {
+          if (status === 'complete' && result && result.regeocode) {
+            var rc = result.regeocode;
+            var c = rc.addressComponent || {};
+            $('addr').textContent   = rc.formattedAddress || '(空)';
+            $('region').textContent = [c.province, c.city, c.district].filter(Boolean).join(' / ') || '—';
+            $('json').textContent   = JSON.stringify({
+              lng: lng, lat: lat,
+              address: rc.formattedAddress,
+              province: c.province, city: c.city, district: c.district
+            }, null, 1);
+          } else {
+            $('addr').textContent = '逆地理编码失败: ' + status;
+          }
+        });
+      });
+
+    } catch (err) {
+      headline('[ ✗ ] 初始化异常: ' + err.message, 'bad');
+      say('    ' + (err.stack || '').split('\n').slice(0, 3).join(' | '), 'dim');
+    }
+  }
+
+  /* ======================== 定位测试 ========================
+     用浏览器原生 navigator.geolocation（不依赖 AMap.Geolocation 插件）。
+     把结果画在图上：红点 = 浏览器认为你在的位置，浅蓝圈 = 自报精度范围。
+     骑手实时位置追踪将来就是这套：拿到坐标 → 上报后端 → 别人看到红点。 */
+  function drawGeoResult(lng, lat, accuracy, addressText) {
+    try {
+      if (!map) { return; }
+
+      if (geoMarker) { map.remove(geoMarker); geoMarker = null; }
+      if (geoCircle) { map.remove(geoCircle); geoCircle = null; }
+
+      // 精度圈：万一 Circle 需要插件而没加载，不能让主流程挂掉
+      try {
+        geoCircle = new AMap.Circle({
+          center: [lng, lat],
+          radius: accuracy || 50,
+          map: map,
+          strokeColor: '#3b82f6',
+          strokeWeight: 1,
+          strokeOpacity: 0.9,
+          fillColor: '#93c5fd',
+          fillOpacity: 0.25,
+          zIndex: 50
+        });
+      } catch (circleErr) {
+        say('[ ! ] 精度圈绘制失败（不影响定位结果）: ' + circleErr.message, 'dim');
+      }
+
+      geoMarker = new AMap.Marker({ position: [lng, lat], map: map, zIndex: 200 });
+
+      map.setZoomAndCenter(17, [lng, lat]);
+      say('[ ✓ ] 已在图上标出定位点（红点）与精度范围', 'ok');
+      if (addressText) { say('    该点反查地址: ' + addressText, 'dim'); }
+
+    } catch (err) {
+      say('[ ! ] 图上标注失败（不影响定位结果）: ' + err.message, 'dim');
+    }
+  }
+
+  $('geoBtn').addEventListener('click', function () {
+    var out = $('geo');
+
+    if (!window.isSecureContext) {
+      out.textContent = '✗ 非安全上下文（HTTP）\n浏览器会直接拒绝定位请求。\n请务必用 https:// 访问。';
+      return;
+    }
+    if (!navigator.geolocation) {
+      out.textContent = '✗ 此浏览器不支持 navigator.geolocation';
+      return;
+    }
+
+    out.textContent = '定位中…（首次会弹授权框，请点「允许」）';
+    var t0 = Date.now();
+
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        var c = pos.coords;
+        var lng = +c.longitude.toFixed(6);
+        var lat = +c.latitude.toFixed(6);
+        var acc = Math.round(c.accuracy);
+
+        out.textContent = [
+          '✓ 定位成功',
+          '纬度 ' + lat,
+          '经度 ' + lng,
+          '精度 ±' + acc + ' 米',
+          '耗时 ' + (Date.now() - t0) + ' ms',
+          '（正在图上标注…）'
+        ].join('\n');
+
+        drawGeoResult(lng, lat, acc, null);
+
+        // 反查该地址，顺便验证 Geocoder 在定位这条路径上也正常
+        if (geocoder) {
+          geocoder.getAddress([lng, lat], function (status, result) {
+            var addr = (status === 'complete' && result && result.regeocode)
+                     ? result.regeocode.formattedAddress : '(反查失败: ' + status + ')';
+            out.textContent = [
+              '✓ 定位成功',
+              '纬度 ' + lat,
+              '经度 ' + lng,
+              '精度 ±' + acc + ' 米',
+              '耗时 ' + (Date.now() - t0) + ' ms',
+              '反查地址 ' + addr
+            ].join('\n');
+            say('    该点反查地址: ' + addr, 'dim');
+          });
+        }
+      },
+      function (err) {
+        var m = { 1: '用户拒绝授权', 2: '位置不可用(POSITION_UNAVAILABLE)', 3: '请求超时' };
+        out.textContent = '✗ 失败: ' + (m[err.code] || '未知错误') + '\n' + err.message;
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  });
+
+  $('clearBtn').addEventListener('click', function () {
+    if (!map) { return; }
+    if (geoMarker) { map.remove(geoMarker); geoMarker = null; }
+    if (geoCircle) { map.remove(geoCircle); geoCircle = null; }
+    $('geo').textContent = '已清除';
+  });
+
+})();
+</script>
+
+</body>
+</html>

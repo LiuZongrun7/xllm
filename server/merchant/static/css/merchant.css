@@ -1,0 +1,276 @@
+/* ============================================================
+   商家端 · 设计系统
+   参考：Merchant Portal（桌面 1312×816）
+   语言：粉白底 / 酒红 / 小方角 / 细描边零投影 / 高密度表格 / 大号数字
+   ────────────────────────────────────────────────────────────
+   本文件自成一体，不依赖任何共享 token。
+   类名统一 m- 前缀。禁止引用顾客端(c-)或骑手端(r-)的类。
+   ============================================================ */
+
+:root {
+  --m-bg:      #FBF5F7;   /* 极淡粉，桌面上让白卡片浮起来 */
+  --m-surface: #FFFFFF;
+  --m-line:    #EFE3E8;
+  --m-line-2:  #E0D0D7;
+  --m-text:    #545454;
+  --m-text-1:  #2B2426;   /* 标题比正文深一档 */
+  --m-text-3:  #96A1B3;   /* 表头 / 辅助，实测灰蓝 */
+
+  --m-primary:       #B11955;
+  --m-primary-press: #941347;
+  --m-primary-weak:  #FAE8EF;
+  --m-grad-a:        #7A1030;   /* 登录/注册页整块品牌渐变 */
+  --m-grad-b:        #D0185C;
+
+  --m-success: #2F7A4D;  --m-success-bg: #D9EADF;
+  --m-warning: #8A5B00;  --m-warning-bg: #F7DFA6;
+  --m-danger:  #FFFBFC;  --m-danger-bg:  #B45A5F;   /* 注意：暗红底 + 白字 */
+
+  --r-card: 8px;
+  --r-btn:  6px;
+  --r-input: 6px;
+  --r-pill: 999px;
+
+  --fs-1: 20px; --fs-2: 16px; --fs-3: 14px;
+  --fs-4: 13px; --fs-5: 12px; --fs-6: 11px;
+  --fs-num: 20px;              /* 关键数字刻意放大 */
+
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+}
+
+.m-page {
+  min-height: 100vh;
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: var(--fs-4);
+}
+
+/* ── 顶栏 ── */
+.m-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  height: 52px;
+  padding: 0 var(--sp-5);
+  background: var(--m-surface);
+  border-bottom: 1px solid var(--m-line);
+}
+.m-brand {
+  font-size: var(--fs-2);
+  font-weight: 700;
+  font-style: italic;
+  color: var(--m-primary);
+  letter-spacing: -.02em;
+}
+.m-nav { display: flex; gap: var(--sp-4); }
+.m-nav__item { font-size: var(--fs-4); color: var(--m-text-3); cursor: pointer; }
+.m-nav__item.is-active { color: var(--m-text-1); font-weight: 600; }
+
+.m-body { padding: var(--sp-5); max-width: 1080px; }
+
+/* ── 排版 ── */
+.m-h1 { font-size: var(--fs-1); font-weight: 700; color: var(--m-text-1); letter-spacing: -.01em; }
+.m-h2 { font-size: var(--fs-2); font-weight: 600; color: var(--m-text-1); }
+.m-meta { font-size: var(--fs-5); color: var(--m-text-3); }
+.m-num { font-size: var(--fs-num); font-weight: 700; color: var(--m-text-1); font-variant-numeric: tabular-nums; }
+.m-num--sm { font-size: var(--fs-2); font-weight: 700; color: var(--m-text-1); }
+
+/* ── 按钮：32px 小方角，后台不用胶囊 ── */
+.m-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--r-btn);
+  background: var(--m-primary);
+  color: #fff;
+  font-size: var(--fs-4);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.m-btn:hover { background: var(--m-primary-press); }
+.m-btn:disabled { background: #EAD8E0; color: #B49AA6; cursor: not-allowed; }
+
+.m-btn--ghost {
+  background: #fff;
+  border: 1px solid var(--m-primary);
+  color: var(--m-primary);
+}
+.m-btn--ghost:hover { background: var(--m-primary-weak); }
+
+.m-btn--quiet {
+  background: #fff;
+  border: 1px solid var(--m-line-2);
+  color: var(--m-text);
+}
+.m-btn--quiet:hover { background: #FAF6F8; }
+
+.m-btn--sm { height: 26px; padding: 0 10px; font-size: var(--fs-5); }
+
+/* ── 卡片：8px 圆角 + 细描边，**无投影** ── */
+.m-card {
+  background: var(--m-surface);
+  border: 1px solid var(--m-line);
+  border-radius: var(--r-card);
+  padding: var(--sp-4);
+}
+.m-card__head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.m-card__title { font-size: 15px; font-weight: 600; color: var(--m-text-1); }
+
+/* ── 表格：行高 56，表头小字灰蓝 ── */
+.m-table {
+  width: 100%;
+  background: var(--m-surface);
+  border: 1px solid var(--m-line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.m-th {
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--m-text-3);
+  text-align: left;
+  background: #FFFCFD;
+  border-bottom: 1px solid var(--m-line);
+  white-space: nowrap;
+}
+.m-td {
+  height: 56px;
+  padding: var(--sp-3);
+  font-size: var(--fs-4);
+  color: var(--m-text);
+  border-bottom: 1px solid var(--m-line);
+  vertical-align: middle;
+}
+.m-table tr:last-child .m-td { border-bottom: 0; }
+.m-cell-title { font-size: var(--fs-3); color: var(--m-text-1); font-weight: 500; }
+.m-cell-sub { font-size: var(--fs-5); color: var(--m-text-3); }
+
+/* ── 状态胶囊：实心 / 无描边 / 胶囊，同色系深字 ── */
+.m-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-5);
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--m-success-bg);
+  color: var(--m-success);
+}
+.m-chip--warning { background: var(--m-warning-bg); color: var(--m-warning); }
+.m-chip--danger  { background: var(--m-danger-bg);  color: var(--m-danger); }   /* 白字 */
+.m-chip--neutral { background: #F1ECEE;             color: var(--m-text-3); }
+
+/* ── 数量步进器：三段式 − [ n ] + ── */
+.m-stepper {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-input);
+  background: var(--m-primary-weak);
+  height: 28px;
+}
+.m-stepper__btn {
+  width: 26px; height: 28px;
+  border: 0; background: transparent;
+  color: var(--m-primary);
+  font-size: 15px; line-height: 1;
+  cursor: pointer;
+}
+.m-stepper__btn:hover { background: #F5DCE6; }
+.m-stepper__val {
+  min-width: 38px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff;
+  border: 1px solid var(--m-line-2);
+  border-radius: var(--r-input);
+  font-size: var(--fs-4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 开关 ── */
+.m-switch { position: relative; display: inline-block; width: 40px; height: 24px; flex: none; }
+.m-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.m-switch__track {
+  position: absolute; inset: 0;
+  background: #DCD2D6;
+  border-radius: var(--r-pill);
+  transition: background .15s ease;
+  cursor: pointer;
+}
+.m-switch__track::after {
+  content: "";
+  position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+  transition: transform .15s ease;
+}
+.m-switch input:checked + .m-switch__track { background: var(--m-primary); }
+.m-switch input:checked + .m-switch__track::after { transform: translateX(16px); }
+
+/* ── 分段 Tab（选中白底 + 仅顶部圆角）── */
+.m-segmented { display: inline-flex; background: #E8E8E8; border-radius: 8px 8px 0 0; overflow: hidden; }
+.m-segmented__item {
+  padding: 10px 28px;
+  border: 0; background: transparent;
+  font-size: var(--fs-4);
+  color: var(--m-text-3);
+  cursor: pointer;
+}
+.m-segmented__item.is-active { background: #fff; color: var(--m-text-1); font-weight: 600; }
+
+/* ── 输入框 ── */
+.m-input {
+  height: 36px;
+  width: 100%;
+  padding: 0 10px;
+  background: #fff;
+  border: 1px solid var(--m-line-2);
+  border-radius: var(--r-input);
+  font-size: var(--fs-4);
+}
+.m-input:focus { outline: none; border-color: var(--m-primary); box-shadow: 0 0 0 2px var(--m-primary-weak); }
+
+/* ── KPI 卡（数字大、标签小）── */
+.m-kpi { display: flex; gap: var(--sp-5); flex-wrap: wrap; }
+.m-kpi__item { min-width: 120px; }
+.m-kpi__label { font-size: var(--fs-5); color: var(--m-text-3); margin-bottom: 6px; }
+
+/* ── 空状态：窄、文字小，后台不做大插画 ── */
+.m-empty {
+  display: flex; flex-direction: column;
+  align-items: center; gap: var(--sp-2);
+  padding: 40px var(--sp-5);
+  text-align: center;
+}
+.m-empty__icon { width: 40px; height: 40px; color: #D8C8CE; margin-bottom: var(--sp-1); }
+.m-empty__title { font-size: var(--fs-3); font-weight: 600; color: var(--m-text-1); }
+.m-empty__desc { font-size: var(--fs-5); color: var(--m-text-3); max-width: 320px; line-height: 1.6; }
+
+/* ── 品牌渐变块（登录 / 注册页左侧）── */
+.m-hero {
+  display: flex; flex-direction: column; justify-content: center;
+  gap: var(--sp-3);
+  padding: 48px;
+  border-radius: var(--r-card);
+  background: linear-gradient(150deg, var(--m-grad-a), var(--m-grad-b));
+  color: #fff;
+}
+.m-hero__title { font-size: 28px; font-weight: 700; line-height: 1.25; letter-spacing: -.02em; }
+
+/* ── 布局辅助 ── */
+.m-row { display: flex; align-items: center; gap: var(--sp-2); }
+.m-between { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.m-stack { display: flex; flex-direction: column; gap: var(--sp-4); }
+.m-grid { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }

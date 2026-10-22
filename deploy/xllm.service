@@ -1,0 +1,39 @@
+[Unit]
+Description=xLLM Food Delivery Website (Flask + gunicorn)
+Documentation=https://xllm.cloud
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/xllm
+
+# 用 venv 里的解释器和 gunicorn
+Environment="PATH=/home/ubuntu/xllm/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONDONTWRITEBYTECODE=1"
+
+# 密钥与数据库配置（DB_PASSWORD / SECRET_KEY 等）
+# 前缀 "-" = 文件不存在也不报错；权限应为 600，且绝对不能进 Git
+EnvironmentFile=-/home/ubuntu/xllm/.env
+
+# ⚠️ 监听 127.0.0.1:8080 —— 必须与 nginx 的 proxy_pass 保持一致
+#    只绑本机，不暴露到公网；外部访问一律经过 nginx（HTTPS）
+ExecStart=/home/ubuntu/xllm/.venv/bin/gunicorn \
+    --workers 3 \
+    --bind 127.0.0.1:8080 \
+    --access-logfile - \
+    --error-logfile - \
+    --capture-output \
+    app:app
+
+Restart=always
+RestartSec=3
+
+# 基础加固
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

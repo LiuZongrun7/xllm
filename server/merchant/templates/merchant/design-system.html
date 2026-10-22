@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xLLM · Merchant — Design System</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('merchant.static', filename='css/merchant.css') }}">
+<style>
+  /* Page chrome for this reference sheet only — not part of the design system */
+  .doc-note { font-size: 12px; color: #96A1B3; margin-bottom: 12px; }
+  .doc-sec { margin-top: 24px; }
+  .doc-sec h2 { font-size: 15px; font-weight: 600; color: #2B2426; padding-bottom: 8px; border-bottom: 1px solid #EFE3E8; margin-bottom: 16px; }
+</style>
+</head>
+<body class="m-page">
+
+  <header class="m-topbar">
+    <div class="m-brand">xLLM merchant</div>
+    <nav class="m-nav">
+      <span class="m-nav__item">Overview</span>
+      <span class="m-nav__item is-active">Menu</span>
+      <span class="m-nav__item">Orders</span>
+      <span class="m-nav__item">Issues</span>
+    </nav>
+    <div style="flex:1"></div>
+    <span class="m-meta">Open until 22:00</span>
+    <span class="m-btn m-btn--sm">Pause orders</span>
+  </header>
+
+  <div class="m-body">
+
+    <h1 class="m-h1">Menu and stock</h1>
+    <p class="doc-note" style="margin-top:8px">
+      Imports <code>reset.css</code> + <code>merchant.css</code> only. No styles shared with the
+      customer or rider interfaces.<br>
+      Language: pink-white surface / burgundy / 6px squared controls / hairline borders and no
+      shadows / dense table / key figures enlarged.
+    </p>
+
+    <div class="doc-sec">
+      <h2>Key figures</h2>
+      <div class="m-kpi">
+        <div class="m-kpi__item">
+          <div class="m-kpi__label">Revenue today</div>
+          <div class="m-num">¥4,260.50</div>
+        </div>
+        <div class="m-kpi__item">
+          <div class="m-kpi__label">Orders today</div>
+          <div class="m-num">128</div>
+        </div>
+        <div class="m-kpi__item">
+          <div class="m-kpi__label">Avg preparation</div>
+          <div class="m-num">4m 12s</div>
+        </div>
+        <div class="m-kpi__item">
+          <div class="m-kpi__label">On-time rate</div>
+          <div class="m-num">93%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-sec">
+      <h2>Menu table — 56px rows, small grey-blue column headers</h2>
+      <table class="m-table">
+        <thead>
+          <tr>
+            <th class="m-th">Item</th>
+            <th class="m-th">Remaining</th>
+            <th class="m-th">Daily limit</th>
+            <th class="m-th">Status</th>
+            <th class="m-th">Actions</th>
+            <th class="m-th">Live</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="m-td">
+              <div class="m-cell-title">Teriyaki Chicken Bowl</div>
+              <div class="m-cell-sub num">640 kcal · ¥26.00</div>
+            </td>
+            <td class="m-td"><span class="m-num--sm">34</span></td>
+            <td class="m-td m-cell-sub num">limit 60</td>
+            <td class="m-td"><span class="m-chip">In stock</span></td>
+            <td class="m-td">
+              <div class="m-row">
+                <div class="m-stepper">
+                  <button class="m-stepper__btn" type="button" aria-label="Decrease">−</button>
+                  <span class="m-stepper__val num">1</span>
+                  <button class="m-stepper__btn" type="button" aria-label="Increase">+</button>
+                </div>
+                <button class="m-btn m-btn--ghost m-btn--sm">Restock</button>
+              </div>
+            </td>
+            <td class="m-td">
+              <label class="m-switch"><input type="checkbox" checked><span class="m-switch__track"></span></label>
+            </td>
+          </tr>
+          <tr>
+            <td class="m-td">
+              <div class="m-cell-title">Spicy Beef Noodles</div>
+              <div class="m-cell-sub num">720 kcal · ¥32.00</div>
+            </td>
+            <td class="m-td"><span class="m-num--sm">8</span></td>
+            <td class="m-td m-cell-sub num">limit 40</td>
+            <td class="m-td"><span class="m-chip m-chip--warning">Low stock</span></td>
+            <td class="m-td">
+              <div class="m-row">
+                <div class="m-stepper">
+                  <button class="m-stepper__btn" type="button" aria-label="Decrease">−</button>
+                  <span class="m-stepper__val num">8</span>
+                  <button class="m-stepper__btn" type="button" aria-label="Increase">+</button>
+                </div>
+                <button class="m-btn m-btn--ghost m-btn--sm">Restock</button>
+              </div>
+            </td>
+            <td class="m-td">
+              <label class="m-switch"><input type="checkbox" checked><span class="m-switch__track"></span></label>
+            </td>
+          </tr>
+          <tr>
+            <td class="m-td">
+              <div class="m-cell-title">Miso Soup</div>
+              <div class="m-cell-sub num">120 kcal · ¥8.00</div>
+            </td>
+            <td class="m-td"><span class="m-num--sm">0</span></td>
+            <td class="m-td m-cell-sub num">limit 30</td>
+            <td class="m-td"><span class="m-chip m-chip--danger">Sold out</span></td>
+            <td class="m-td">
+              <div class="m-row">
+                <button class="m-btn m-btn--quiet m-btn--sm">Put back on sale</button>
+              </div>
+            </td>
+            <td class="m-td">
+              <label class="m-switch"><input type="checkbox"><span class="m-switch__track"></span></label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="m-row" style="margin-top:16px">
+        <button class="m-btn">+ New item</button>
+        <button class="m-btn m-btn--quiet">Import CSV</button>
+        <button class="m-btn m-btn--quiet" disabled>Bulk delist</button>
+      </div>
+    </div>
+
+    <div class="doc-sec">
+      <h2>Segmented tabs and inputs</h2>
+      <div class="m-grid">
+        <div>
+          <div class="m-segmented">
+            <button class="m-segmented__item is-active">Placed</button>
+            <button class="m-segmented__item">Preparing</button>
+            <button class="m-segmented__item">Ready</button>
+          </div>
+          <div class="m-card" style="border-top-left-radius:0;margin-top:0">
+            <div class="m-card__head">
+              <div class="m-card__title">#4823 · Placed</div>
+              <span class="m-chip m-chip--neutral">6m 10s ago</span>
+            </div>
+            <div class="m-cell-sub">Teriyaki Chicken Bowl ×1 · Spicy Beef Noodles ×1</div>
+            <div class="m-row" style="margin-top:12px">
+              <button class="m-btn m-btn--sm">Accept</button>
+              <button class="m-btn m-btn--quiet m-btn--sm">Decline</button>
+            </div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card__head"><div class="m-card__title">Store settings</div></div>
+          <div class="m-stack" style="gap:12px">
+            <div>
+              <div class="m-meta" style="margin-bottom:6px">Store name</div>
+              <input class="m-input" value="Golden Wok Kitchen">
+            </div>
+            <div>
+              <div class="m-meta" style="margin-bottom:6px">Service radius (km)</div>
+              <input class="m-input num" value="3.0">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-sec">
+      <h2>Empty state — narrow and restrained, no large illustration in a back office</h2>
+      <div class="m-card">
+        <div class="m-empty">
+          <svg class="m-empty__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="8" y="12" width="32" height="24" rx="2"/><path d="M8 20h32"/>
+          </svg>
+          <div class="m-empty__title">No orders today</div>
+          <div class="m-empty__desc">New orders will appear here during opening hours.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-sec">
+      <h2>Brand gradient block — sign-in and sign-up only</h2>
+      <div class="m-hero" style="max-width:540px">
+        <div class="m-hero__title">Get your counter<br>online in three minutes</div>
+        <div style="font-size:13px;opacity:.85;line-height:1.6">Store details · Opening hours and capacity · Payout documents</div>
+        <div style="margin-top:8px"><button class="m-btn" style="background:#fff;color:#B11955">Continue</button></div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

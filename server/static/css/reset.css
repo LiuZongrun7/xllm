@@ -1,0 +1,48 @@
+/* ============================================================
+   reset.css —— 纯技术层，三端唯一共享的文件
+   ⚠️ 这里只许放「浏览器默认样式的纠正」和「无障碍」规则。
+      禁止出现任何品牌色、圆角、字号、间距决策 —— 那些归各端自己的 css。
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, p, ul, ol, figure, table { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+table { border-collapse: collapse; }
+
+a { color: inherit; text-decoration: none; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+img, svg { display: block; max-width: 100%; }
+
+/* 键盘可达性：三端都必须看得见焦点环，样式由各端自己定义 */
+:focus-visible { outline: 2px solid; outline-offset: 2px; }
+
+/* 数字等宽（价格 / 数量 / 倒计时 / 订单号） */
+.num { font-variant-numeric: tabular-nums; }
+
+/* 仅供读屏 */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
