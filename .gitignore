@@ -53,3 +53,13 @@ docs/reference/ui/总览/
 
 # 高德本地调试用的真实 Key（把 tools/amap-check.html 复制一份再填值）
 tools/amap-check.local.html
+
+# --- LaTeX / 报告构建产物（由 main.tex 生成，不入库）---
+docs/M1/*.pdf
+docs/M1/*.zip
+*.aux
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
