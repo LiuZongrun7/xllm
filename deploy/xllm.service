@@ -7,7 +7,11 @@ After=network.target mysql.service
 Type=simple
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/home/ubuntu/xllm
+# 服务器上的 /home/ubuntu/xllm 是 GitHub 仓库（分支 main）的 checkout。
+# 仓库根 = 项目根；Flask 应用在 server/ 子目录，所以工作目录指向 server/。
+# 部署方式：cd /home/ubuntu/xllm && git pull && sudo systemctl restart xllm
+# .env 与 .venv 留在仓库根、不进 Git，git pull 不会动它们。
+WorkingDirectory=/home/ubuntu/xllm/server
 
 # 用 venv 里的解释器和 gunicorn
 Environment="PATH=/home/ubuntu/xllm/.venv/bin:/usr/local/bin:/usr/bin:/bin"
