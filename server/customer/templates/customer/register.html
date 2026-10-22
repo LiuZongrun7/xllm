@@ -1,0 +1,65 @@
+{% extends "customer/base.html" %}
+{% block title %}Create account · xLLM{% endblock %}
+{% block page_key %}register{% endblock %}
+{% block main_class %}c-main--plain{% endblock %}
+{% block content %}
+<div class="c-auth">
+  <header class="c-auth__head">
+    <a class="c-auth__brand" href="/customer/login" aria-label="xLLM home">
+      <span class="c-auth__dot" aria-hidden="true"></span><span>xLLM</span>
+    </a>
+    <h1 class="c-auth__title">Create your account</h1>
+    <p class="c-meta">One account for orders, addresses and ratings.</p>
+  </header>
+
+  <div class="c-alert" id="auth-error" role="alert" hidden></div>
+
+  <form class="c-auth__form" id="register-form" novalidate>
+    <div class="c-field">
+      <label class="c-field__label" for="reg-username">Username</label>
+      <input class="c-input" id="reg-username" name="username" type="text"
+             autocomplete="username" placeholder="3–40 letters, digits or _" required>
+      <p class="c-field__hint">This is how you sign in. You can use Chinese characters too.</p>
+      <p class="c-field__error" id="err-username" hidden></p>
+    </div>
+    <div class="c-field">
+      <label class="c-field__label" for="reg-email">Email</label>
+      <input class="c-input" id="reg-email" name="email" type="email"
+             autocomplete="email" placeholder="you@example.com" required>
+      <p class="c-field__error" id="err-email" hidden></p>
+    </div>
+    <div class="c-field">
+      <label class="c-field__label" for="reg-phone">Phone <span class="c-field__optional">(optional)</span></label>
+      <input class="c-input" id="reg-phone" name="phone" type="tel"
+             autocomplete="tel" placeholder="138 0000 0000">
+      <p class="c-field__hint">Riders use this number to reach you.</p>
+      <p class="c-field__error" id="err-phone" hidden></p>
+    </div>
+    <div class="c-field">
+      <label class="c-field__label" for="reg-password">Password</label>
+      <div class="c-inputwrap">
+        <input class="c-input" id="reg-password" name="password" type="password"
+               autocomplete="new-password" placeholder="At least 8 characters" required>
+        <button class="c-inputwrap__btn" type="button" data-toggle-password="reg-password"
+                aria-label="Show password">Show</button>
+      </div>
+      <p class="c-field__hint">Use at least 8 characters.</p>
+      <p class="c-field__error" id="err-password" hidden></p>
+    </div>
+    <button class="c-btn" id="register-submit" type="submit">Create account</button>
+    <p class="c-auth__terms c-meta">By creating an account you agree to this demo project's
+      terms and privacy policy.</p>
+  </form>
+
+  <footer class="c-auth__foot">
+    <p class="c-meta">Already have an account?
+      <a class="c-link" href="/customer/login">Sign in</a>
+    </p>
+    <div class="c-auth__portals">
+      <a class="c-link c-link--muted" href="/merchant/login">Merchant portal →</a>
+      <span aria-hidden="true">·</span>
+      <a class="c-link c-link--muted" href="/rider/login">Rider portal →</a>
+    </div>
+  </footer>
+</div>
+{% endblock %}

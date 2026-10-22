@@ -12,6 +12,11 @@
 --   3. 状态机 status 是整个项目的骨架, 三个端的界面都围绕它变化
 --   4. 时间戳拆成多个 —— 它们是"配送进度"的数据来源, 也是算延迟的依据
 --   5. 每张表都有明确的【归属字段】, 权限判断靠它, 不靠前端隐藏
+--
+--  ★ 标注 = 实现阶段补充的字段 / 表（M1 的 11 张表之外，见 docs/数据库设计.md）
+--     restaurants.cuisine / max_concurrent_orders / avg_prep_minutes
+--     orders.preparing_at / delay_flagged_at / delay_reason
+--     rider_profiles（第 12 张表：骑手的工作状态）
 -- ============================================================================
 
 SET NAMES utf8mb4;
@@ -78,9 +83,12 @@ CREATE TABLE `restaurants` (
   `lat`                DECIMAL(10,7)   NOT NULL COMMENT '纬度',
   `description`        VARCHAR(500)    NULL     COMMENT '简介',
   `cover_url`          VARCHAR(255)    NULL     COMMENT '门头图',
+  `cuisine`            VARCHAR(30)     NULL     COMMENT '★ 菜系, 顾客端分类筛选用',
   `min_order_amount`   DECIMAL(10,2)   NOT NULL DEFAULT 0.00 COMMENT '起送价',
   `delivery_fee`       DECIMAL(10,2)   NOT NULL DEFAULT 0.00 COMMENT '配送费',
   `delivery_radius_km` DECIMAL(5,2)    NOT NULL DEFAULT 5.00 COMMENT '配送范围(直线距离), 超出不可下单',
+  `max_concurrent_orders` INT          NOT NULL DEFAULT 20 COMMENT '★ 最大并发订单数 = 备餐产能',
+  `avg_prep_minutes`   INT             NOT NULL DEFAULT 20 COMMENT '★ 平均备餐分钟, 用于给顾客估算送达时间',
   `is_open`            TINYINT(1)      NOT NULL DEFAULT 0 COMMENT '营业总开关, 商家手动打烊',
   `created_at`         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -90,6 +98,25 @@ CREATE TABLE `restaurants` (
   KEY `idx_restaurants_open` (`is_open`),
   CONSTRAINT `fk_restaurants_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='餐厅';
+
+
+-- ---------------------------------------------------------------------------
+-- 2b. rider_profiles  骑手工作状态 ★ 第 12 张表
+--     归属: user_id (1:1)
+--     为什么不塞进 users: 只有骑手需要"在线 / 车型 / 服务半径",
+--     另外两种角色的行会全是 NULL —— 那是把三种实体硬塞进一张表。
+-- ---------------------------------------------------------------------------
+DROP TABLE IF EXISTS `rider_profiles`;
+CREATE TABLE `rider_profiles` (
+  `user_id`           BIGINT UNSIGNED NOT NULL COMMENT 'FK users.id (role=rider)',
+  `is_online`         TINYINT(1)      NOT NULL DEFAULT 0 COMMENT '在线才会看到可接单池',
+  `vehicle_type`      ENUM('bike','ebike','motorbike','car') NOT NULL DEFAULT 'ebike',
+  `service_radius_km` DECIMAL(5,2)    NOT NULL DEFAULT 5.00,
+  `created_at`        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `fk_rider_profile_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='骑手工作状态';
 
 
 -- ---------------------------------------------------------------------------
@@ -204,9 +231,15 @@ CREATE TABLE `orders` (
   `cancel_reason` VARCHAR(100) NULL,
   `cancelled_by`  ENUM('customer','restaurant','rider','system') NULL,
 
+  -- ===== 异常: 延迟标记 (FR-18) =====
+  `delay_flagged_at` DATETIME     NULL COMMENT '★ 商家标记延迟的时间',
+  `delay_reason`     VARCHAR(100) NULL COMMENT '★ 延迟原因, 顾客端显示在横幅里',
+  `address_updated_at` DATETIME   NULL COMMENT '★ 顾客改配送地址的时间 (FR-19, 取餐前可改)',
+
   -- ===== 时间戳: 它们就是"配送进度"的数据来源 =====
   `created_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '下单',
   `accepted_at`  DATETIME NULL COMMENT '商家接单',
+  `preparing_at` DATETIME NULL COMMENT '★ 开始备餐 (accepted → preparing)',
   `ready_at`     DATETIME NULL COMMENT '备餐完成',
   `picked_up_at` DATETIME NULL COMMENT '骑手取餐',
   `delivered_at` DATETIME NULL COMMENT '送达',

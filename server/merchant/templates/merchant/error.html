@@ -1,0 +1,24 @@
+{% extends "merchant/base.html" %}
+{% block title %}{{ code|default('Something went wrong') }} · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div style="max-width:520px;margin:72px auto;padding:0 20px">
+  <div class="m-pagehead" style="margin-top:0">
+    <div>
+      <div class="m-brand" style="font-size:18px">xLLM<span class="m-brand__sub">merchant</span></div>
+    </div>
+  </div>
+
+  <div class="m-card" style="padding:28px">
+    <div class="m-cell-sub num" style="margin-bottom:4px">Error {{ code|default('500') }}</div>
+    <h1 class="m-h1" style="margin-bottom:8px">We could not finish that request</h1>
+    <p class="m-meta" style="line-height:1.7;margin-bottom:20px">
+      {{ message|default('The page failed to load. Try again, and if it keeps happening the kitchen can keep taking orders from the Orders board.') }}
+    </p>
+    <div class="m-row">
+      <a class="m-btn" href="{{ url_for('merchant.dashboard') }}">Back to overview</a>
+      <a class="m-btn m-btn--quiet" href="{{ url_for('merchant.login_page') }}">Sign in again</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

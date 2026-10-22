@@ -23,7 +23,12 @@ class Config:
 
     # 驱动选 PyMySQL：纯 Python，pip 装完就能用，不需要编译 mysqlclient
     # 密码必须 URL 编码，否则密码里出现 @ : / # 之类的字符会把连接串拆坏
-    SQLALCHEMY_DATABASE_URI = (
+    #
+    # DATABASE_URL 是给本地开发用的逃生口：把整条连接串直接塞进来就能绕过上面
+    # 五个变量，例如
+    #     DATABASE_URL=sqlite:///$(pwd)/dev.db python app.py
+    # 生产不设它，永远走 MySQL。
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or (
         "mysql+pymysql://{user}:{pwd}@{host}:{port}/{db}?charset=utf8mb4".format(
             user=quote_plus(DB_USER),
             pwd=quote_plus(DB_PASSWORD),
@@ -63,6 +68,13 @@ class Config:
     # Reply-To 只是一个头字段，**不需要**该邮箱的任何授权码。
     # 设成空字符串则不加这个头。
     MAIL_REPLY_TO = os.environ.get("MAIL_REPLY_TO", "contact@xllm.cloud")
+
+    # ---------------- 高德地图（地址选点 / 骑手位置展示） ----------------
+    # 三个都是可选的：没配 Key 时前端自动降级成"纯文本地址 + 城市中心坐标"，
+    # 核心下单流程不受影响（见 docs/部署说明.md §7）。
+    AMAP_JS_KEY = os.environ.get("AMAP_JS_KEY", "")
+    AMAP_SECURITY_CODE = os.environ.get("AMAP_SECURITY_JS_CODE", "")
+    AMAP_WEB_KEY = os.environ.get("AMAP_WEB_KEY", "")
 
     # ---------------- 会话 ----------------
     # 线上全站 HTTPS，所以 cookie 应当只走加密通道。

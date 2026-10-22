@@ -1,0 +1,25 @@
+{% extends "merchant/base.html" %}
+{% block title %}Settings · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div class="m-strip">
+  <span id="page-strip">Loading store settings…</span>
+  <span class="m-strip__spacer"></span>
+  <a class="m-strip__link" href="{{ url_for('merchant.menu_page') }}">Menu →</a>
+</div>
+
+<div class="m-pagehead">
+  <div>
+    <h1 class="m-h1">Business settings</h1>
+    <div class="m-pagehead__sub">Opening hours, capacity and the details customers see. One save applies everything.</div>
+  </div>
+  <div class="m-pagehead__actions">
+    <span class="m-meta" id="settings-saved"></span>
+    <button class="m-btn" type="button" id="save-settings" disabled>Save settings</button>
+  </div>
+</div>
+
+<div id="settings-app">
+  <div class="m-loading"><span class="m-spinner" aria-hidden="true"></span>Loading store settings…</div>
+</div>
+{% endblock %}

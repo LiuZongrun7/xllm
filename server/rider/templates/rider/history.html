@@ -1,0 +1,44 @@
+{% extends "rider/base.html" %}
+{% block title %}Delivery history · xLLM Rider{% endblock %}
+{% block page_name %}history{% endblock %}
+
+{% block content %}
+<main>
+  <div class="r-pagehead">
+    <span class="r-pagehead__eyebrow">Completed</span>
+    <h1 class="r-h1">Delivery history</h1>
+  </div>
+
+  <div class="r-segmented r-tabs" style="margin-top:0" role="tablist" aria-label="History range">
+    <button class="r-segmented__item" type="button" role="tab" aria-selected="false"
+            data-days="7">Last 7 days</button>
+    <button class="r-segmented__item is-active" type="button" role="tab" aria-selected="true"
+            data-days="30">Last 30 days</button>
+    <button class="r-segmented__item" type="button" role="tab" aria-selected="false"
+            data-days="90" tabindex="-1">Last 90 days</button>
+  </div>
+
+  <section class="r-card" id="history-summary" style="border-radius:0 0 10px 10px;border-top:0" aria-label="Delivery summary" aria-busy="true">
+    <div class="r-stats">
+      <div class="r-stat"><div class="r-skel r-skel--big"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:72%"></div></div>
+      <div class="r-stat"><div class="r-skel r-skel--big"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:72%"></div></div>
+      <div class="r-stat"><div class="r-skel r-skel--big"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:72%"></div></div>
+    </div>
+  </section>
+
+  <div id="history-notice" class="r-panel" style="margin-top:12px" hidden></div>
+  <div id="history-list" class="r-panel" aria-busy="true">
+    <div class="r-card r-skelcard" aria-hidden="true">
+      <div class="r-skelrow"><div style="flex:1"><div class="r-skel r-skel--title"></div><div class="r-skel r-skel--line" style="margin-top:8px"></div></div><div class="r-skel r-skel--line" style="width:48px"></div></div>
+    </div>
+    <div class="r-card r-skelcard" aria-hidden="true">
+      <div class="r-skelrow"><div style="flex:1"><div class="r-skel r-skel--title"></div><div class="r-skel r-skel--line" style="margin-top:8px"></div></div><div class="r-skel r-skel--line" style="width:48px"></div></div>
+    </div>
+  </div>
+
+  <div class="r-sync">
+    <span data-sync>Loading your deliveries…</span>
+    <button type="button" data-refresh>Refresh</button>
+  </div>
+</main>
+{% endblock %}

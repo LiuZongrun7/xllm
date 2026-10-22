@@ -1,0 +1,116 @@
+{% extends "customer/base.html" %}
+{% block title %}Addresses · xLLM{% endblock %}
+{% block page_key %}addresses{% endblock %}
+{% block app_attrs %} data-amap-key="{{ amap_key|default('') }}"{% endblock %}
+{% block main_class %}c-main--tabs{% endblock %}
+
+{% block header %}
+<header class="c-topbar c-topbar--line">
+  <div class="c-topbar__inner">
+    <a class="c-iconbtn" href="/customer/account" aria-label="Back to account">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>
+    </a>
+    <h1 class="c-topbar__title">Addresses</h1>
+    <button class="c-iconbtn" id="addr-add-toggle" type="button" aria-label="Add a new address" aria-expanded="false" aria-controls="addr-form-panel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="c-addresspage">
+  <div class="c-alert" id="addr-error" role="alert" hidden></div>
+
+  <div id="addr-loading">
+    <div class="c-card c-card__body">
+      <span class="c-skel" style="width:45%;height:18px"></span>
+      <span class="c-skel" style="width:80%;height:13px;margin-top:10px"></span>
+      <span class="c-skel" style="width:60%;height:13px;margin-top:6px"></span>
+    </div>
+    <div class="c-card c-card__body" style="margin-top:12px">
+      <span class="c-skel" style="width:50%;height:18px"></span>
+      <span class="c-skel" style="width:75%;height:13px;margin-top:10px"></span>
+    </div>
+  </div>
+
+  <div id="addr-empty" hidden>
+    <div class="c-card">
+      <div class="c-empty">
+        <svg class="c-empty__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M24 42s14-11 14-22a14 14 0 1 0-28 0c0 11 14 22 14 22Z"/><circle cx="24" cy="20" r="5"/>
+        </svg>
+        <div class="c-empty__title">No addresses yet</div>
+        <div class="c-empty__desc">Add an address so we know where to deliver your orders.</div>
+        <button class="c-btn c-btn--ghost c-btn--inline" id="addr-empty-add" type="button">Add an address</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="c-stack c-stack--sm" id="addr-list"></div>
+
+  <section class="c-card c-addrform" id="addr-form-panel" hidden>
+    <div class="c-card__body">
+      <h2 class="c-h2" id="addr-form-title">Add a new address</h2>
+      <div class="c-alert" id="addr-form-error" role="alert" hidden></div>
+      <form id="addr-form" novalidate>
+        <div class="c-field">
+          <label class="c-field__label" for="addr-label">Label</label>
+          <select class="c-input c-select" id="addr-label" name="label">
+            <option value="Home">Home</option>
+            <option value="Office">Office</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="c-field">
+          <label class="c-field__label" for="addr-contact">Contact name</label>
+          <input class="c-input" id="addr-contact" name="contact_name" type="text"
+                 autocomplete="name" placeholder="Who should the rider ask for?" required>
+          <p class="c-field__error" id="err-contact_name" hidden></p>
+        </div>
+        <div class="c-field">
+          <label class="c-field__label" for="addr-phone">Phone</label>
+          <input class="c-input" id="addr-phone" name="contact_phone" type="tel"
+                 autocomplete="tel" placeholder="138 0000 0000" required>
+          <p class="c-field__error" id="err-contact_phone" hidden></p>
+        </div>
+        <div class="c-field">
+          <label class="c-field__label" for="addr-text">Address</label>
+          <input class="c-input" id="addr-text" name="address_text" type="text"
+                 autocomplete="street-address" placeholder="Street, building and room number" required>
+          <p class="c-field__hint">Include the street and building number so the rider can find you.</p>
+          <p class="c-field__error" id="err-address_text" hidden></p>
+        </div>
+
+        <div class="c-field">
+          <span class="c-field__label">Map point</span>
+          <div class="c-map" id="addr-map" hidden>
+            <div class="c-map__hint" id="addr-map-message">Loading map…</div>
+          </div>
+          <div class="c-alert c-alert--info" id="addr-map-note" hidden>
+            Map picker unavailable — enter the address and we will use the city centre as the map point
+          </div>
+          <p class="c-field__hint num" id="addr-coords">Map point: 121.4737, 31.2304 (city centre)</p>
+          <button class="c-btn c-btn--text c-coordbtn" id="addr-reset-pin" type="button" hidden>Reset to city centre</button>
+        </div>
+
+        <label class="c-checkrow">
+          <input type="checkbox" id="addr-default" name="is_default">
+          <span class="c-checkbox" aria-hidden="true"></span>
+          <span>Use as my default address</span>
+        </label>
+
+        <div class="c-modal__actions c-modal__actions--top">
+          <button class="c-btn" id="addr-save" type="submit">Save address</button>
+          <button class="c-btn c-btn--ghost" id="addr-cancel" type="button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block bottom %}
+{% set tab = 'account' %}
+{% include 'customer/_tabbar.html' %}
+{% endblock %}

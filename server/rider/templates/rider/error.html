@@ -1,0 +1,27 @@
+{% extends "rider/base.html" %}
+{% block title %}Error {{ code }} · xLLM Rider{% endblock %}
+{% block page_name %}error{% endblock %}
+
+{% block chrome %}
+<div class="r-auth__brand">
+  <a class="r-brand" href="{{ url_for('rider.workbench') }}">xLLM<span class="r-brand__sub">Rider</span></a>
+</div>
+{% endblock %}
+
+{% block content %}
+<main class="r-stack" style="padding-top:24px">
+  <section class="r-card">
+    <div class="r-empty r-empty--card">
+      <div class="r-empty__code" aria-hidden="true">{{ code }}</div>
+      <h1 class="r-empty__title">
+        {% if code == 404 %}Page not found{% elif code == 500 %}Something broke on our side{% else %}That did not work{% endif %}
+      </h1>
+      <p class="r-empty__desc">{{ message }}</p>
+      <div class="r-empty__actions">
+        <a class="r-btn" href="{{ url_for('rider.workbench') }}">Back to workbench</a>
+        <a class="r-btn r-btn--ghost" href="{{ url_for('rider.login_page') }}">Sign in again</a>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

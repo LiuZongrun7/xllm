@@ -1,0 +1,80 @@
+{% extends "merchant/base.html" %}
+{% block title %}Sign in · xLLM Merchant{% endblock %}
+{% block body_attrs %}data-auth="login"{% endblock %}
+
+{% block content %}
+<div class="m-auth">
+  <aside class="m-auth__aside">
+    <div class="m-hero m-hero--full">
+      <div class="m-hero__brand">
+        <span class="m-hero__logo">xLLM</span>
+        <span class="m-hero__logo-sub">Merchant</span>
+      </div>
+
+      <div class="m-hero__middle">
+        <div class="m-hero__title">Run your counter,<br>not your paperwork.</div>
+        <p class="m-hero__lede">One back office for the order board, stock, kitchen capacity and the numbers that matter at close.</p>
+        <ul class="m-hero__steps">
+          <li class="m-hero__step is-active">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Live order board</div>
+              <div class="m-hero__step-desc">Accept, cook and hand off without leaving the board.</div>
+            </div>
+          </li>
+          <li class="m-hero__step">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Stock that hides itself</div>
+              <div class="m-hero__step-desc">A dish at zero leaves the menu automatically.</div>
+            </div>
+          </li>
+          <li class="m-hero__step">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Capacity guardrails</div>
+              <div class="m-hero__step-desc">Pause the kitchen before the queue runs away.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="m-hero__foot">
+        <a href="/customer/login">Customer portal →</a>
+        <a href="/rider/login">Rider portal →</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="m-auth__main">
+    <div class="m-auth__card">
+      <h1 class="m-auth__title">Sign in to your store</h1>
+      <p class="m-auth__sub">Use your merchant account or the email you registered with.</p>
+
+      <form class="m-auth__form" id="login-form" novalidate>
+        <div class="m-field">
+          <label class="m-label" for="login-account">Account</label>
+          <input class="m-input" id="login-account" name="account" type="text"
+                 autocomplete="username" placeholder="Username or email" required>
+          <span class="m-field-error" id="login-account-error" aria-live="polite"></span>
+        </div>
+
+        <div class="m-field">
+          <label class="m-label" for="login-password">Password</label>
+          <input class="m-input" id="login-password" name="password" type="password"
+                 autocomplete="current-password" placeholder="Your password" required>
+          <span class="m-field-error" id="login-password-error" aria-live="polite"></span>
+        </div>
+
+        <div class="m-form-error" id="login-form-error" role="alert"></div>
+        <button class="m-btn" type="submit" id="login-submit">Sign in</button>
+      </form>
+
+      <div class="m-auth__foot">
+        <span>New to xLLM?</span>
+        <a class="m-link" href="{{ url_for('merchant.register_page') }}">Create account</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

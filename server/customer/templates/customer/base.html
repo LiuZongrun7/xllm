@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<title>{% block title %}xLLM{% endblock %}</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('customer.static', filename='css/customer.css') }}">
+{% block head %}{% endblock %}
+</head>
+<body class="c-body">
+<div class="c-app" data-page="{% block page_key %}{{ page|default('') }}{% endblock %}"{% block app_attrs %}{% endblock %}>
+  {% block header %}{% endblock %}
+  <main class="c-main {% block main_class %}{% endblock %}" id="c-main">
+    {% block content %}{% endblock %}
+  </main>
+  {% block bottom %}{% endblock %}
+</div>
+
+<div class="c-toast" id="c-toast" role="status" aria-live="polite"></div>
+
+<div class="c-modal" id="c-confirm" hidden>
+  <div class="c-modal__backdrop" data-close></div>
+  <div class="c-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="c-confirm-title">
+    <div class="c-modal__handle"></div>
+    <h2 class="c-h2" id="c-confirm-title">Are you sure?</h2>
+    <p class="c-meta" id="c-confirm-body"></p>
+    <div class="c-modal__actions">
+      <button class="c-btn" id="c-confirm-ok" type="button">Confirm</button>
+      <button class="c-btn c-btn--ghost" id="c-confirm-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('customer.static', filename='js/customer.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

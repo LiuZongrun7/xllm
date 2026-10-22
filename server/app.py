@@ -33,8 +33,9 @@ Flask 后端入口（应用工厂模式）
 """
 
 import logging
+import os
 
-from flask import Flask
+from flask import Flask, redirect, render_template, request, url_for
 
 from config import Config
 from shared.extensions import db
@@ -76,6 +77,46 @@ def create_app(config_object: type = Config) -> Flask:
     app.register_blueprint(rider_pages)
     app.register_blueprint(rider_api)
 
+    # --- 根路径：顾客端是"主入口"，另外两端从各自登录页侧链过去 ---
+    @app.get("/")
+    def root():
+        return redirect(url_for("customer.home"))
+
+    # --- 错误页：哪一端的 URL 出错，就用哪一端的皮肤 ---
+    def _role_from_path() -> str | None:
+        for role in ("customer", "merchant", "rider"):
+            if request.path.startswith(f"/{role}"):
+                return role
+        return None
+
+    @app.errorhandler(404)
+    def not_found(error):
+        role = _role_from_path()
+        if role:
+            try:
+                return render_template(f"{role}/error.html", code=404,
+                                       message="We could not find that page.",
+                                       role=role), 404
+            except Exception:
+                pass
+        return ("<h1 style=\"font:600 20px system-ui;padding:48px\">404 — page not found</h1>"
+                "<p style=\"font:14px system-ui;padding:0 48px\">"
+                "The page you asked for does not exist.</p>"), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        role = _role_from_path()
+        if role:
+            try:
+                return render_template(f"{role}/error.html", code=500,
+                                       message="Something broke on our side.",
+                                       role=role), 500
+            except Exception:
+                pass
+        return ("<h1 style=\"font:600 20px system-ui;padding:48px\">500 — server error</h1>"
+                "<p style=\"font:14px system-ui;padding:0 48px\">"
+                "We have logged it. Please try again.</p>"), 500
+
     return app
 
 
@@ -85,4 +126,7 @@ app = create_app()
 
 if __name__ == "__main__":
     # 仅本地开发用；生产由 gunicorn 拉起（见 deploy/xllm.service）
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    # PORT / FLASK_DEBUG 走环境变量，方便同时开多个端做对照测试
+    app.run(host="0.0.0.0",
+            port=int(os.environ.get("PORT", "8080")),
+            debug=os.environ.get("FLASK_DEBUG", "0") == "1")

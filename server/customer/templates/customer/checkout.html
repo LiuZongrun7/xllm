@@ -1,0 +1,122 @@
+{% extends "customer/base.html" %}
+{% block title %}Checkout · xLLM{% endblock %}
+{% block page_key %}checkout{% endblock %}
+{% block main_class %}c-main--bar c-main--plain{% endblock %}
+
+{% block header %}
+<header class="c-topbar c-topbar--line">
+  <div class="c-topbar__inner">
+    <a class="c-iconbtn" href="/customer/cart" aria-label="Back to cart">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>
+    </a>
+    <h1 class="c-topbar__title">Checkout</h1>
+    <span class="c-topbar__spacer" aria-hidden="true"></span>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="c-checkout">
+  <div class="c-alert" id="checkout-error" role="alert" hidden></div>
+
+  <div id="checkout-loading">
+    <div class="c-card c-card__body">
+      <span class="c-skel" style="width:45%;height:16px"></span>
+      <span class="c-skel" style="width:100%;height:78px;margin-top:14px;border-radius:14px"></span>
+      <span class="c-skel" style="width:100%;height:64px;margin-top:10px"></span>
+    </div>
+    <div class="c-card c-card__body" style="margin-top:16px">
+      <span class="c-skel" style="width:35%;height:16px"></span>
+      <span class="c-skel" style="width:100%;height:52px;margin-top:12px"></span>
+      <span class="c-skel" style="width:100%;height:52px;margin-top:10px"></span>
+    </div>
+  </div>
+
+  <div id="checkout-empty" hidden>
+    <div class="c-card">
+      <div class="c-empty">
+        <svg class="c-empty__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10 14h28l-3 22H13Z"/><path d="M18 14a6 6 0 0 1 12 0"/>
+        </svg>
+        <div class="c-empty__title">Nothing to check out</div>
+        <div class="c-empty__desc">Your cart is empty. Add a dish from a nearby restaurant first.</div>
+        <a class="c-btn c-btn--ghost c-btn--inline" href="/customer/">Browse restaurants</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="checkout-content" hidden>
+    <section class="c-section c-section--flush">
+      <div class="c-section__head">
+        <h2 class="c-section__title">Delivery address</h2>
+        <a class="c-btn c-btn--text" href="/customer/addresses">Manage</a>
+      </div>
+      <div class="c-stack c-stack--sm" id="co-addresses"></div>
+    </section>
+
+    <section class="c-section c-section--flush" aria-labelledby="co-eta-title">
+      <h2 class="c-section__title" id="co-eta-title">Delivery time</h2>
+      <div class="c-card c-eta" id="co-eta">
+        <span class="c-skel" style="width:45%;height:18px"></span>
+        <span class="c-skel" style="width:65%;height:13px;margin-top:8px"></span>
+      </div>
+    </section>
+
+    <section class="c-section c-section--flush" aria-labelledby="co-pay-title">
+      <h2 class="c-section__title" id="co-pay-title">Payment method</h2>
+      <div class="c-card c-paylist" role="radiogroup" aria-labelledby="co-pay-title">
+        <label class="c-payrow">
+          <input class="sr-only" type="radio" name="payment" value="card" checked>
+          <span class="c-radio" aria-hidden="true"></span>
+          <span class="c-payrow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>
+          </span>
+          <span class="c-payrow__text">
+            <span class="c-payrow__title">Card</span>
+            <span class="c-payrow__sub">Demo card · no real charge</span>
+          </span>
+        </label>
+        <label class="c-payrow">
+          <input class="sr-only" type="radio" name="payment" value="cash">
+          <span class="c-radio" aria-hidden="true"></span>
+          <span class="c-payrow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/></svg>
+          </span>
+          <span class="c-payrow__text">
+            <span class="c-payrow__title">Cash</span>
+            <span class="c-payrow__sub">Pay the rider on delivery</span>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <section class="c-section c-section--flush" aria-labelledby="co-note-title">
+      <h2 class="c-section__title" id="co-note-title">Add a note</h2>
+      <label class="sr-only" for="co-remark">Delivery instructions for the restaurant or rider</label>
+      <textarea class="c-input c-textarea" id="co-remark" maxlength="255"
+                placeholder="Extra cutlery, leave at the door, call on arrival…"></textarea>
+    </section>
+
+    <section class="c-section c-section--flush" aria-labelledby="co-summary-title">
+      <h2 class="c-section__title" id="co-summary-title">Order summary</h2>
+      <div class="c-card c-card__body">
+        <div id="co-items" class="c-coitems"></div>
+        <div class="c-divider" style="margin:14px 0"></div>
+        <div id="co-summary" class="c-summary"></div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block bottom %}
+<div class="c-bottombar" id="checkout-bar" hidden>
+  <div class="c-bottombar__inner">
+    <div class="c-bottombar__sum">
+      <span class="c-bottombar__count">Total</span>
+      <span class="c-bottombar__total num" id="co-total">¥0.00</span>
+    </div>
+    <button class="c-btn c-bottombar__cta" id="place-order" type="button">Place order</button>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}xLLM Merchant{% endblock %}</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('merchant.static', filename='css/merchant.css') }}">
+</head>
+{% set current_page = page|default('') %}
+{% set is_auth = current_page in ('', 'setup', 'error') %}
+<body class="m-page" data-page="{{ current_page }}" {% block body_attrs %}{% endblock %}>
+
+{% if not is_auth %}
+<header class="m-topbar">
+  <div class="m-topbar__inner">
+    <a class="m-brand" href="{{ url_for('merchant.dashboard') }}">xLLM<span class="m-brand__sub">merchant</span></a>
+
+    <nav class="m-nav" aria-label="Merchant sections">
+      <a class="m-nav__item{% if current_page == 'dashboard' %} is-active{% endif %}" href="{{ url_for('merchant.dashboard') }}"{% if current_page == 'dashboard' %} aria-current="page"{% endif %}>Overview</a>
+      <a class="m-nav__item{% if current_page == 'orders' %} is-active{% endif %}" href="{{ url_for('merchant.orders_page') }}"{% if current_page == 'orders' %} aria-current="page"{% endif %}>Orders</a>
+      <a class="m-nav__item{% if current_page == 'menu' %} is-active{% endif %}" href="{{ url_for('merchant.menu_page') }}"{% if current_page == 'menu' %} aria-current="page"{% endif %}>Menu</a>
+      <a class="m-nav__item{% if current_page == 'analytics' %} is-active{% endif %}" href="{{ url_for('merchant.analytics_page') }}"{% if current_page == 'analytics' %} aria-current="page"{% endif %}>Analytics</a>
+      <a class="m-nav__item{% if current_page == 'issues' %} is-active{% endif %}" href="{{ url_for('merchant.issues_page') }}"{% if current_page == 'issues' %} aria-current="page"{% endif %}>Issues</a>
+      <a class="m-nav__item{% if current_page == 'settings' %} is-active{% endif %}" href="{{ url_for('merchant.settings_page') }}"{% if current_page == 'settings' %} aria-current="page"{% endif %}>Settings</a>
+    </nav>
+
+    <div class="m-topbar__spacer"></div>
+
+    <div class="m-topbar__status">
+      <span class="m-dot" id="store-dot" aria-hidden="true"></span>
+      <span class="m-topbar__meta" id="store-status-label">Checking status…</span>
+      <label class="m-switch" title="Pause or resume incoming orders">
+        <input type="checkbox" id="store-open-switch" aria-label="Accepting orders">
+        <span class="m-switch__track"></span>
+      </label>
+    </div>
+
+    <a class="m-account" href="{{ url_for('merchant.settings_page') }}" title="Signed in — open store settings">
+      <span class="m-avatar" id="account-initial" aria-hidden="true">·</span>
+      <span id="account-name">Account</span>
+    </a>
+    <button class="m-btn m-btn--quiet m-btn--sm" type="button" id="signout-btn">Sign out</button>
+  </div>
+</header>
+{% endif %}
+
+<main class="{% if is_auth %}m-auth-wrap{% else %}m-body{% endif %}">
+  {% block content %}{% endblock %}
+</main>
+
+<div class="m-toast-stack" id="toast-stack" aria-live="polite"></div>
+
+<script src="{{ url_for('merchant.static', filename='js/merchant.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

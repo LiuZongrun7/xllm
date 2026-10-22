@@ -19,14 +19,26 @@ the same information`).
 Scope, requirements (`FR-1` … `FR-26`) and design rationale are in
 [`docs/M1-设计报告.md`](docs/M1-设计报告.md).
 
+## What is implemented
+
+| Role | Pages |
+|---|---|
+| **Customer** (phone UI) | sign in / register / verification-code sign in / reset password · restaurant list with cuisine filter · search restaurants + dishes · restaurant menu with cart · cart · checkout with address + delivery-radius check + mock payment · order history · live order progress, cancel, rate · address book · profile |
+| **Merchant** (desktop UI) | sign in / register · store onboarding · overview KPIs · four-column order board · order detail with accept / decline / start preparing / mark ready / flag delay · menu CRUD with stock, sold-out switch and one-click restock · opening hours + capacity settings · analytics (7/14/30 days) · issues and after-sales |
+| **Rider** (phone UI) | sign in / register · workbench with online toggle, claimable pool and active deliveries · atomic `Grab order` (two riders cannot win the same order) · order detail with pickup / delivered actions and Gaode navigation links · automatic + manual location reporting · delivery history · settings |
+
+Shared server-side behaviour: one order state machine, ownership checks on every query,
+opening-hours/capacity gating, delivery-radius validation (Haversine), stock checks, delay flags,
+duplicate-review protection, GPS sanity checks, and email verification codes.
+
 ## Stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Python 3.10 · Flask 3.1 · SQLAlchemy 2.0 |
-| Database | MySQL 8 (11 tables) |
+| Backend | Python 3.10+ · Flask 3.1 · SQLAlchemy 2.0 |
+| Database | MySQL 8 (13 tables) · SQLite for local development |
 | Templates | Jinja2 |
-| Front end | HTML5 · CSS3 · vanilla JS |
+| Front end | HTML5 · CSS3 · vanilla JS (`fetch`) |
 | Deployment | nginx (TLS) + gunicorn + systemd |
 | Map | Amap (Gaode) JS API + Web service API — declared under brief §4 |
 
@@ -35,21 +47,22 @@ Scope, requirements (`FR-1` … `FR-26`) and design rationale are in
 ```
 server/            Flask application
 ├── app.py         application factory (single entry point)
-├── shared/        models · security · auth · mailer · health   (shared layer)
+├── shared/        models · order_flow · security · auth · mailer · health · seed
 ├── customer/      customer pages + /api/customer endpoints
 ├── merchant/      merchant pages + /api/merchant endpoints
 └── rider/         rider pages   + /api/rider endpoints
 database/          schema.sql · ER diagrams
-docs/              reports, design docs, deployment guide
+docs/              reports, API contract, design docs, deployment guide
 deploy/            systemd unit
-tools/             one-off verification pages
+tools/             migrate.py · smoke_test.py · Amap verification page
 ```
 
 **The directory tree *is* the division of work** — one folder per role, so each member can open
 their own slice during the demonstration. Details: [`docs/代码结构.md`](docs/代码结构.md).
 
-Two things are deliberately *not* per-role: `shared/models.py` and the order state machine.
-Duplicating those would give one order three implementations.
+Two things are deliberately *not* per-role: `shared/models.py` and
+`shared/order_flow.py` (the order state machine). Duplicating those would give one order three
+implementations.
 
 ## Design
 
@@ -62,24 +75,66 @@ See [`docs/设计语言.md`](docs/设计语言.md) and the live specimens:
 - https://xllm.cloud/merchant/design-system
 - https://xllm.cloud/rider/design-system
 
+## Screenshots
+
+The three interfaces, captured from the running application (see
+[`docs/screenshots/`](docs/screenshots/)):
+
+| Customer | Merchant | Rider |
+|---|---|---|
+| ![customer home](docs/screenshots/customer-home.png) | ![merchant dashboard](docs/screenshots/merchant-dashboard.png) | ![rider workbench](docs/screenshots/rider-workbench.png) |
+
 ## Running locally
+
+### Option A — SQLite, no database server needed (fastest)
 
 ```bash
 cd server
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
+python3 -m venv ../.venv && ../.venv/bin/pip install -r requirements.txt
 
-cp .env.example .env      # then fill in DB_PASSWORD / SECRET_KEY / MAIL_*
-python app.py             # http://127.0.0.1:8080
+export DATABASE_URL="sqlite:///$(pwd)/dev.db"
+../.venv/bin/python -m shared.seed --reset     # demo data
+../.venv/bin/python app.py                     # http://127.0.0.1:8080
 ```
+
+### Option B — MySQL (same as production)
+
+```bash
+cd server
+python3 -m venv ../.venv && ../.venv/bin/pip install -r requirements.txt
+cp .env.example .env                 # then fill in DB_PASSWORD / SECRET_KEY / MAIL_*
+set -a; . ./.env; set +a
+../.venv/bin/python ../tools/migrate.py
+../.venv/bin/python -m shared.seed
+../.venv/bin/python app.py
+```
+
+### Demo accounts (password `demo1234`)
+
+| Role | Account | Extra accounts |
+|---|---|---|
+| Customer | `alex` | `mia` |
+| Merchant | `goldenwok` | `noodlebar`, `sakura`, `greenbowl` (paused) |
+| Rider | `chen` | `zhao`, `liu` |
 
 | URL | Purpose |
 |---|---|
-| `/api/ping` | liveness |
-| `/api/db-ping` | database connectivity |
-| `/customer/design-system` | customer design system specimen |
-| `/merchant/design-system` | merchant design system specimen |
-| `/rider/design-system` | rider design system specimen |
+| `/` | customer app (redirects to sign-in) |
+| `/customer/` · `/merchant/` · `/rider/` | the three interfaces |
+| `/customer/design-system` · `/merchant/design-system` · `/rider/design-system` | design specimens |
+| `/api/ping` · `/api/db-ping` | liveness · database connectivity |
+
+## Testing
+
+`tools/smoke_test.py` rebuilds a throw-away database, seeds it, then plays customer → merchant →
+rider through the whole order lifecycle plus the failure paths (minimum order, sold-out dish,
+out-of-radius address, late cancellation, double review, atomic claim, GPS sanity, IDOR on all
+three roles, page rendering):
+
+```bash
+cd server
+DATABASE_URL="sqlite:////tmp/xllm-smoke.db" ../.venv/bin/python ../tools/smoke_test.py
+```
 
 ## Documentation
 
@@ -87,11 +142,15 @@ python app.py             # http://127.0.0.1:8080
 |---|---|
 | [`docs/M1-设计报告.md`](docs/M1-设计报告.md) | Milestone 1 design report (English) |
 | [`docs/项目规划.md`](docs/项目规划.md) | scope, risks, roadmap, division of work |
-| [`docs/架构`](docs/代码结构.md) · [`docs/代码结构.md`](docs/代码结构.md) | who owns which file |
-| [`docs/数据库设计.md`](docs/数据库设计.md) | schema rationale |
+| [`docs/API契约.md`](docs/API契约.md) | endpoint contract, payloads, status machine, error copy |
+| [`docs/代码结构.md`](docs/代码结构.md) | who owns which file |
+| [`docs/数据库设计.md`](docs/数据库设计.md) | schema rationale (13 tables) |
 | [`docs/认证设计.md`](docs/认证设计.md) | login / verification-code / password-reset design |
 | [`docs/设计语言.md`](docs/设计语言.md) | three independent design systems |
-| [`docs/部署说明.md`](docs/部署说明.md) | nginx, gunicorn, deploy and rollback |
+| [`docs/前端实现约定.md`](docs/前端实现约定.md) | front-end rules: boundaries, states, formatting |
+| [`docs/测试与验收.md`](docs/测试与验收.md) | FR/NFR matrix — where each requirement is implemented and tested |
+| [`docs/演示脚本.md`](docs/演示脚本.md) | 5-minute demo script for the defence |
+| [`docs/部署说明.md`](docs/部署说明.md) | nginx, gunicorn, deploy, migration and rollback |
 
 ## Deployment
 

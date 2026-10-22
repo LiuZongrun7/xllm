@@ -1,0 +1,97 @@
+{% extends "merchant/base.html" %}
+{% block title %}Menu · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div class="m-strip">
+  <span id="page-strip">Loading the menu…</span>
+  <span class="m-strip__spacer"></span>
+  <a class="m-strip__link" href="{{ url_for('merchant.issues_page') }}">Sold-out issues →</a>
+</div>
+
+<div class="m-pagehead">
+  <div>
+    <h1 class="m-h1">Menu and stock</h1>
+    <div class="m-pagehead__sub" id="menu-stats">Counted at the counter. A dish at zero hides itself from customers.</div>
+  </div>
+  <div class="m-pagehead__actions">
+    <button class="m-btn m-btn--quiet" type="button" id="menu-restock">Restock low stock</button>
+    <button class="m-btn" type="button" id="menu-new">+ New item</button>
+  </div>
+</div>
+
+<section class="m-panel" id="menu-panel" hidden>
+  <div class="m-panel__head">
+    <div>
+      <div class="m-panel__title">New dish</div>
+      <div class="m-help">Added straight to the storefront as soon as you save.</div>
+    </div>
+    <button class="m-btn m-btn--quiet m-btn--sm" type="button" id="menu-panel-close">Close</button>
+  </div>
+
+  <form id="menu-create-form" novalidate>
+    <div class="m-form-grid m-form-grid--3">
+      <div class="m-field">
+        <label class="m-label" for="new-name">Dish name <span class="m-label__req">*</span></label>
+        <input class="m-input" id="new-name" name="name" type="text" maxlength="80" required>
+        <span class="m-field-error" id="new-name-error" aria-live="polite"></span>
+      </div>
+
+      <div class="m-field">
+        <label class="m-label" for="new-category">Category</label>
+        <input class="m-input" id="new-category" name="category" type="text"
+               list="menu-categories" maxlength="30" placeholder="Mains">
+        <datalist id="menu-categories"></datalist>
+      </div>
+
+      <div class="m-field">
+        <label class="m-label" for="new-price">Price (¥) <span class="m-label__req">*</span></label>
+        <input class="m-input num" id="new-price" name="price" type="number"
+               min="0.01" max="9999" step="0.01" required>
+        <span class="m-field-error" id="new-price-error" aria-live="polite"></span>
+      </div>
+
+      <div class="m-field">
+        <label class="m-label" for="new-calories">Calories (kcal)</label>
+        <input class="m-input num" id="new-calories" name="calories" type="number"
+               min="0" max="5000" step="1" placeholder="Optional">
+      </div>
+
+      <div class="m-field">
+        <label class="m-label" for="new-stock">Stock</label>
+        <input class="m-input num" id="new-stock" name="stock" type="number"
+               min="0" step="1" placeholder="Empty = unlimited">
+        <span class="m-help">Leave empty for unlimited.</span>
+      </div>
+
+      <div class="m-field">
+        <label class="m-label" for="new-description">Description</label>
+        <input class="m-input" id="new-description" name="description" type="text"
+               maxlength="255" placeholder="What is on the plate">
+      </div>
+    </div>
+
+    <div class="m-form-error" id="menu-form-error" role="alert" style="margin-top:12px"></div>
+
+    <div class="m-row" style="margin-top:12px">
+      <button class="m-btn" type="submit" id="menu-create-submit">Add dish</button>
+      <button class="m-btn m-btn--quiet" type="button" id="menu-create-cancel">Cancel</button>
+    </div>
+  </form>
+</section>
+
+<div class="m-toolbar">
+  <label class="sr-only" for="menu-search">Search dishes</label>
+  <input class="m-input m-input--sm m-input--search" id="menu-search" type="search"
+         placeholder="Search dishes" autocomplete="off">
+  <label class="sr-only" for="menu-category">Filter by category</label>
+  <select class="m-input m-input--sm" id="menu-category">
+    <option value="all">All categories</option>
+  </select>
+  <div class="m-toolbar__spacer"></div>
+  <span class="m-meta" id="menu-filter-count"></span>
+</div>
+
+<div id="menu-list">
+  <div class="m-loading"><span class="m-spinner" aria-hidden="true"></span>Loading the menu…</div>
+</div>
+{% endblock %}

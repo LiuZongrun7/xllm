@@ -1,0 +1,108 @@
+{% extends "customer/base.html" %}
+{% block title %}Sign in · xLLM{% endblock %}
+{% block page_key %}login{% endblock %}
+{% block main_class %}c-main--plain{% endblock %}
+{% block content %}
+<div class="c-auth">
+  <header class="c-auth__head">
+    <a class="c-auth__brand" href="/customer/login" aria-label="xLLM home">
+      <span class="c-auth__dot" aria-hidden="true"></span><span>xLLM</span>
+    </a>
+    <h1 class="c-auth__title" id="login-title">Welcome back</h1>
+    <p class="c-meta">Sign in to order from kitchens near you.</p>
+  </header>
+
+  <div class="c-alert" id="auth-error" role="alert" hidden></div>
+
+  <div class="c-alert c-alert--success" id="auth-notice" role="status" hidden></div>
+
+  <!-- Password sign-in (primary) -->
+  <form class="c-auth__form" id="pane-password" novalidate>
+    <div class="c-field">
+      <label class="c-field__label" for="login-account">Account</label>
+      <input class="c-input" id="login-account" name="account" type="text"
+             autocomplete="username" placeholder="Username or email" required>
+      <p class="c-field__error" id="err-account" hidden></p>
+    </div>
+    <div class="c-field">
+      <label class="c-field__label" for="login-password">Password</label>
+      <div class="c-inputwrap">
+        <input class="c-input" id="login-password" name="password" type="password"
+               autocomplete="current-password" placeholder="Your password" required>
+        <button class="c-inputwrap__btn" type="button" data-toggle-password="login-password"
+                aria-label="Show password">Show</button>
+      </div>
+      <p class="c-field__error" id="err-password" hidden></p>
+    </div>
+    <div class="c-between c-auth__helper">
+      <button class="c-btn c-btn--text" type="button" data-login-mode="forgot">Forgot password?</button>
+      <button class="c-btn c-btn--text" type="button" data-login-mode="code">Use a code instead</button>
+    </div>
+    <button class="c-btn" id="login-submit" type="submit">Sign in</button>
+  </form>
+
+  <!-- Code sign-in (alternate) -->
+  <form class="c-auth__form" id="pane-code" novalidate hidden>
+    <div class="c-field">
+      <label class="c-field__label" for="code-email">Email</label>
+      <input class="c-input" id="code-email" name="email" type="email"
+             autocomplete="email" placeholder="you@example.com" required>
+    </div>
+    <div class="c-row c-row--end">
+      <button class="c-btn c-btn--ghost c-btn--compact" id="code-send" type="button">Email me a code</button>
+    </div>
+    <p class="c-field__hint" id="code-sent" hidden></p>
+    <div class="c-field">
+      <label class="c-field__label" for="code-value">6-digit code</label>
+      <input class="c-input num" id="code-value" name="code" type="text"
+             inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" required>
+    </div>
+    <button class="c-btn" id="code-submit" type="submit">Sign in with code</button>
+    <div class="c-between c-auth__helper c-auth__helper--after">
+      <button class="c-btn c-btn--text" type="button" data-login-mode="password">Use password instead</button>
+      <button class="c-btn c-btn--text" type="button" data-login-mode="forgot">Forgot password?</button>
+    </div>
+  </form>
+
+  <!-- Forgot password -->
+  <form class="c-auth__form" id="pane-forgot" novalidate hidden>
+    <p class="c-meta">Enter your email and we will send a 6-digit reset code.</p>
+    <div class="c-field">
+      <label class="c-field__label" for="forgot-email">Email</label>
+      <input class="c-input" id="forgot-email" name="email" type="email"
+             autocomplete="email" placeholder="you@example.com" required>
+    </div>
+    <div class="c-row c-row--end">
+      <button class="c-btn c-btn--ghost c-btn--compact" id="forgot-send" type="button">Email me a code</button>
+    </div>
+    <p class="c-field__hint" id="forgot-sent" hidden></p>
+    <div class="c-field">
+      <label class="c-field__label" for="forgot-code">6-digit code</label>
+      <input class="c-input num" id="forgot-code" name="code" type="text"
+             inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" required>
+    </div>
+    <div class="c-field">
+      <label class="c-field__label" for="forgot-password">New password</label>
+      <div class="c-inputwrap">
+        <input class="c-input" id="forgot-password" name="new_password" type="password"
+               autocomplete="new-password" placeholder="At least 8 characters" required>
+        <button class="c-inputwrap__btn" type="button" data-toggle-password="forgot-password"
+                aria-label="Show password">Show</button>
+      </div>
+    </div>
+    <button class="c-btn" id="forgot-submit" type="submit">Reset password</button>
+    <button class="c-btn c-btn--text c-auth__switch" type="button" data-login-mode="password">Back to sign in</button>
+  </form>
+
+  <footer class="c-auth__foot">
+    <p class="c-meta">New to xLLM?
+      <a class="c-link" href="/customer/register">Create account</a>
+    </p>
+    <div class="c-auth__portals">
+      <a class="c-link c-link--muted" href="/merchant/login">Merchant portal →</a>
+      <span aria-hidden="true">·</span>
+      <a class="c-link c-link--muted" href="/rider/login">Rider portal →</a>
+    </div>
+  </footer>
+</div>
+{% endblock %}

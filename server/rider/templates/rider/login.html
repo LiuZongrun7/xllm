@@ -1,0 +1,69 @@
+{% extends "rider/base.html" %}
+{% block title %}Sign in · xLLM Rider{% endblock %}
+{% block page_name %}login{% endblock %}
+
+{% block chrome %}
+<div class="r-auth__brand">
+  <a class="r-brand" href="{{ url_for('rider.login_page') }}">xLLM<span class="r-brand__sub">Rider</span></a>
+  <span class="r-chip r-chip--neutral">Rider app</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<main class="r-auth">
+
+  <section class="r-auth__hero">
+    <h1 class="r-auth__title">Sign in to start delivering</h1>
+    <p class="r-auth__sub">One account for xLLM. Sign in to see ready orders near you and keep your deliveries moving.</p>
+  </section>
+
+  <section class="r-card r-auth__card" aria-labelledby="signin-heading">
+    <h2 class="r-h2" id="signin-heading">Welcome back</h2>
+
+    <div class="r-banner r-banner--error" id="form-error" role="alert" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+      <span data-error-text></span>
+    </div>
+
+    <form class="r-form" id="login-form" novalidate>
+      <div class="r-field" data-field="account">
+        <label class="r-field__label" for="account">Username or email</label>
+        <input class="r-input r-input--lg" id="account" name="account" type="text"
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="chen" required>
+        <p class="r-field__err" data-err></p>
+      </div>
+
+      <div class="r-field" data-field="password">
+        <label class="r-field__label" for="password">Password</label>
+        <div class="r-inputwrap">
+          <input class="r-input r-input--lg" id="password" name="password" type="password"
+                 autocomplete="current-password" placeholder="Your password" required>
+          <button class="r-eye" type="button" data-pw-toggle aria-label="Show password" aria-pressed="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="r-field__err" data-err></p>
+      </div>
+
+      <button class="r-btn" type="submit" id="submit-btn">
+        <span class="r-spinner" hidden aria-hidden="true"></span>
+        <span class="r-btn__label">Sign in</span>
+      </button>
+    </form>
+
+    <p class="r-formfoot">New rider? <a href="{{ url_for('rider.register_page') }}">Create an account</a></p>
+  </section>
+
+  <nav class="r-auth__side" aria-label="Other xLLM portals">
+    <a href="{{ url_for('customer.login_page') }}">Customer portal
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+    <a href="{{ url_for('merchant.login_page') }}">Merchant portal
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </nav>
+
+  <p class="r-auth__legal">By signing in you agree to deliver orders safely and follow local traffic rules.</p>
+</main>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "customer/base.html" %}
+{% block title %}Account · xLLM{% endblock %}
+{% block page_key %}account{% endblock %}
+{% block main_class %}c-main--tabs{% endblock %}
+
+{% block header %}
+<header class="c-topbar">
+  <div class="c-topbar__inner">
+    <h1 class="c-topbar__title c-topbar__title--left">Account</h1>
+    <span class="c-topbar__spacer" aria-hidden="true"></span>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="c-accountpage">
+  <div class="c-alert" id="account-error" role="alert" hidden></div>
+
+  <div id="account-loading">
+    <div class="c-card c-card__body">
+      <div class="c-row">
+        <span class="c-skel" style="width:64px;height:64px;border-radius:50%"></span>
+        <div style="flex:1">
+          <span class="c-skel" style="width:55%;height:20px"></span>
+          <span class="c-skel" style="width:70%;height:13px;margin-top:8px"></span>
+        </div>
+      </div>
+      <span class="c-skel" style="width:100%;height:64px;margin-top:18px"></span>
+    </div>
+  </div>
+
+  <div id="account-content" hidden>
+    <section class="c-profile">
+      <div class="c-avatar c-avatar--lg" id="acct-avatar" aria-hidden="true">A</div>
+      <div class="c-profile__text">
+        <h1 class="c-h1" id="acct-name">…</h1>
+        <p class="c-meta" id="acct-email"></p>
+        <p class="c-meta" id="acct-meta"></p>
+      </div>
+    </section>
+
+    <div class="c-stats" id="acct-stats"></div>
+
+    <section class="c-account__section">
+      <div class="c-section__head">
+        <h2 class="c-section__title">Your details</h2>
+      </div>
+      <form class="c-card c-card__body" id="acct-form" novalidate>
+        <div class="c-field">
+          <label class="c-field__label" for="acct-input-name">Name</label>
+          <input class="c-input" id="acct-input-name" name="name" type="text"
+                 autocomplete="name" required>
+          <p class="c-field__error" id="err-acct-name" hidden></p>
+        </div>
+        <div class="c-field">
+          <label class="c-field__label" for="acct-input-phone">Phone</label>
+          <input class="c-input" id="acct-input-phone" name="phone" type="tel"
+                 autocomplete="tel" placeholder="Add a phone number">
+          <p class="c-field__error" id="err-acct-phone" hidden></p>
+        </div>
+        <button class="c-btn" id="acct-save" type="submit">Save changes</button>
+        <p class="c-field__hint" id="acct-saved" role="status" hidden>Saved</p>
+      </form>
+    </section>
+
+    <section class="c-account__section">
+      <div class="c-section__head">
+        <h2 class="c-section__title">Shortcuts</h2>
+      </div>
+      <div class="c-card c-linklist">
+        <a class="c-menurow" href="/customer/addresses">
+          <span class="c-menurow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </span>
+          <span class="c-menurow__text">
+            <span class="c-menurow__title">Addresses</span>
+            <span class="c-menurow__sub">Delivery addresses and map points</span>
+          </span>
+          <svg class="c-menurow__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </a>
+        <a class="c-menurow" href="/customer/orders">
+          <span class="c-menurow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-3-2-3 2-3-2-3 2V4a1 1 0 0 1 1-1Z"/><path d="M9 8h6M9 12h6"/></svg>
+          </span>
+          <span class="c-menurow__text">
+            <span class="c-menurow__title">Your orders</span>
+            <span class="c-menurow__sub">Track active orders and see history</span>
+          </span>
+          <svg class="c-menurow__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <section class="c-account__section">
+      <div class="c-section__head">
+        <h2 class="c-section__title">Other portals</h2>
+      </div>
+      <div class="c-card c-linklist">
+        <a class="c-menurow" href="/merchant/login">
+          <span class="c-menurow__text">
+            <span class="c-menurow__title">Merchant portal</span>
+            <span class="c-menurow__sub">Manage a restaurant</span>
+          </span>
+          <span class="c-menurow__arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="c-menurow" href="/rider/login">
+          <span class="c-menurow__text">
+            <span class="c-menurow__title">Rider portal</span>
+            <span class="c-menurow__sub">Deliver orders</span>
+          </span>
+          <span class="c-menurow__arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+
+    <button class="c-btn c-btn--ghost" id="signout" type="button">Sign out</button>
+    <p class="c-account__foot">xLLM · Food delivery demo</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block bottom %}
+{% set tab = 'account' %}
+{% include 'customer/_tabbar.html' %}
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "customer/base.html" %}
+{% block title %}Restaurant · xLLM{% endblock %}
+{% block page_key %}restaurant{% endblock %}
+{% block app_attrs %} data-restaurant-id="{{ restaurant_id }}"{% endblock %}
+{% block main_class %}c-main--bar c-main--plain{% endblock %}
+
+{% block content %}
+<div class="c-restpage">
+  <div class="c-hero" id="rest-hero">
+    <div class="c-hero__glow" aria-hidden="true"></div>
+    <a class="c-iconbtn c-hero__back" id="rest-back" href="/customer/" aria-label="Go back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>
+    </a>
+    <span class="c-hero__emoji" id="rest-emoji" aria-hidden="true">🍽️</span>
+  </div>
+
+  <div id="rest-loading" class="c-restpage__loading">
+    <div class="c-card c-card__body">
+      <span class="c-skel" style="width:55%;height:22px"></span>
+      <span class="c-skel" style="width:40%;height:13px;margin-top:10px"></span>
+      <span class="c-skel" style="width:100%;height:56px;margin-top:16px"></span>
+    </div>
+    <div class="c-card c-card__body" style="margin-top:16px">
+      <span class="c-skel" style="width:30%;height:16px"></span>
+      <span class="c-skel" style="width:100%;height:64px;margin-top:14px"></span>
+      <span class="c-skel" style="width:100%;height:64px;margin-top:10px"></span>
+    </div>
+  </div>
+
+  <div class="c-alert c-restpage__alert" id="rest-error" role="alert" hidden></div>
+
+  <div id="rest-content" hidden>
+    <section class="c-restinfo c-card">
+      <div class="c-card__body">
+        <div class="c-between c-restinfo__head">
+          <h1 class="c-h1" id="rest-name"></h1>
+          <span class="c-chip" id="rest-state" hidden></span>
+        </div>
+        <p class="c-meta c-restinfo__meta" id="rest-meta"></p>
+        <p class="c-restinfo__desc" id="rest-desc"></p>
+        <div class="c-restinfo__facts" id="rest-facts"></div>
+      </div>
+    </section>
+
+    <div class="c-restpage__body">
+      <div class="c-alert c-alert--warning" id="rest-closed-note" role="status" hidden></div>
+
+      <div class="c-anchors" id="rest-anchors" aria-label="Menu categories"></div>
+
+      <div id="rest-menu"></div>
+
+      <section class="c-reviews" id="rest-reviews" hidden>
+        <div class="c-section__head">
+          <h2 class="c-section__title">Reviews</h2>
+          <span class="c-meta" id="rest-review-summary"></span>
+        </div>
+        <div class="c-stack c-stack--sm" id="rest-review-list"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="c-bottombar" id="rest-cartbar" hidden>
+    <div class="c-bottombar__inner">
+      <div class="c-bottombar__sum">
+        <span class="c-bottombar__count" id="rest-cart-count">0 items</span>
+        <span class="c-bottombar__total num" id="rest-cart-total">¥0.00</span>
+      </div>
+      <a class="c-btn c-bottombar__cta" href="/customer/cart">View cart</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

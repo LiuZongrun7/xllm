@@ -1,0 +1,46 @@
+{% extends "customer/base.html" %}
+{% block title %}Your orders · xLLM{% endblock %}
+{% block page_key %}orders{% endblock %}
+{% block main_class %}c-main--tabs{% endblock %}
+
+{% block header %}
+<header class="c-topbar">
+  <div class="c-topbar__inner">
+    <h1 class="c-topbar__title c-topbar__title--left">Your orders</h1>
+    <span class="c-topbar__spacer" aria-hidden="true"></span>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="c-orderspage">
+  <div class="c-seg" role="tablist" aria-label="Order history">
+    <button class="c-seg__btn is-active" id="seg-active" type="button" role="tab"
+            aria-selected="true" aria-controls="orders-active">Active</button>
+    <button class="c-seg__btn" id="seg-past" type="button" role="tab"
+            aria-selected="false" aria-controls="orders-past">Past</button>
+  </div>
+
+  <div class="c-alert" id="orders-error" role="alert" hidden></div>
+
+  <div id="orders-loading">
+    <div class="c-card c-card__body" style="margin-top:14px">
+      <span class="c-skel" style="width:50%;height:18px"></span>
+      <span class="c-skel" style="width:75%;height:13px;margin-top:10px"></span>
+      <span class="c-skel" style="width:100%;height:42px;margin-top:14px"></span>
+    </div>
+    <div class="c-card c-card__body" style="margin-top:12px">
+      <span class="c-skel" style="width:45%;height:18px"></span>
+      <span class="c-skel" style="width:70%;height:13px;margin-top:10px"></span>
+    </div>
+  </div>
+
+  <section id="orders-active" class="c-orders-active" role="tabpanel" aria-labelledby="seg-active" hidden></section>
+  <section id="orders-past" class="c-orders-past" role="tabpanel" aria-labelledby="seg-past" hidden></section>
+</div>
+{% endblock %}
+
+{% block bottom %}
+{% set tab = 'orders' %}
+{% include 'customer/_tabbar.html' %}
+{% endblock %}

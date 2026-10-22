@@ -1,0 +1,24 @@
+{% extends "merchant/base.html" %}
+{% block title %}Issues · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div class="m-strip">
+  <span id="page-strip">Loading exceptions…</span>
+  <span class="m-strip__spacer"></span>
+  <a class="m-strip__link" href="{{ url_for('merchant.orders_page') }}">Order board →</a>
+</div>
+
+<div class="m-pagehead">
+  <div>
+    <h1 class="m-h1">Issues and after-sales</h1>
+    <div class="m-pagehead__sub">Anything that needs a human: unclaimed orders, delays, cancellations and dishes off the menu.</div>
+  </div>
+  <div class="m-pagehead__actions">
+    <button class="m-btn m-btn--quiet" type="button" id="issues-refresh">Refresh</button>
+  </div>
+</div>
+
+<div id="issues-app">
+  <div class="m-loading"><span class="m-spinner" aria-hidden="true"></span>Loading issues…</div>
+</div>
+{% endblock %}

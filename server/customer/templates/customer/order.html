@@ -1,0 +1,171 @@
+{% extends "customer/base.html" %}
+{% block title %}Order · xLLM{% endblock %}
+{% block page_key %}order{% endblock %}
+{% block app_attrs %} data-order-id="{{ order_id }}"{% endblock %}
+{% block main_class %}c-main--plain{% endblock %}
+
+{% block header %}
+<header class="c-topbar c-topbar--line">
+  <div class="c-topbar__inner">
+    <a class="c-iconbtn" id="order-back" href="/customer/orders" aria-label="Back to orders">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>
+    </a>
+    <h1 class="c-topbar__title">Order</h1>
+    <a class="c-iconbtn c-iconbtn--quiet" href="/customer/" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>
+    </a>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="c-orderpage">
+  <div class="c-alert" id="order-error" role="alert" hidden></div>
+
+  <div id="order-loading">
+    <div class="c-card c-card__body">
+      <span class="c-skel" style="width:60%;height:26px"></span>
+      <span class="c-skel" style="width:40%;height:14px;margin-top:10px"></span>
+      <span class="c-skel" style="width:100%;height:52px;margin-top:18px"></span>
+    </div>
+    <div class="c-card c-card__body" style="margin-top:14px">
+      <span class="c-skel" style="width:35%;height:16px"></span>
+      <span class="c-skel" style="width:100%;height:64px;margin-top:14px"></span>
+    </div>
+  </div>
+
+  <div id="order-content" hidden>
+    <section class="c-statushero">
+      <div class="c-between">
+        <h1 class="c-statushero__title" id="order-title"></h1>
+        <span class="c-chip" id="order-chip"></span>
+      </div>
+      <p class="c-statushero__sub" id="order-sub"></p>
+    </section>
+
+    <div class="c-alert c-alert--warning" id="order-delayed" role="status" hidden></div>
+    <div class="c-alert" id="order-cancelled" role="status" hidden></div>
+
+    <section class="c-card c-card__body c-timeline-card" id="order-timeline-card">
+      <div class="c-timeline" id="order-timeline"></div>
+    </section>
+
+    <section class="c-order__section">
+      <h2 class="c-section__title">Restaurant</h2>
+      <div class="c-card c-card__body" id="order-restaurant"></div>
+    </section>
+
+    <section class="c-order__section" id="order-rider-section" hidden>
+      <h2 class="c-section__title">Your rider</h2>
+      <div class="c-card c-card__body" id="order-rider"></div>
+    </section>
+
+    <section class="c-order__section">
+      <h2 class="c-section__title">Delivery details</h2>
+      <div class="c-card c-card__body" id="order-delivery"></div>
+    </section>
+
+    <section class="c-order__section">
+      <h2 class="c-section__title">Your order</h2>
+      <div class="c-card c-card__body">
+        <div id="order-items"></div>
+        <div class="c-divider" style="margin:14px 0"></div>
+        <div class="c-summary" id="order-summary"></div>
+      </div>
+    </section>
+
+    <div class="c-order__actions" id="order-actions"></div>
+    <p class="c-order__footnum num" id="order-footnum"></p>
+  </div>
+</div>
+
+<!-- Cancel order sheet -->
+<div class="c-modal" id="cancel-modal" hidden>
+  <div class="c-modal__backdrop" data-close></div>
+  <div class="c-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+    <div class="c-modal__handle" aria-hidden="true"></div>
+    <h2 class="c-h2" id="cancel-title">Cancel this order?</h2>
+    <p class="c-meta">The restaurant is preparing it. Tell us why so they can improve.</p>
+    <div class="c-field" style="margin-top:16px">
+      <label class="c-field__label" for="cancel-reason">Reason</label>
+      <textarea class="c-input c-textarea" id="cancel-reason" maxlength="100"
+                placeholder="Tell us why you are cancelling"></textarea>
+    </div>
+    <div class="c-chiprow" id="cancel-chips">
+      <button class="c-filter c-filter--sm" type="button" data-reason="Changed my mind">Changed my mind</button>
+      <button class="c-filter c-filter--sm" type="button" data-reason="Ordered by mistake">Ordered by mistake</button>
+      <button class="c-filter c-filter--sm" type="button" data-reason="Taking too long">Taking too long</button>
+      <button class="c-filter c-filter--sm" type="button" data-reason="Wrong delivery address">Wrong address</button>
+    </div>
+    <p class="c-field__error" id="cancel-error" hidden></p>
+    <div class="c-modal__actions c-modal__actions--top">
+      <button class="c-btn" id="cancel-submit" type="button">Cancel order</button>
+      <button class="c-btn c-btn--ghost" type="button" data-close>Keep my order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change delivery address sheet -->
+<div class="c-modal" id="address-modal" hidden>
+  <div class="c-modal__backdrop" data-close></div>
+  <div class="c-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="address-title">
+    <div class="c-modal__handle" aria-hidden="true"></div>
+    <h2 class="c-h2" id="address-title">Change delivery address</h2>
+    <p class="c-meta">We will check the delivery radius again before saving.</p>
+    <div class="c-stack c-stack--sm" id="address-list" style="margin-top:14px">
+      <span class="c-skel" style="width:100%;height:76px;border-radius:14px"></span>
+      <span class="c-skel" style="width:100%;height:76px;border-radius:14px"></span>
+    </div>
+    <div class="c-alert" id="address-error" role="alert" hidden style="margin-top:12px"></div>
+    <div class="c-modal__actions c-modal__actions--top">
+      <button class="c-btn" id="address-submit" type="button">Confirm address</button>
+      <button class="c-btn c-btn--ghost" type="button" data-close>Keep current address</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rate order sheet -->
+<div class="c-modal" id="review-modal" hidden>
+  <div class="c-modal__backdrop" data-close></div>
+  <div class="c-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="review-title">
+    <div class="c-modal__handle" aria-hidden="true"></div>
+    <h2 class="c-h2" id="review-title">Rate this order</h2>
+    <p class="c-meta" id="review-subtitle"></p>
+
+    <div class="c-rateblock">
+      <p class="c-rateblock__label">How was the food?</p>
+      <div class="c-stars" id="review-stars" role="group" aria-label="Restaurant rating">
+        {% for i in range(1, 6) %}
+        <button class="c-star" type="button" data-value="{{ i }}" aria-label="{{ i }} star{% if i > 1 %}s{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9Z"/></svg>
+        </button>
+        {% endfor %}
+      </div>
+      <p class="c-field__hint" id="review-stars-label">Tap a star to rate</p>
+    </div>
+
+    <div class="c-rateblock" id="rider-rateblock" hidden>
+      <p class="c-rateblock__label">How was your rider?</p>
+      <div class="c-stars" id="rider-stars" role="group" aria-label="Rider rating">
+        {% for i in range(1, 6) %}
+        <button class="c-star" type="button" data-value="{{ i }}" aria-label="{{ i }} star{% if i > 1 %}s{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9Z"/></svg>
+        </button>
+        {% endfor %}
+      </div>
+      <p class="c-field__hint" id="rider-stars-label">Optional</p>
+    </div>
+
+    <div class="c-field">
+      <label class="c-field__label" for="review-content">Comment <span class="c-field__optional">(optional)</span></label>
+      <textarea class="c-input c-textarea" id="review-content" maxlength="500"
+                placeholder="What stood out? Packaging, portion size, speed…"></textarea>
+    </div>
+    <p class="c-field__error" id="review-error" hidden></p>
+    <div class="c-modal__actions c-modal__actions--top">
+      <button class="c-btn" id="review-submit" type="button">Submit rating</button>
+      <button class="c-btn c-btn--ghost" type="button" data-close>Not now</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "rider/base.html" %}
+{% block title %}Settings · xLLM Rider{% endblock %}
+{% block page_name %}settings{% endblock %}
+
+{% block content %}
+<main>
+  <div class="r-pagehead">
+    <span class="r-pagehead__eyebrow">Account</span>
+    <h1 class="r-h1">Settings</h1>
+  </div>
+
+  <div id="settings-body" aria-live="polite" aria-busy="true">
+    <div class="r-card r-skelcard" aria-hidden="true" style="margin-bottom:12px">
+      <div class="r-skelrow"><div style="flex:1"><div class="r-skel r-skel--title"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:55%"></div></div><div class="r-skel" style="width:58px;height:32px;border-radius:999px;flex:none"></div></div>
+    </div>
+    <div class="r-card r-skelcard" aria-hidden="true" style="margin-bottom:12px">
+      <div class="r-skel r-skel--line" style="width:25%"></div>
+      <div class="r-skel" style="height:48px;border-radius:10px"></div>
+      <div class="r-skel r-skel--line" style="width:25%"></div>
+      <div class="r-skel" style="height:48px;border-radius:10px"></div>
+      <div class="r-skel" style="height:56px;border-radius:10px"></div>
+    </div>
+    <div class="r-card r-skelcard" aria-hidden="true">
+      <div class="r-skelrow"><div class="r-skel" style="width:52px;height:52px;border-radius:50%;flex:none"></div><div style="flex:1"><div class="r-skel r-skel--title"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:60%"></div></div></div>
+    </div>
+  </div>
+</main>
+{% endblock %}

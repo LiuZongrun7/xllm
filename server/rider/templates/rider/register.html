@@ -1,0 +1,98 @@
+{% extends "rider/base.html" %}
+{% block title %}Create account · xLLM Rider{% endblock %}
+{% block page_name %}register{% endblock %}
+
+{% block chrome %}
+<div class="r-auth__brand">
+  <a class="r-brand" href="{{ url_for('rider.login_page') }}">xLLM<span class="r-brand__sub">Rider</span></a>
+  <span class="r-chip r-chip--neutral">Rider app</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<main class="r-auth">
+
+  <section class="r-auth__hero">
+    <h1 class="r-auth__title">Become an xLLM rider</h1>
+    <p class="r-auth__sub">Create your rider account, go online, and start picking up orders in your area.</p>
+  </section>
+
+  <section class="r-card r-auth__card" aria-labelledby="register-heading">
+    <h2 class="r-h2" id="register-heading">Create your account</h2>
+
+    <div class="r-banner r-banner--error" id="form-error" role="alert" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+      <span data-error-text></span>
+    </div>
+
+    <form class="r-form" id="register-form" novalidate>
+      <div class="r-field" data-field="username">
+        <label class="r-field__label" for="username">Username</label>
+        <input class="r-input r-input--lg" id="username" name="username" type="text"
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="3–40 letters, digits or underscore" required>
+        <p class="r-field__hint">This is how you sign in. You can change your display name later.</p>
+        <p class="r-field__err" data-err></p>
+      </div>
+
+      <div class="r-field" data-field="email">
+        <label class="r-field__label" for="email">Email</label>
+        <input class="r-input r-input--lg" id="email" name="email" type="email"
+               autocomplete="email" autocapitalize="none" spellcheck="false"
+               placeholder="you@example.com" required>
+        <p class="r-field__err" data-err></p>
+      </div>
+
+      <div class="r-field" data-field="phone">
+        <label class="r-field__label" for="phone">Phone <span class="r-field__hint">(optional)</span></label>
+        <input class="r-input r-input--lg" id="phone" name="phone" type="tel"
+               autocomplete="tel" placeholder="138 0000 0000">
+        <p class="r-field__hint">Customers and restaurants use it only for active deliveries.</p>
+        <p class="r-field__err" data-err></p>
+      </div>
+
+      <div class="r-field" data-field="password">
+        <label class="r-field__label" for="password">Password</label>
+        <div class="r-inputwrap">
+          <input class="r-input r-input--lg" id="password" name="password" type="password"
+                 autocomplete="new-password" placeholder="At least 8 characters" required>
+          <button class="r-eye" type="button" data-pw-toggle aria-label="Show password" aria-pressed="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="r-field__err" data-err></p>
+      </div>
+
+      <div class="r-field" data-field="confirm">
+        <label class="r-field__label" for="confirm">Confirm password</label>
+        <div class="r-inputwrap">
+          <input class="r-input r-input--lg" id="confirm" name="confirm" type="password"
+                 autocomplete="new-password" placeholder="Type it again" required>
+          <button class="r-eye" type="button" data-pw-toggle aria-label="Show password" aria-pressed="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="r-field__err" data-err></p>
+      </div>
+
+      <button class="r-btn" type="submit" id="submit-btn">
+        <span class="r-spinner" hidden aria-hidden="true"></span>
+        <span class="r-btn__label">Create rider account</span>
+      </button>
+    </form>
+
+    <p class="r-formfoot">Already have an account? <a href="{{ url_for('rider.login_page') }}">Sign in</a></p>
+  </section>
+
+  <nav class="r-auth__side" aria-label="Other xLLM portals">
+    <a href="{{ url_for('customer.login_page') }}">Customer portal
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+    <a href="{{ url_for('merchant.login_page') }}">Merchant portal
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </nav>
+
+  <p class="r-auth__legal">Rider accounts are for delivery partners only. Restaurant staff should use the merchant portal.</p>
+</main>
+{% endblock %}

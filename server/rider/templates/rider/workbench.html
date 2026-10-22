@@ -1,0 +1,64 @@
+{% extends "rider/base.html" %}
+{% block title %}Workbench · xLLM Rider{% endblock %}
+{% block page_name %}workbench{% endblock %}
+
+{% block content %}
+<main>
+  <div class="r-pagehead">
+    <span class="r-pagehead__eyebrow">Today</span>
+    <div class="r-pagehead__row">
+      <h1 class="r-h1" id="greeting">Workbench</h1>
+      <span class="r-chip r-chip--neutral" id="rider-chip" hidden></span>
+    </div>
+  </div>
+
+  <section class="r-card r-hero" id="hero" aria-label="Your availability and today's numbers" aria-busy="true">
+    <div class="r-skelcard" style="padding:0">
+      <div class="r-skelrow">
+        <div class="r-skel r-skel--line" style="max-width:120px"></div>
+        <div class="r-skel" style="width:58px;height:32px;border-radius:999px;flex:none"></div>
+      </div>
+      <div class="r-stats" style="margin-top:6px">
+        <div><div class="r-skel r-skel--big"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:70%"></div></div>
+        <div style="padding-left:12px"><div class="r-skel r-skel--big"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:70%"></div></div>
+        <div style="padding-left:12px"><div class="r-skel r-skel--big"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:70%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="pool-notice" class="r-panel" style="margin-top:12px" hidden></div>
+
+  <div class="r-segmented r-tabs" role="tablist" aria-label="Rider orders">
+    <button class="r-segmented__item is-active" id="tab-available" type="button" role="tab"
+            aria-selected="true" aria-controls="panel-available" data-tab="available">
+      Available <span class="r-tabs__count" data-count-available>–</span>
+    </button>
+    <button class="r-segmented__item" id="tab-active" type="button" role="tab"
+            aria-selected="false" aria-controls="panel-active" data-tab="active" tabindex="-1">
+      Active <span class="r-tabs__count" data-count-active>–</span>
+    </button>
+  </div>
+
+  <div class="r-panel" id="panel-available" role="tabpanel" aria-labelledby="tab-available" aria-busy="true">
+    <div class="r-card r-skelcard" aria-hidden="true">
+      <div class="r-skelrow"><div class="r-skel r-skel--tile"></div><div style="flex:1"><div class="r-skel r-skel--title"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:45%"></div></div></div>
+      <div class="r-skel r-skel--line"></div>
+      <div class="r-skel r-skel--line" style="width:82%"></div>
+      <div class="r-skel r-skel--btn"></div>
+    </div>
+  </div>
+
+  <div class="r-panel" id="panel-active" role="tabpanel" aria-labelledby="tab-active" aria-busy="true" hidden>
+    <div class="r-card r-skelcard" aria-hidden="true">
+      <div class="r-skel r-skel--title"></div>
+      <div class="r-skel r-skel--line" style="width:70%"></div>
+      <div class="r-skel r-skel--btn"></div>
+    </div>
+  </div>
+
+  <div class="r-sync">
+    <span data-sync>Connecting…</span>
+    <button type="button" data-refresh>Refresh now</button>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "rider/base.html" %}
+{% block title %}Order · xLLM Rider{% endblock %}
+{% block page_name %}order{% endblock %}
+{% block body_attrs %} data-order-id="{{ order_id }}"{% endblock %}
+
+{% block content %}
+<main>
+  <h1 class="sr-only">Order detail</h1>
+  <a class="r-back" href="{{ url_for('rider.workbench') }}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    Workbench
+  </a>
+
+  <div id="order-body" aria-live="polite" aria-busy="true">
+    <div class="r-card r-skelcard" aria-hidden="true" style="margin-bottom:12px">
+      <div class="r-skel r-skel--line" style="width:30%"></div>
+      <div class="r-skel r-skel--title" style="height:24px;width:70%"></div>
+      <div class="r-skel r-skel--line" style="width:48%"></div>
+    </div>
+    <div class="r-card r-skelcard" aria-hidden="true" style="margin-bottom:12px">
+      <div class="r-skelrow"><div class="r-skel r-skel--tile"></div><div style="flex:1"><div class="r-skel r-skel--title"></div><div class="r-skel r-skel--line" style="margin-top:8px;width:50%"></div></div></div>
+      <div class="r-skel r-skel--line"></div>
+      <div class="r-skel r-skel--line" style="width:80%"></div>
+    </div>
+    <div class="r-card r-skelcard" aria-hidden="true">
+      <div class="r-skel r-skel--btn"></div>
+      <div class="r-skel r-skel--btn"></div>
+    </div>
+  </div>
+</main>
+{% endblock %}

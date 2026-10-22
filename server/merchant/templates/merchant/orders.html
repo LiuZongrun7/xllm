@@ -1,0 +1,25 @@
+{% extends "merchant/base.html" %}
+{% block title %}Orders · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div class="m-strip">
+  <span id="page-strip">Loading the live board…</span>
+  <span class="m-strip__spacer"></span>
+  <a class="m-strip__link" href="{{ url_for('merchant.issues_page') }}">Issues →</a>
+</div>
+
+<div class="m-pagehead">
+  <div>
+    <h1 class="m-h1">Orders</h1>
+    <div class="m-pagehead__sub">The kitchen board refreshes every 15 seconds while this tab is visible.</div>
+  </div>
+  <div class="m-pagehead__actions">
+    <span class="m-meta" id="board-updated"></span>
+    <button class="m-btn m-btn--quiet" type="button" id="board-refresh">Refresh</button>
+  </div>
+</div>
+
+<div id="board" class="m-board m-board--live">
+  <div class="m-loading"><span class="m-spinner" aria-hidden="true"></span>Loading the board…</div>
+</div>
+{% endblock %}

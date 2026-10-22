@@ -1,0 +1,18 @@
+{% extends "customer/base.html" %}
+{% block title %}{{ code }} · xLLM{% endblock %}
+{% block page_key %}error{% endblock %}
+{% block main_class %}c-main--center{% endblock %}
+{% block content %}
+<div class="c-errorpage">
+  <div class="c-errorpage__badge num">{{ code }}</div>
+  <h1 class="c-h1">{{ message }}</h1>
+  <p class="c-meta c-errorpage__desc">
+    {% if code == 404 %}
+      The page you asked for does not exist. Check the link or head back home.
+    {% else %}
+      Something went wrong on our side. We have logged it — please try again.
+    {% endif %}
+  </p>
+  <a class="c-btn" href="/customer/">Back to home</a>
+</div>
+{% endblock %}

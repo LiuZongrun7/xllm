@@ -1,0 +1,172 @@
+{% extends "merchant/base.html" %}
+{% block title %}Create your store · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div class="m-auth">
+  <aside class="m-auth__aside">
+    <div class="m-hero m-hero--full">
+      <div class="m-hero__brand">
+        <span class="m-hero__logo">xLLM</span>
+        <span class="m-hero__logo-sub">Merchant</span>
+      </div>
+
+      <div class="m-hero__middle">
+        <div class="m-hero__title">Tell us about<br>your kitchen.</div>
+        <p class="m-hero__lede">This is the first thing customers and riders see. It takes about two minutes and everything here can be changed later.</p>
+        <ul class="m-hero__steps">
+          <li class="m-hero__step is-active">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Store details</div>
+              <div class="m-hero__step-desc">Name, cuisine, phone, address and the pin riders navigate to.</div>
+            </div>
+          </li>
+          <li class="m-hero__step">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Capacity and delivery</div>
+              <div class="m-hero__step-desc">Minimum order, delivery fee, radius and how many orders the kitchen can hold.</div>
+            </div>
+          </li>
+          <li class="m-hero__step">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Menu and go live</div>
+              <div class="m-hero__step-desc">Add your first dishes from the Menu page. Opening hours start at 10:00–22:00.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="m-hero__foot">
+        <a href="/customer/login">Customer portal →</a>
+        <a href="/rider/login">Rider portal →</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="m-auth__main">
+    <div class="m-auth__card m-auth__card--wide">
+      <h1 class="m-auth__title">Create your store</h1>
+      <p class="m-auth__sub">You can change every field later in Settings. Fields marked <span class="m-label__req">*</span> are required.</p>
+
+      <form class="m-auth__form" id="setup-form" novalidate>
+        <div class="m-form-grid">
+          <div class="m-field m-form-grid__full">
+            <label class="m-label" for="setup-name">Store name <span class="m-label__req">*</span></label>
+            <input class="m-input" id="setup-name" name="name" type="text"
+                   placeholder="The name above your door" maxlength="80" required>
+            <span class="m-field-error" id="setup-name-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field">
+            <label class="m-label" for="setup-cuisine">Cuisine</label>
+            <input class="m-input" id="setup-cuisine" name="cuisine" type="text"
+                   list="setup-cuisine-options" placeholder="Chinese" maxlength="30">
+            <datalist id="setup-cuisine-options">
+              <option value="Chinese"></option>
+              <option value="Noodles"></option>
+              <option value="Japanese"></option>
+              <option value="Korean"></option>
+              <option value="Thai"></option>
+              <option value="Indian"></option>
+              <option value="Italian"></option>
+              <option value="Western"></option>
+              <option value="Salad"></option>
+              <option value="Dessert"></option>
+              <option value="Cafe"></option>
+            </datalist>
+            <span class="m-field-error" id="setup-cuisine-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field">
+            <label class="m-label" for="setup-phone">Phone <span class="m-label__req">*</span></label>
+            <input class="m-input" id="setup-phone" name="phone" type="tel"
+                   placeholder="Number riders and customers can call" maxlength="20" required>
+            <span class="m-field-error" id="setup-phone-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field m-form-grid__full">
+            <label class="m-label" for="setup-address">Street address <span class="m-label__req">*</span></label>
+            <input class="m-input" id="setup-address" name="address_text" type="text"
+                   placeholder="Building number, street, district, city" maxlength="255" required>
+            <span class="m-field-error" id="setup-address-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field m-form-grid__full">
+            <span class="m-label">Store location</span>
+            <div class="m-map" id="setup-map" data-amap-key="{{ amap_key }}"
+                 data-amap-security="{{ amap_security_code|default('') }}"
+                 data-lng="121.4737" data-lat="31.2304">
+              <div class="m-map__fallback" id="setup-map-fallback">
+                <span>Map picker is not configured on this server.</span>
+                <span class="m-map__pin-note">Your store will be placed at the Shanghai city centre (121.4737, 31.2304). You can fine-tune this later in Settings.</span>
+              </div>
+            </div>
+            <input type="hidden" id="setup-lng" name="lng" value="121.4737">
+            <input type="hidden" id="setup-lat" name="lat" value="31.2304">
+            <span class="m-help" id="setup-map-help">Riders use this pin for pickup distance and navigation.</span>
+            <span class="m-field-error" id="setup-location-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field m-form-grid__full">
+            <label class="m-label" for="setup-description">Description</label>
+            <textarea class="m-textarea" id="setup-description" name="description"
+                      placeholder="One or two lines about the kitchen — what you are known for." maxlength="500"></textarea>
+            <span class="m-help">Shown to customers under your store name.</span>
+          </div>
+
+          <div class="m-field">
+            <label class="m-label" for="setup-min-order">Minimum order (¥)</label>
+            <input class="m-input num" id="setup-min-order" name="min_order_amount" type="number"
+                   min="0" max="500" step="0.5" value="20">
+            <span class="m-help">Order subtotal needed to check out.</span>
+            <span class="m-field-error" id="setup-min-order-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field">
+            <label class="m-label" for="setup-delivery-fee">Delivery fee (¥)</label>
+            <input class="m-input num" id="setup-delivery-fee" name="delivery_fee" type="number"
+                   min="0" max="100" step="0.5" value="5">
+            <span class="m-help">Charged to the customer per order.</span>
+            <span class="m-field-error" id="setup-delivery-fee-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field">
+            <label class="m-label" for="setup-radius">Delivery radius (km)</label>
+            <input class="m-input num" id="setup-radius" name="delivery_radius_km" type="number"
+                   min="0.5" max="30" step="0.5" value="5">
+            <span class="m-help">Orders farther than this are refused.</span>
+            <span class="m-field-error" id="setup-radius-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field">
+            <label class="m-label" for="setup-max-orders">Max concurrent orders</label>
+            <input class="m-input num" id="setup-max-orders" name="max_concurrent_orders" type="number"
+                   min="1" max="200" step="1" value="20">
+            <span class="m-help">New orders pause when the kitchen is full.</span>
+            <span class="m-field-error" id="setup-max-orders-error" aria-live="polite"></span>
+          </div>
+
+          <div class="m-field">
+            <label class="m-label" for="setup-prep">Average prep time (min)</label>
+            <input class="m-input num" id="setup-prep" name="avg_prep_minutes" type="number"
+                   min="1" max="120" step="1" value="20">
+            <span class="m-help">Used for the delivery estimate.</span>
+            <span class="m-field-error" id="setup-prep-error" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div class="m-form-error" id="setup-form-error" role="alert"></div>
+
+        <div class="m-row">
+          <button class="m-btn" type="submit" id="setup-submit">Create store</button>
+          <button class="m-btn m-btn--quiet" type="button" id="setup-signout">Sign out</button>
+          <span class="m-row__spacer"></span>
+          <span class="m-help">Opening hours start at 10:00–22:00, seven days a week.</span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

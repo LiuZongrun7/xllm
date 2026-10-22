@@ -1,0 +1,26 @@
+{% extends "merchant/base.html" %}
+{% block title %}Analytics · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div class="m-strip">
+  <span id="page-strip">Loading the last 7 days…</span>
+  <span class="m-strip__spacer"></span>
+  <a class="m-strip__link" href="{{ url_for('merchant.orders_page') }}">Order board →</a>
+</div>
+
+<div class="m-pagehead">
+  <div>
+    <h1 class="m-h1">Analytics</h1>
+    <div class="m-pagehead__sub">Delivered orders only count towards revenue. Cancellations are tracked separately.</div>
+  </div>
+  <div class="m-segmented" role="group" aria-label="Date range" id="analytics-range">
+    <button class="m-segmented__item is-active" type="button" data-days="7">7 days</button>
+    <button class="m-segmented__item" type="button" data-days="14">14 days</button>
+    <button class="m-segmented__item" type="button" data-days="30">30 days</button>
+  </div>
+</div>
+
+<div id="analytics-app">
+  <div class="m-loading"><span class="m-spinner" aria-hidden="true"></span>Loading analytics…</div>
+</div>
+{% endblock %}

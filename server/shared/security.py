@@ -12,7 +12,7 @@
 
 from functools import wraps
 
-from flask import g, jsonify, session
+from flask import current_app, g, jsonify, redirect, request, session, url_for
 
 from shared.models import User
 
@@ -30,6 +30,21 @@ def current_user() -> User | None:
     return user
 
 
+def log_denied(reason: str, **fields) -> None:
+    """记录一次被拒绝的跨归属访问（NFR-5）。
+
+    对外的响应仍然保持模糊（404 而不是"这是别人的订单"），但日志里要能查得到：
+    谁、什么角色、访问了哪条路径、想动哪条数据。
+    """
+    user = current_user()
+    current_app.logger.warning(
+        "[denied] uid=%s role=%s path=%s reason=%s %s",
+        getattr(user, "id", None), getattr(user, "role", None),
+        request.path, reason,
+        " ".join(f"{key}={value}" for key, value in fields.items()),
+    )
+
+
 def login_user(user: User) -> None:
     session.clear()                 # 换用户时清掉旧会话，防会话固定
     session["uid"] = user.id
@@ -45,7 +60,7 @@ def login_required(view):
     @wraps(view)
     def wrapper(*args, **kwargs):
         if current_user() is None:
-            return jsonify({"ok": False, "error": "请先登录"}), 401
+            return jsonify({"ok": False, "error": "Please sign in first"}), 401
         return view(*args, **kwargs)
     return wrapper
 
@@ -58,10 +73,28 @@ def require_role(*roles: str):
         def wrapper(*args, **kwargs):
             user = current_user()
             if user.role not in roles:
+                log_denied("role_mismatch", required="/".join(roles))
                 return jsonify({
                     "ok": False,
-                    "error": f"该操作仅限 {'/'.join(roles)} 角色",
+                    "error": f"This action is only available to: {'/'.join(roles)}",
                 }), 403
+            return view(*args, **kwargs)
+        return wrapper
+    return deco
+
+
+def role_page(role: str, login_endpoint: str):
+    """页面版权限：没登录或角色不对，都重定向到本端的登录页。
+
+    接口越权返回 401/403（给 fetch 用），页面越权必须跳转（给浏览器用）——
+    两者不能混用，否则用户会看到一坨 JSON。
+    """
+    def deco(view):
+        @wraps(view)
+        def wrapper(*args, **kwargs):
+            user = current_user()
+            if user is None or user.role != role:
+                return redirect(url_for(login_endpoint))
             return view(*args, **kwargs)
         return wrapper
     return deco

@@ -1,0 +1,25 @@
+{% extends "merchant/base.html" %}
+{% block title %}Overview · xLLM Merchant{% endblock %}
+
+{% block content %}
+<div class="m-strip">
+  <span id="page-strip">Loading today’s service…</span>
+  <span class="m-strip__spacer"></span>
+  <a class="m-strip__link" href="{{ url_for('merchant.issues_page') }}">Review issues →</a>
+</div>
+
+<div class="m-pagehead">
+  <div>
+    <h1 class="m-h1">Overview</h1>
+    <div class="m-pagehead__sub" id="dash-sub">Today at a glance</div>
+  </div>
+  <div class="m-pagehead__actions">
+    <a class="m-btn m-btn--quiet" href="{{ url_for('merchant.analytics_page') }}">Analytics</a>
+    <a class="m-btn" href="{{ url_for('merchant.orders_page') }}">Open order board</a>
+  </div>
+</div>
+
+<div id="dash-app">
+  <div class="m-loading"><span class="m-spinner" aria-hidden="true"></span>Loading today’s numbers…</div>
+</div>
+{% endblock %}

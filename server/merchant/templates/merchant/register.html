@@ -1,0 +1,94 @@
+{% extends "merchant/base.html" %}
+{% block title %}Create a merchant account · xLLM{% endblock %}
+{% block body_attrs %}data-auth="register"{% endblock %}
+
+{% block content %}
+<div class="m-auth">
+  <aside class="m-auth__aside">
+    <div class="m-hero m-hero--full">
+      <div class="m-hero__brand">
+        <span class="m-hero__logo">xLLM</span>
+        <span class="m-hero__logo-sub">Merchant</span>
+      </div>
+
+      <div class="m-hero__middle">
+        <div class="m-hero__title">Get your counter<br>online tonight.</div>
+        <p class="m-hero__lede">Create the account, tell us about the kitchen, and you are a few dishes away from your first order.</p>
+        <ul class="m-hero__steps">
+          <li class="m-hero__step is-active">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Account details</div>
+              <div class="m-hero__step-desc">Username, email and the password you will use every morning.</div>
+            </div>
+          </li>
+          <li class="m-hero__step">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Store details</div>
+              <div class="m-hero__step-desc">Name, cuisine, phone and the address riders will look for.</div>
+            </div>
+          </li>
+          <li class="m-hero__step">
+            <span class="m-hero__step-dot" aria-hidden="true"></span>
+            <div>
+              <div class="m-hero__step-title">Opening hours and capacity</div>
+              <div class="m-hero__step-desc">We start you at 10:00–22:00; adjust it later in Settings.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="m-hero__foot">
+        <a href="/customer/login">Customer portal →</a>
+        <a href="/rider/login">Rider portal →</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="m-auth__main">
+    <div class="m-auth__card">
+      <h1 class="m-auth__title">Create your merchant account</h1>
+      <p class="m-auth__sub">One account per store. You will add the menu after this step.</p>
+
+      <form class="m-auth__form" id="register-form" novalidate>
+        <div class="m-field">
+          <label class="m-label" for="register-username">Username <span class="m-label__req">*</span></label>
+          <input class="m-input" id="register-username" name="username" type="text"
+                 autocomplete="username" placeholder="3–40 characters" required>
+          <span class="m-field-error" id="register-username-error" aria-live="polite"></span>
+        </div>
+
+        <div class="m-field">
+          <label class="m-label" for="register-email">Email <span class="m-label__req">*</span></label>
+          <input class="m-input" id="register-email" name="email" type="email"
+                 autocomplete="email" placeholder="owner@yourstore.com" required>
+          <span class="m-field-error" id="register-email-error" aria-live="polite"></span>
+        </div>
+
+        <div class="m-field">
+          <label class="m-label" for="register-phone">Phone</label>
+          <input class="m-input" id="register-phone" name="phone" type="tel"
+                 autocomplete="tel" placeholder="Number customers can call">
+          <span class="m-field-error" id="register-phone-error" aria-live="polite"></span>
+        </div>
+
+        <div class="m-field">
+          <label class="m-label" for="register-password">Password <span class="m-label__req">*</span></label>
+          <input class="m-input" id="register-password" name="password" type="password"
+                 autocomplete="new-password" placeholder="At least 8 characters" required>
+          <span class="m-field-error" id="register-password-error" aria-live="polite"></span>
+        </div>
+
+        <div class="m-form-error" id="register-form-error" role="alert"></div>
+        <button class="m-btn" type="submit" id="register-submit">Create account</button>
+      </form>
+
+      <div class="m-auth__foot">
+        <span>Already registered?</span>
+        <a class="m-link" href="{{ url_for('merchant.login_page') }}">Sign in</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

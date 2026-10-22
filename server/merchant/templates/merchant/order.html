@@ -1,0 +1,13 @@
+{% extends "merchant/base.html" %}
+{% block title %}Order detail · xLLM Merchant{% endblock %}
+{% block body_attrs %}data-order-id="{{ order_id }}"{% endblock %}
+
+{% block content %}
+<div class="m-strip">
+  <span id="page-strip">Loading order…</span>
+</div>
+
+<div id="order-app">
+  <div class="m-loading"><span class="m-spinner" aria-hidden="true"></span>Loading the order…</div>
+</div>
+{% endblock %}
