@@ -93,6 +93,20 @@ python app.py             # http://127.0.0.1:8080
 | [`docs/设计语言.md`](docs/设计语言.md) | three independent design systems |
 | [`docs/部署说明.md`](docs/部署说明.md) | nginx, gunicorn, deploy and rollback |
 
+## Deployment
+
+The server keeps a bare repo at `/home/ubuntu/xllm.git` with a `post-receive` hook that checks the
+tree out to `/home/ubuntu/xllm` and restarts the service. `.env` and `.venv` live in the work tree
+and are git-ignored, so they survive checkouts.
+
+```bash
+git push server main      # deploy: checkout + restart
+git push origin main      # keep the GitHub archive in sync
+```
+
+The VM cannot reach GitHub reliably (clone hangs), so the server never talks to GitHub — see
+[`docs/部署说明.md`](docs/部署说明.md) §5.
+
 ## Not in this repository
 
 - `.env` — secrets live on the server only; `.env.example` lists the keys
