@@ -84,6 +84,12 @@ Details: [`docs/管理大屏.md`](docs/管理大屏.md).
 
 ## Screenshots
 
+The project site — what `https://xllm.cloud/` now opens:
+
+| Desktop | Phone |
+|---|---|
+| ![public site](docs/screenshots/site-home.png) | ![public site on a phone](docs/screenshots/site-mobile.png) |
+
 The three interfaces, captured from the running application (see
 [`docs/screenshots/`](docs/screenshots/)):
 
