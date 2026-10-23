@@ -4,8 +4,16 @@
 
 Team **xLLM**: Fu Rao · Liu Jing · Liu Zongrun · Zhou Jiaxu
 
-Live deployment: **https://xllm.cloud** — the root path opens the project site at
-**https://xllm.cloud/info/**, which links into all three interfaces.
+Live deployment — each interface has its own domain, so the three can be signed in at once:
+
+| Interface | Address | Demo account |
+|---|---|---|
+| Customer app | **https://customer.xllm.cloud** | `alex` |
+| Restaurant console | **https://restaurant.xllm.cloud** | `goldenwok` |
+| Rider app | **https://delivery.xllm.cloud** | `chen` |
+| Project site & operations wall | **https://xllm.cloud** → `/info/` | — |
+
+All demo accounts use the password `demo1234`. The project site links into all four surfaces.
 
 ---
 
@@ -73,9 +81,9 @@ customers browse on a phone, restaurants work a dense desktop queue, riders oper
 outdoors. What they share is not pixels but terminology, data and API contract.
 See [`docs/设计语言.md`](docs/设计语言.md) and the live specimens:
 
-- https://xllm.cloud/customer/design-system
-- https://xllm.cloud/merchant/design-system
-- https://xllm.cloud/rider/design-system
+- https://customer.xllm.cloud/customer/design-system
+- https://restaurant.xllm.cloud/merchant/design-system
+- https://delivery.xllm.cloud/rider/design-system
 
 There is also a fourth, equally separate surface: the **operations wall** at `/admin/` —
 a dark, read-only console for platform staff (no marketplace account, no `users` row, no write
@@ -145,7 +153,8 @@ set -a; . ./.env; set +a
 `tools/smoke_test.py` rebuilds a throw-away database, seeds it, then plays customer → merchant →
 rider through the whole order lifecycle plus the failure paths (minimum order, sold-out dish,
 out-of-radius address, late cancellation, double review, atomic claim, GPS sanity, IDOR on all
-three roles, page rendering, the public site, and the operations console — 121 checks):
+three roles, page rendering, the public site, the operations console and the
+subdomain routing — 132 checks):
 
 ```bash
 cd server
