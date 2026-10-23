@@ -18,7 +18,7 @@ import math
 # 画布（正方形，最后会裁掉留白）
 CANVAS = 1600
 # 内容实际范围（裁图用）
-CROP = (100, 60, 1540, 1300)      # x0, y0, x1, y1
+CROP = (85, 90, 1470, 1205)       # x0, y0, x1, y1
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
 
@@ -34,7 +34,7 @@ def esc(s):
     return html.escape(str(s))
 
 
-def box(x, y, w, h, lines, fill=C_BOX, bold_first=True, size=20, rx=6, stroke=2.0):
+def box(x, y, w, h, lines, fill=C_BOX, bold_first=True, size=26, rx=6, stroke=2.0):
     out = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" '
            f'fill="{fill}" stroke="{C_STROKE}" stroke-width="{stroke}"/>']
     n = len(lines)
@@ -50,7 +50,7 @@ def box(x, y, w, h, lines, fill=C_BOX, bold_first=True, size=20, rx=6, stroke=2.
     return "".join(out)
 
 
-def arrow(x1, y1, x2, y2, dashed=False, label=None, lx=None, ly=None, lsize=16):
+def arrow(x1, y1, x2, y2, dashed=False, label=None, lx=None, ly=None, lsize=21):
     m = "arrd" if dashed else "arr"
     d = ' stroke-dasharray="9,7"' if dashed else ""
     out = [f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{C_STROKE}" '
@@ -106,7 +106,7 @@ def build():
 
     # ---------- nginx ----------
     nx, nw, nh, ny = mid - 230, 460, 80, merge_y + 50
-    p.append(box(nx, ny, nw, nh, ["nginx  (reverse proxy, TLS)", "/api  →  application server"]))
+    p.append(box(nx, ny, nw, nh, ["nginx  (reverse proxy, TLS)", "pages + /api  →  application server"]))
     p.append(arrow(xs[1] + bw / 2, merge_y, xs[1] + bw / 2, ny - 1,
                    label="HTTPS", lx=xs[1] + bw / 2 + 62, ly=merge_y + 26))
 
@@ -120,7 +120,7 @@ def build():
     fx, fw, fy, fh = 180, 1240, gy + gh + 64, 310
     p.append(f'<rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" rx="8" fill="{C_BOX_ALT}" '
              f'stroke="{C_STROKE}" stroke-width="2.4"/>')
-    p.append(f'<text x="{mid}" y="{fy+34}" font-family="{FONT}" font-size="24" font-weight="700" '
+    p.append(f'<text x="{mid}" y="{fy+34}" font-family="{FONT}" font-size="31" font-weight="700" '
              f'fill="{C_TEXT}" text-anchor="middle" dominant-baseline="middle">'
              f'Flask application</text>')
     p.append(arrow(mid, gy + gh, mid, fy - 1, label="WSGI", lx=mid + 62, ly=gy + gh + 32))
@@ -134,46 +134,47 @@ def build():
             ("orders", "state machine"), ("riders", "pool, position"),
             ("reviews", "ratings")]
     for i, (name, sub) in enumerate(mods):
-        p.append(box(mx0 + i * (mw + msep), my, mw, mh, [name, sub], size=19, stroke=1.8))
+        p.append(box(mx0 + i * (mw + msep), my, mw, mh, [name, sub], size=25, stroke=1.8))
 
     # 共享数据访问层
     sx, sw, sh, sy = mx0, total, 58, my + mh + 26
     p.append(box(sx, sy, sw, sh, ["Shared data access layer (SQLAlchemy models, ownership checks)"],
-                 fill=C_HEAD, size=18, stroke=1.8))
+                 fill=C_HEAD, size=23, stroke=1.8))
 
     # ---------- 数据与外部服务 ----------
     dy, dh = fy + fh + 90, 108
     store = [("MySQL 8", "12 records (InnoDB)", 180, 430),
-             ("Amap (map service)", "geocoding / distance", 660, 360),
+             ("Amap (map service)", "address picker / map display", 660, 360),
              ("SMTP mail service", "password recovery", 1070, 350)]
 
     for name, sub, x, w in store:
-        p.append(box(x, dy, w, dh, [name, sub], size=19))
+        p.append(box(x, dy, w, dh, [name, sub], size=25))
 
     # Flask → MySQL / Amap / SMTP（虚线）
     p.append(arrow(400, fy + fh, 395, dy - 1, dashed=True, label="SQL",
                    lx=440, ly=fy + fh + 40))
-    p.append(arrow(840, fy + fh, 840, dy - 1, dashed=True, label="HTTPS",
-                   lx=888, ly=fy + fh + 40))
     p.append(arrow(1240, fy + fh, 1240, dy - 1, dashed=True, label="SMTP",
                    lx=1290, ly=fy + fh + 40))
 
-    # 浏览器 → Amap（地图 JS API），沿右侧走线
-    p.append(path(f"M {1470} {by + bh/2} L 1500 {by + bh/2} L 1500 {dy + dh/2} "
-                  f"L {1425} {dy + dh/2}", dashed=True))
+    # 浏览器 → Amap（地图 JS API）：沿左侧下行，从底部绕到 Amap 下方
+    p.append(path(f"M {xs[0]} {by + bh/2} L 110 {by + bh/2} L 110 {dy + dh + 30} "
+                  f"L 840 {dy + dh + 30} L 840 {dy + dh + 1}", dashed=True))
+    p.append(f'<rect x="420" y="{dy + dh + 6}" width="150" height="26" fill="#ffffff"/>')
+    p.append(f'<text x="495" y="{dy + dh + 19}" font-family="{FONT}" font-size="21" '
+             f'fill="{C_SOFT}" text-anchor="middle" dominant-baseline="middle">map JS API</text>')
 
     # ---------- 图例 ----------
-    ly0 = dy + dh + 56
+    ly0 = dy + dh + 86
     p.append(f'<line x1="180" y1="{ly0 - 22}" x2="1420" y2="{ly0 - 22}" '
              f'stroke="{C_SOFT}" stroke-width="1"/>')
     p.append(f'<line x1="180" y1="{ly0}" x2="245" y2="{ly0}" stroke="{C_STROKE}" '
              f'stroke-width="2.4" marker-end="url(#arr)"/>')
-    p.append(f'<text x="258" y="{ly0}" font-family="{FONT}" font-size="18" fill="{C_SOFT}" '
+    p.append(f'<text x="258" y="{ly0}" font-family="{FONT}" font-size="23" fill="{C_SOFT}" '
              f'dominant-baseline="middle">user request / response</text>')
     p.append(f'<line x1="560" y1="{ly0}" x2="625" y2="{ly0}" stroke="{C_STROKE}" '
              f'stroke-width="2.4" stroke-dasharray="9,7" marker-end="url(#arrd)"/>')
-    p.append(f'<text x="638" y="{ly0}" font-family="{FONT}" font-size="18" fill="{C_SOFT}" '
-             f'dominant-baseline="middle">internal call to storage or an external service</text>')
+    p.append(f'<text x="638" y="{ly0}" font-family="{FONT}" font-size="23" fill="{C_SOFT}" '
+             f'dominant-baseline="middle">call to storage or an external service</text>')
 
     p.append("</svg>")
     return "\n".join(p)

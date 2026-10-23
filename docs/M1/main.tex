@@ -58,9 +58,10 @@ without them the topic's central workflow cannot be demonstrated. The remainder 
 \emph{optional} additions that we will attempt only once the essential set works end to end.
 
 \begin{itemize}
-\item \textbf{F1 --- Accounts and roles.} All three roles register and sign in through one entry
-point; the role determines which interface is shown. Result: an authenticated session that the
-server uses to authorise every later request.
+\item \textbf{F1 --- Accounts and roles.} Each role registers and signs in through its own
+interface; all three share one authentication module and one session, and the role decides what that
+session may reach. Result: an authenticated session that the server uses to
+authorise every later request.
 \item \textbf{F2 --- Restaurant menu and hours.} Restaurant staff set opening hours per weekday,
 add and edit dishes with price, calories and remaining stock, and mark a dish unavailable.
 Result: the public menu always reflects what the kitchen can actually produce now.
@@ -91,15 +92,15 @@ add value but are not required by the topic, so they come last and are reduced f
 \item \emph{Ownership.} A record may only be changed by the party that owns it: a dish by its
 own restaurant, an order by its own customer, restaurant or rider. The check is made on the
 server for every query, not by hiding controls in the interface.
-\item \emph{Transition authority.} Each state change belongs to exactly one role. Only the
-restaurant may accept and prepare; only a rider may collect and deliver. No role may skip a
+\item \emph{Transition authority.} Apart from cancellation, each state change belongs to exactly one
+role: only the restaurant may accept and prepare, and only a rider may collect and deliver. No role may skip a
 state.
 \item \emph{Claim exclusivity.} An order enters the rider pool only when it is ready and has no
 rider. Claiming is a single conditional update, so if two riders act at the same moment exactly
 one succeeds and the other is told the order has gone.
-\item \emph{Cancellation window.} Cancellation is free while the order is still awaiting
-acceptance. Once the restaurant has accepted, preparation may have started, so cancellation
-requires the restaurant's agreement.
+\item \emph{Cancellation window.} The customer may cancel while the order is placed or accepted,
+because nothing has been cooked yet. Once the kitchen starts preparing, only the restaurant may
+cancel, and it records why.
 \item \emph{Delivery range.} An order is refused if the selected address lies outside the
 restaurant's configured delivery radius, and the customer is told why.
 \item \emph{Record integrity.} Address and prices are copied into the order when it is placed.
@@ -110,7 +111,8 @@ Later edits to an address or a menu therefore cannot rewrite the history of past
 
 \noindent\textbf{Application structure.} Figure~\ref{fig:structure} shows the main parts.
 Three browser interfaces --- customer, restaurant and rider --- send requests over HTTPS to a
-reverse proxy, which forwards everything under \texttt{/api} to the application server. The
+reverse proxy, which forwards every request --- pages as well as \texttt{/api} --- to the
+application server. The
 application is divided into functional modules, one per business domain. The
 \emph{authentication module} establishes who the caller is and which role they hold.
 The \emph{restaurant module} manages shop profiles, opening hours and menu items. The
@@ -119,14 +121,16 @@ writes order states. The \emph{rider module} manages the claimable pool and posi
 The \emph{review module} records ratings against completed orders. All modules share one data
 access layer and one set of record definitions, so ownership checks are written in the same
 place for every request. The database holds the records in Table~\ref{tab:data}. Two external
-services are used: a map service, called from the browser to capture coordinates and from the
-server to verify them; and a mail service, used only for password recovery.
+services are used: a map service, loaded by the browser to pick addresses and to draw a rider's
+position; and a mail service, used only for one-time codes (code sign-in and password reset). The
+delivery radius is checked by the server itself, without the map service.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.66\linewidth]{structure.png}
+\includegraphics[width=0.68\linewidth]{structure.png}
 \caption{Main parts of the application. Solid arrows carry user requests and responses over
-HTTPS; the dashed arrows show internal calls to the database and to external services.}
+HTTPS; the dashed arrows show calls to the database, to the mail service, and --- from the
+browser --- to the map service.}
 \label{fig:structure}
 \end{figure}
 
@@ -134,7 +138,8 @@ HTTPS; the dashed arrows show internal calls to the database and to external ser
 information in each, and the functions that use or update them.
 
 \begin{table}[h]
-\small
+\footnotesize
+\renewcommand{\arraystretch}{1.0}
 \begin{tabularx}{\linewidth}{|p{27mm}|Y|Y|}
 \hline
 \textbf{Record}&\textbf{Information stored}&\textbf{Functions that use or update it}\\\hline
@@ -142,6 +147,8 @@ Users & Role, username, e-mail, display name, hashed password &
 F1 creates and authenticates; every other function reads it to decide permissions.\\\hline
 Restaurants & Owner, name, address and coordinates, delivery radius, minimum order, open flag &
 F2 updates it; F3 reads it to list shops and check the delivery radius.\\\hline
+Rider profiles & Rider, online flag, vehicle type, service radius &
+F1 creates it; F4 refuses a claim unless the rider is online.\\\hline
 Opening hours & Restaurant, weekday, open and close time, closed flag &
 F2 maintains; F3 uses it to refuse orders outside opening hours.\\\hline
 Menu items & Restaurant, name, price, calories, stock, available flag &
@@ -159,7 +166,7 @@ F7 appends them; F5 reads the latest one for display.\\\hline
 Coupons and claims & Code, owner, discount, threshold, claim status &
 F8 issues, claims and redeems them against an order.\\\hline
 Verification codes & E-mail, purpose, hashed code, expiry, attempts &
-F1 sends and checks them when a password is reset.\\\hline
+F1 sends and checks them for code sign-in and password resets.\\\hline
 \end{tabularx}
 \caption{Records, the information stored in each, and the functions that use them.}
 \label{tab:data}
@@ -201,21 +208,21 @@ this order.
 \end{enumerate}
 
 \emph{A situation that changes the process: cancellation.} Suppose the customer wants to cancel
-\emph{after} the restaurant has accepted and begun cooking. The normal path offers no free way
-out, because food has already been committed. The order module therefore does not cancel it
-directly: it records the request and surfaces it to the restaurant, whose decision it is. If the
-restaurant agrees, the order moves to \emph{cancelled} with the cancelling party and reason
-recorded alongside the timestamp; the order disappears from the restaurant's queue, and if a
-rider had already claimed it, that rider is released and the order leaves the pool. If the
-restaurant refuses, the order simply continues along the normal path. The same mechanism covers
-the reverse timing: while the order is still \emph{pending} nothing has been committed, so the
-customer cancels immediately and no restaurant action is needed. The rule is thus a property of
-the order's state, not of the interface the request arrived from.
+\emph{after} the kitchen has started preparing the food. The normal path offers no free way out,
+because ingredients have already been committed. The order module therefore refuses the
+customer's cancellation and tells them to contact the restaurant, whose decision it is. If the
+restaurant agrees, the order moves to \emph{cancelled}, with the cancelling party and reason
+recorded alongside the timestamp; it disappears from the restaurant's queue and from the rider
+pool, and any payment is marked refunded. If the restaurant refuses, the order simply continues
+along the normal path. The same rule covers the reverse timing: while the order is still
+\emph{pending} or \emph{accepted} nothing has been cooked, so the customer cancels directly. The rule is thus a property of the order's state, not of the
+interface the request arrived from.
 
 \section{Technology Choices}
 
-\noindent\textbf{Browser.} HTML5 and CSS3 for structure and presentation; JavaScript with jQuery
-and AJAX for interaction and for calling the server without reloading the page; Jinja2 templates
+\noindent\textbf{Browser.} HTML5 and CSS3 for structure and presentation; JavaScript with the
+browser's \texttt{fetch} API for interaction and for calling the server without reloading the
+page; Jinja2 templates
 on the server to render the three role interfaces. The browser is responsible for presentation
 and input validation only --- including the map, which captures the address coordinates.
 
@@ -228,13 +235,13 @@ database credentials.
 \noindent\textbf{Data storage.} MySQL 8 with InnoDB and \texttt{utf8mb4}, holding the twelve
 records in Table~\ref{tab:data}. A relational store is the right fit because the rules above are
 relational: ownership is a column on the row, claim exclusivity is \emph{one} conditional
-\texttt{UPDATE} guarded by \texttt{rider\_id IS NULL}, one-review-per-order is a unique
-constraint, and per-order history is preserved by copying values rather than joining to live
+\texttt{UPDATE} guarded by \texttt{rider\_id IS NULL}, duplicate ratings for the same order
+and target are refused, and per-order history is preserved by copying values rather than joining to live
 ones. Foreign keys keep the order graph consistent while a record is passed between roles.
 
 \noindent\textbf{Why this combination suits the project.} One language for the server and the
 data layer keeps the ownership checks in one place, which matters because every function depends
-on them; server-rendered pages with AJAX keep the three interfaces simple while still allowing
+on them; server-rendered pages with asynchronous requests keep the three interfaces simple while still allowing
 progress to refresh without a reload; and the relational model expresses the topic's own
 language --- availability, ownership, approval --- directly as constraints.
 
@@ -245,16 +252,16 @@ were chosen for specific reasons.
 \item \emph{Map service (Amap)} --- used to let a customer point at a delivery address instead
 of typing it, and to check the delivery radius. The benefit is direct: hand-typed addresses are
 the main source of the address problems the topic names, and pointing at a map removes that
-ambiguity at source. Management: two separate keys are used, a browser key restricted by domain
-and a server key kept on the server only; the radius check uses straight-line distance computed
-locally, so the ordering flow still works if the service is unavailable, and the address field
-falls back to text. Integration has already been carried out and verified end to end.
+ambiguity at source. Management: one browser key, restricted by domain and paired with a security
+code, is the only credential exposed; the radius check uses straight-line distance computed
+locally, so no server-side key is needed, the ordering flow still works if the service is
+unavailable, and the address field falls back to text. Integration has already been carried out and verified end to end.
 \item \emph{nginx and gunicorn (deployment)} --- the reverse proxy terminates HTTPS and forwards
 requests; gunicorn runs the application. This is an operational rather than a functional
 choice: Flask's built-in server is explicitly not intended for production, and HTTPS is a
 prerequisite for the browser location API used in F7. Management: the configuration is fixed and
 documented; the application code is unchanged.
-\item \emph{E-mail service (SMTP)} --- used only to send a one-time code for password recovery.
+\item \emph{E-mail service (SMTP)} --- used only to send one-time codes for code sign-in and password reset.
 It is the only out-of-band channel available to us at no cost, since programmatic SMS here
 requires a paid registered signature and pre-approved templates. Management: sending is
 isolated so a failure cannot fail the request, and the code's expiry, single use and attempt
