@@ -46,16 +46,14 @@ orders that are prepared and unclaimed, claim one, report position, and move tha
 delivery. Must never see orders that are not ready, or orders another rider has claimed.
 \end{itemize}
 
-\noindent\textbf{Why it is useful.} The application covers the whole life of an order rather
-than a single step, and replaces the informal telephone coordination with one shared record that
-each party can act on, making the exception paths explicit rather than leaving them to
-improvisation.
+\noindent\textbf{Why it is useful.} The application covers the whole life of an order, not a single step, and replaces telephone
+coordination with one shared record each party can act on, so the exception paths are explicit.
 
 \section{Main Functions}
 
-Functions are listed in the order we intend to build them. The first five are \emph{essential}:
-without them the topic's central workflow cannot be demonstrated. The remainder are
-\emph{optional} additions that we will attempt only once the essential set works end to end.
+The first five functions are \emph{essential}: without them the central workflow cannot be
+demonstrated. The rest are \emph{optional}
+additions, attempted once the essential set works end to end.
 
 \begin{itemize}
 \item \textbf{F1 --- Accounts and roles.} Each role registers and signs in through its own
@@ -84,8 +82,8 @@ Result: a discounted total recorded on the order.
 \end{itemize}
 
 \noindent\textbf{Priority.} F1--F5 are the minimum for a coherent demonstration: only these
-are needed to take one order from a request to a delivered outcome through two roles. F6--F8
-add value but are not required by the topic, so they come last and are reduced first.
+take one order from request to delivery through two roles. F6--F8 add value but the topic does
+not require them, so they come last and are cut first.
 
 \noindent\textbf{Rules that constrain these functions.}
 \begin{itemize}
@@ -114,20 +112,19 @@ Three browser interfaces --- customer, restaurant and rider --- send requests ov
 reverse proxy, which forwards every request --- pages as well as \texttt{/api} --- to the
 application server. The
 application is divided into functional modules, one per business domain. The
-\emph{authentication module} establishes who the caller is and which role they hold.
+\emph{authentication module} establishes the caller and their role.
 The \emph{restaurant module} manages shop profiles, opening hours and menu items. The
 \emph{order module} creates orders and enforces the state machine, and is the only module that
 writes order states. The \emph{rider module} manages the claimable pool and position reports.
 The \emph{review module} records ratings against completed orders. All modules share one data
-access layer and one set of record definitions, so ownership checks are written in the same
-place for every request. The database holds the records in Table~\ref{tab:data}. Two external
+access layer, so ownership checks are written in one place. The database holds the records in Table~\ref{tab:data}. Two external
 services are used: a map service, loaded by the browser to pick addresses and to draw a rider's
 position; and a mail service, used only for one-time codes (code sign-in and password reset). The
 delivery radius is checked by the server itself, without the map service.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.68\linewidth]{structure.png}
+\includegraphics[width=0.66\linewidth]{structure.png}
 \caption{Main parts of the application. Solid arrows carry user requests and responses over
 HTTPS; the dashed arrows show calls to the database, to the mail service, and --- from the
 browser --- to the map service.}
@@ -223,8 +220,8 @@ interface the request arrived from.
 \noindent\textbf{Browser.} HTML5 and CSS3 for structure and presentation; JavaScript with the
 browser's \texttt{fetch} API for interaction and for calling the server without reloading the
 page; Jinja2 templates
-on the server to render the three role interfaces. The browser is responsible for presentation
-and input validation only --- including the map, which captures the address coordinates.
+on the server to render the three role interfaces. The browser presents and validates input,
+including the map that captures coordinates.
 
 \noindent\textbf{Server.} Python 3.10 with Flask 3.1, using Werkzeug password hashing and Flask
 sessions, with SQLAlchemy 2.0 as the data access layer. The server is where the application
@@ -240,13 +237,11 @@ and target are refused, and per-order history is preserved by copying values rat
 ones. Foreign keys keep the order graph consistent while a record is passed between roles.
 
 \noindent\textbf{Why this combination suits the project.} One language for the server and the
-data layer keeps the ownership checks in one place, which matters because every function depends
-on them; server-rendered pages with asynchronous requests keep the three interfaces simple while still allowing
+data layer keeps the ownership checks in one place; server-rendered pages with asynchronous requests keep the three interfaces simple while still allowing
 progress to refresh without a reload; and the relational model expresses the topic's own
 language --- availability, ownership, approval --- directly as constraints.
 
-\noindent\textbf{Technology not covered in class.} Three items are outside the taught stack and
-were chosen for specific reasons.
+\noindent\textbf{Technology not covered in class.}
 
 \begin{itemize}
 \item \emph{Map service (Amap)} --- used to let a customer point at a delivery address instead
@@ -257,9 +252,8 @@ code, is the only credential exposed; the radius check uses straight-line distan
 locally, so no server-side key is needed, the ordering flow still works if the service is
 unavailable, and the address field falls back to text. Integration has already been carried out and verified end to end.
 \item \emph{nginx and gunicorn (deployment)} --- the reverse proxy terminates HTTPS and forwards
-requests; gunicorn runs the application. This is an operational rather than a functional
-choice: Flask's built-in server is explicitly not intended for production, and HTTPS is a
-prerequisite for the browser location API used in F7. Management: the configuration is fixed and
+requests; gunicorn runs the application. It is an operational choice: Flask's built-in server is not meant for production, and HTTPS is
+required by the browser location API used in F7. Management: the configuration is fixed and
 documented; the application code is unchanged.
 \item \emph{E-mail service (SMTP)} --- used only to send one-time codes for code sign-in and password reset.
 It is the only out-of-band channel available to us at no cost, since programmatic SMS here
@@ -267,5 +261,11 @@ requires a paid registered signature and pre-approved templates. Management: sen
 isolated so a failure cannot fail the request, and the code's expiry, single use and attempt
 limits live in our own database, so the security property does not depend on the mail service.
 \end{itemize}
+
+
+\noindent\textbf{Division of work and plan.} Zhou Jiaxu owns the customer interface, Fu Rao the
+restaurant interface, Liu Jing the rider interface and Liu Zongrun the shared layer and
+deployment. The layer is frozen before the interfaces; Milestone 2 completes one order end to
+end, and Milestone 3 adds the optional functions and the exception flows.
 
 \end{document}
