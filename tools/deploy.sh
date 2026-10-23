@@ -54,6 +54,8 @@ ssh xllm 'sudo -n systemctl restart xllm && systemctl is-active xllm'
 
 echo "[deploy] health check ..."
 curl -s -o /dev/null -w '  /api/ping        %{http_code}\n' https://xllm.cloud/api/ping
+curl -s -o /dev/null -w '  /info/           %{http_code}\n' https://xllm.cloud/info/
+curl -s -o /dev/null -w '  /  (→ /info/)    %{http_code}\n' https://xllm.cloud/
 curl -s -o /dev/null -w '  /api/db-ping     %{http_code}\n' https://xllm.cloud/api/db-ping
 curl -s -o /dev/null -w '  /customer/       %{http_code}\n' https://xllm.cloud/customer/
 curl -s -o /dev/null -w '  /merchant/login  %{http_code}\n' https://xllm.cloud/merchant/login

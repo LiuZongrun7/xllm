@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090A">
+<meta name="robots" content="noindex">
+<title>{{ code }} — xLLM</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2308090A'/><circle cx='16' cy='16' r='5.5' fill='%23C9F25B'/></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('info.static', filename='css/info.css') }}">
+</head>
+<body class="i-body i-body--error">
+
+<main class="i-err">
+  <p class="i-err__code">{{ code }}</p>
+  <h1 class="i-err__title">{{ title }}</h1>
+  <p class="i-err__body">{{ message }}</p>
+
+  <div class="i-err__actions">
+    <a class="i-btn i-btn--primary" href="{{ url_for('info.index') }}">Back to the site</a>
+    <a class="i-btn i-btn--ghost" href="{{ url_for('customer.login_page') }}">Customer app</a>
+    <a class="i-btn i-btn--ghost" href="{{ url_for('merchant.login_page') }}">Restaurant console</a>
+  </div>
+
+  <p class="i-err__foot">xLLM Food Delivery</p>
+</main>
+
+</body>
+</html>

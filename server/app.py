@@ -12,7 +12,8 @@ Flask 后端入口（应用工厂模式）
     customer/   A —— 顾客端页面 + 顾客侧接口
     merchant/   B —— 商家端页面 + 商家侧接口
     rider/      C —— 骑手端页面 + 骑手侧接口
-    static/     三端唯一共享的前端资源（只有 reset.css）
+    info/       ——  公开官网（/info），不读数据库、不需要登录
+    static/     全站唯一共享的前端资源（只有 reset.css）
 
 ⚠️ 关于 /api 前缀
     nginx 配置已改为【保留】前缀（proxy_pass 结尾不带斜杠）：
@@ -26,6 +27,7 @@ Flask 后端入口（应用工厂模式）
 
 本地运行
     cd server && python app.py
+    http://127.0.0.1:8080/info/            ← 官网（根路径 / 会跳到这里）
     http://127.0.0.1:8080/customer/design-system
     http://127.0.0.1:8080/merchant/design-system
     http://127.0.0.1:8080/rider/design-system
@@ -45,6 +47,7 @@ from shared.health import bp as health_bp
 from customer.routes import api as customer_api, pages as customer_pages
 from merchant.routes import api as merchant_api, pages as merchant_pages
 from rider.routes import api as rider_api, pages as rider_pages
+from info.routes import pages as info_pages
 
 from shared import models  # noqa: F401  —— 必须 import，SQLAlchemy 才知道有哪些表
 
@@ -67,6 +70,9 @@ def create_app(config_object: type = Config) -> Flask:
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp)
 
+    # --- 公开官网（不依赖数据库与会话）---
+    app.register_blueprint(info_pages)
+
     # --- 三端各自的一对蓝图：页面 + 接口 ---
     app.register_blueprint(customer_pages)
     app.register_blueprint(customer_api)
@@ -77,10 +83,12 @@ def create_app(config_object: type = Config) -> Flask:
     app.register_blueprint(rider_pages)
     app.register_blueprint(rider_api)
 
-    # --- 根路径：顾客端是"主入口"，另外两端从各自登录页侧链过去 ---
+    # --- 根路径：官网是"门面"，三端从官网的演示入口进 ---
+    # 用 302 而不是 301：这是课程演示站，入口随时可能调整，
+    # 而且 301 会被浏览器长期缓存，改回来很麻烦。
     @app.get("/")
     def root():
-        return redirect(url_for("customer.home"))
+        return redirect(url_for("info.index"))
 
     # --- 错误页：哪一端的 URL 出错，就用哪一端的皮肤 ---
     def _role_from_path() -> str | None:
@@ -88,6 +96,14 @@ def create_app(config_object: type = Config) -> Flask:
             if request.path.startswith(f"/{role}"):
                 return role
         return None
+
+    # 三端之外的地址（/、/info/...、/api/...）统一用官网的深色皮肤
+    def _site_error(code: int, title: str, message: str):
+        try:
+            return render_template("info/error.html", code=code,
+                                   title=title, message=message), code
+        except Exception:
+            return None
 
     @app.errorhandler(404)
     def not_found(error):
@@ -99,6 +115,12 @@ def create_app(config_object: type = Config) -> Flask:
                                        role=role), 404
             except Exception:
                 pass
+
+        branded = _site_error(404, "Nothing here.", "The page you asked for does not exist. "
+                              "It may have moved, or the link may be out of date.")
+        if branded:
+            return branded
+
         return ("<h1 style=\"font:600 20px system-ui;padding:48px\">404 — page not found</h1>"
                 "<p style=\"font:14px system-ui;padding:0 48px\">"
                 "The page you asked for does not exist.</p>"), 404
@@ -113,6 +135,12 @@ def create_app(config_object: type = Config) -> Flask:
                                        role=role), 500
             except Exception:
                 pass
+
+        branded = _site_error(500, "Something broke.", "We logged it on our side. "
+                              "Please try again in a moment.")
+        if branded:
+            return branded
+
         return ("<h1 style=\"font:600 20px system-ui;padding:48px\">500 — server error</h1>"
                 "<p style=\"font:14px system-ui;padding:0 48px\">"
                 "We have logged it. Please try again.</p>"), 500

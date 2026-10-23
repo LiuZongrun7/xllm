@@ -4,7 +4,8 @@
 
 Team **xLLM**: Fu Rao · Liu Jing · Liu Zongrun · Zhou Jiaxu
 
-Live deployment: **https://xllm.cloud**
+Live deployment: **https://xllm.cloud** — the root path opens the project site at
+**https://xllm.cloud/info/**, which links into all three interfaces.
 
 ---
 
@@ -50,7 +51,8 @@ server/            Flask application
 ├── shared/        models · order_flow · security · auth · mailer · health · seed
 ├── customer/      customer pages + /api/customer endpoints
 ├── merchant/      merchant pages + /api/merchant endpoints
-└── rider/         rider pages   + /api/rider endpoints
+├── rider/         rider pages   + /api/rider endpoints
+└── info/          the public project site    (/info) — no database, no session
 database/          schema.sql · ER diagrams
 docs/              reports, API contract, design docs, deployment guide
 deploy/            systemd unit
@@ -119,7 +121,8 @@ set -a; . ./.env; set +a
 
 | URL | Purpose |
 |---|---|
-| `/` | customer app (redirects to sign-in) |
+| `/` | **redirects to `/info/`** (the public site) |
+| `/info/` | public project site: what it is, demo entry points, lifecycle, design notes |
 | `/customer/` · `/merchant/` · `/rider/` | the three interfaces |
 | `/customer/design-system` · `/merchant/design-system` · `/rider/design-system` | design specimens |
 | `/api/ping` · `/api/db-ping` | liveness · database connectivity |
@@ -129,7 +132,7 @@ set -a; . ./.env; set +a
 `tools/smoke_test.py` rebuilds a throw-away database, seeds it, then plays customer → merchant →
 rider through the whole order lifecycle plus the failure paths (minimum order, sold-out dish,
 out-of-radius address, late cancellation, double review, atomic claim, GPS sanity, IDOR on all
-three roles, page rendering):
+three roles, page rendering, and the public site itself — 108 checks):
 
 ```bash
 cd server

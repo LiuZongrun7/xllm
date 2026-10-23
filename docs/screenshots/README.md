@@ -5,6 +5,8 @@
 
 | 文件 | 页面 | 视口 |
 |---|---|---|
+| `site-home.png` | 官网首页（`/info/`） | 1440×900 |
+| `site-mobile.png` | 官网首页（手机） | 430×900 |
 | `customer-home.png` | 顾客端首页 | 430×900 |
 | `customer-restaurant.png` | 餐厅菜单 | 430×900 |
 | `customer-checkout.png` | 结算页 | 430×900 |

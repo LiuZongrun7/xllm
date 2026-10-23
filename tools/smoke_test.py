@@ -354,6 +354,38 @@ def main() -> int:
     status, body = call(rider, "patch", "/api/rider/profile", {"vehicle_type": "boat"})
     check("invalid vehicle is rejected", status == 400, body)
 
+    print("\n=== public site (/info) ===")
+    landing = anon.get("/")
+    check("root redirects to the public site",
+          landing.status_code == 302 and landing.headers["Location"] == "/info/",
+          f"{landing.status_code} {landing.headers.get('Location')}")
+
+    info = anon.get("/info/")
+    info_html = info.get_data(as_text=True)
+    check("GET /info/ → 200", info.status_code == 200, info.status_code)
+    check("public site links all three apps",
+          all(path in info_html for path in ("/customer/login", "/merchant/login", "/rider/login")))
+    check("public site is self-contained (no external assets)",
+          "http://" not in info_html.replace("http://www.w3.org", "")
+          and "https://" not in info_html.replace("https://github.com", ""))
+
+    short = anon.get("/info")
+    check("GET /info redirects to /info/",
+          short.status_code in (301, 308), short.status_code)
+
+    demo = anon.get("/info/demo")
+    check("/info/demo points at the demo section",
+          demo.status_code == 302 and demo.headers["Location"].endswith("#demo"),
+          f"{demo.status_code} {demo.headers.get('Location')}")
+
+    css = anon.get("/info/static/css/info.css")
+    check("public site stylesheet is served", css.status_code == 200, css.status_code)
+
+    missing = anon.get("/no-such-page")
+    check("unknown paths get the branded 404",
+          missing.status_code == 404 and "Nothing here." in missing.get_data(as_text=True),
+          missing.status_code)
+
     print("\n=== pages render ===")
     pages = [
         (anon, "/customer/login", 200),

@@ -1,0 +1,349 @@
+{% extends "info/base.html" %}
+
+{% block content %}
+
+<!-- ======================================================================
+     HERO — 一句话 + 一张"订单时间轴"卡片
+     卡片不引用任何图片：整页官网除了三张截图，视觉全部由 CSS 画出来。
+     ====================================================================== -->
+<section class="i-hero">
+  <div class="i-wrap i-hero__grid">
+
+    <div class="i-hero__copy">
+      <p class="i-eyebrow">
+        <span class="i-pulse" aria-hidden="true"></span>
+        <span>{{ site.course }}</span>
+        <span class="i-eyebrow__term">· {{ site.term }}</span>
+      </p>
+
+      <h1 class="i-hero__title">
+        One order,<br>
+        three <em>points of view</em>.
+      </h1>
+
+      <p class="i-lede">
+        Customers order, kitchens cook, riders deliver — over a single order record.
+        The rules that decide what each side may do next live on the server,
+        not in the interface.
+      </p>
+
+      <div class="i-actions">
+        <a class="i-btn i-btn--primary" href="#demo">
+          Try the demo <span class="i-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="i-btn i-btn--ghost" href="{{ site.github }}" rel="noopener">Read the code</a>
+      </div>
+
+      <dl class="i-stats">
+        {% for value, label in stats %}
+        <div class="i-stats__item">
+          <dt class="i-stats__value">{{ value }}</dt>
+          <dd class="i-stats__label">{{ label }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </div>
+
+    <aside class="i-hero__panel">
+      <div class="i-ticket" role="img"
+           aria-label="Example order XL-2041 moving through placed, accepted, preparing, ready and on the way">
+        <div class="i-ticket__head">
+          <span class="i-ticket__no">ORDER XL-2041</span>
+          <span class="i-chip i-chip--live">On the way</span>
+        </div>
+
+        <ol class="i-track">
+          <li class="i-track__row is-done">
+            <time>19:42</time><span class="i-track__dot"></span>
+            <span class="i-track__label">Placed</span><span class="i-track__who">customer</span>
+          </li>
+          <li class="i-track__row is-done">
+            <time>19:44</time><span class="i-track__dot"></span>
+            <span class="i-track__label">Accepted</span><span class="i-track__who">kitchen</span>
+          </li>
+          <li class="i-track__row is-done">
+            <time>19:47</time><span class="i-track__dot"></span>
+            <span class="i-track__label">Preparing</span><span class="i-track__who">kitchen</span>
+          </li>
+          <li class="i-track__row is-done">
+            <time>20:01</time><span class="i-track__dot"></span>
+            <span class="i-track__label">Ready</span><span class="i-track__who">kitchen</span>
+          </li>
+          <li class="i-track__row is-now">
+            <time>20:06</time><span class="i-track__dot"></span>
+            <span class="i-track__label">On the way</span><span class="i-track__who">rider</span>
+          </li>
+          <li class="i-track__row">
+            <span>—</span><span class="i-track__dot"></span>
+            <span class="i-track__label">Delivered</span><span class="i-track__who">customer</span>
+          </li>
+        </ol>
+
+        <div class="i-ticket__foot">
+          <span>Golden Wok · 12 Riverside Lane</span>
+          <span class="i-ticket__sum">¥68.00</span>
+        </div>
+      </div>
+
+      <p class="i-capture">
+        <span class="i-capture__dot" aria-hidden="true"></span>
+        One row in <code>orders</code>. Three clients reading different columns of it.
+      </p>
+    </aside>
+
+  </div>
+</section>
+
+<!-- ======================================================================
+     01 — DEMO
+     ====================================================================== -->
+<section class="i-sec" id="demo">
+  <div class="i-wrap">
+    <header class="i-sec__head">
+      <p class="i-eyebrow">01 — Live demo</p>
+      <h2 class="i-sec__title">Three interfaces. Same order.</h2>
+      <p class="i-sec__lede">
+        Every account below uses the password <code>demo1234</code>. Open the customer and the
+        restaurant side by side, place an order, and watch it move through all three.
+      </p>
+    </header>
+
+    <div class="i-roles">
+      {% for role in roles %}
+      <article class="i-role" style="--tint: {{ role.tint }}">
+        <div class="i-role__media{% if role.orientation == 'desktop' %} i-role__media--desktop{% endif %}">
+          <div class="i-frame i-frame--{{ role.orientation }}">
+            {% if role.orientation == 'desktop' %}
+            <div class="i-frame__bar" aria-hidden="true">
+              <span></span><span></span><span></span>
+              <em>xllm.cloud/merchant/orders</em>
+            </div>
+            {% endif %}
+            <img src="{{ url_for('info.static', filename='img/' ~ role.image) }}"
+                 alt="{{ role.label }} interface: {{ role.headline }}"
+                 width="{{ role.width }}" height="{{ role.height }}"
+                 loading="lazy" decoding="async">
+          </div>
+        </div>
+
+        <div class="i-role__body">
+          <p class="i-role__kicker">
+            {{ role.label }} <span>{{ role.device }}</span>
+          </p>
+          <h3 class="i-role__title">{{ role.headline }}</h3>
+
+          <ul class="i-list">
+            {% for point in role.points %}
+            <li>{{ point }}</li>
+            {% endfor %}
+          </ul>
+
+          <div class="i-role__foot">
+            <a class="i-btn i-btn--tint" href="{{ url_for(role.endpoint) }}">{{ role.cta }}</a>
+            <p class="i-cred"><span>demo</span> {{ role.account }} / demo1234</p>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <p class="i-note">
+      Demo data only — payments are simulated and nothing is actually delivered.
+      The restaurant <code>greenbowl</code> is deliberately paused, which is handy for showing
+      what checkout does when a store cannot take the order.
+    </p>
+  </div>
+</section>
+
+<!-- ======================================================================
+     02 — FEATURES
+     ====================================================================== -->
+<section class="i-sec" id="features">
+  <div class="i-wrap">
+    <header class="i-sec__head">
+      <p class="i-eyebrow">02 — What it does</p>
+      <h2 class="i-sec__title">The interesting parts are the rules.</h2>
+      <p class="i-sec__lede">
+        Any interface can render a list of orders. The work is in what happens when two people
+        act at once, when a store is closed, or when someone asks for an order that is not theirs.
+      </p>
+    </header>
+
+    <div class="i-grid i-grid--3">
+      {% for title, body in features %}
+      <article class="i-cell">
+        <span class="i-cell__no">{{ '%02d'|format(loop.index) }}</span>
+        <h3 class="i-cell__title">{{ title }}</h3>
+        <p class="i-cell__body">{{ body }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     03 — LIFECYCLE
+     ====================================================================== -->
+<section class="i-sec" id="lifecycle">
+  <div class="i-wrap">
+    <header class="i-sec__head">
+      <p class="i-eyebrow">03 — The lifecycle</p>
+      <h2 class="i-sec__title">Seven states, one transition table.</h2>
+      <p class="i-sec__lede">
+        Every status change goes through a single function that checks who is asking, what the
+        current state is, and what should be recorded. The interface can only offer the moves the
+        server will accept.
+      </p>
+    </header>
+
+    <ol class="i-flow">
+      {% for label, note in flow[:6] %}
+      <li class="i-flow__step">
+        <span class="i-flow__no">{{ '%02d'|format(loop.index) }}</span>
+        <h3 class="i-flow__label">{{ label }}</h3>
+        <p class="i-flow__note">{{ note }}</p>
+      </li>
+      {% endfor %}
+    </ol>
+
+    <div class="i-branch">
+      <span class="i-branch__tag">Side exit</span>
+      <h3 class="i-branch__label">{{ flow[6][0] }}</h3>
+      <p class="i-branch__note">{{ flow[6][1] }}</p>
+    </div>
+
+    <div class="i-grid i-grid--2 i-grid--rules">
+      {% for title, body in guardrails %}
+      <article class="i-cell i-cell--tight">
+        <h3 class="i-cell__title">{{ title }}</h3>
+        <p class="i-cell__body">{{ body }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     04 — UNDER THE HOOD
+     ====================================================================== -->
+<section class="i-sec" id="stack">
+  <div class="i-wrap">
+    <header class="i-sec__head">
+      <p class="i-eyebrow">04 — Under the hood</p>
+      <h2 class="i-sec__title">One folder per role, one shared core.</h2>
+      <p class="i-sec__lede">
+        The directory tree is the division of work. Each role owns its routes, templates and
+        stylesheet, and shares only the data model, the state machine and the API contract.
+      </p>
+    </header>
+
+    <div class="i-split">
+      <pre class="i-tree" aria-label="Repository layout"><span class="i-tree__c"># the tree is the division of work</span>
+server/
+├── app.py          <span class="i-tree__note">application factory</span>
+├── info/           <span class="i-tree__note">this site — no db, no session</span>
+├── shared/         <span class="i-tree__note">models · state machine · auth · seed</span>
+├── customer/       <span class="i-tree__note">pages + /api/customer</span>
+├── merchant/       <span class="i-tree__note">pages + /api/merchant</span>
+└── rider/          <span class="i-tree__note">pages + /api/rider</span>
+
+database/           <span class="i-tree__note">schema.sql · ER diagram</span>
+deploy/             <span class="i-tree__note">systemd unit · nginx config</span>
+tools/              <span class="i-tree__note">smoke_test.py · migrate.py</span>
+docs/               <span class="i-tree__note">reports · API contract · design</span></pre>
+
+      <div class="i-stack">
+        {% for group, items in stack %}
+        <div class="i-stack__group">
+          <h3 class="i-stack__name">{{ group }}</h3>
+          <ul class="i-chips">
+            {% for item in items %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <p class="i-note">
+      One command runs the whole test suite — <code>tools/smoke_test.py</code> exercises
+      authentication, ordering rules, illegal transitions, cross-role reads and the rider race
+      against a real database, on SQLite and on MySQL 8.
+    </p>
+  </div>
+</section>
+
+<!-- ======================================================================
+     05 — DESIGN
+     ====================================================================== -->
+<section class="i-sec" id="design">
+  <div class="i-wrap">
+    <header class="i-sec__head">
+      <p class="i-eyebrow">05 — Design</p>
+      <h2 class="i-sec__title">Three people, three interfaces.</h2>
+      <p class="i-sec__lede">
+        A customer on a phone in the rain, a kitchen manager on a desktop with a queue waiting,
+        and a rider with gloves on. They are not the same person, so they do not get the same
+        screen — each side has its own typography, palette and control sizes.
+      </p>
+    </header>
+
+    <div class="i-designs">
+      {% for d in designs %}
+      <article class="i-design">
+        <div class="i-design__swatch" aria-hidden="true">
+          {% for colour in d.swatches %}
+          <span style="background: {{ colour }}"></span>
+          {% endfor %}
+        </div>
+        <h3 class="i-design__name">{{ d.name }}</h3>
+        <p class="i-design__note">{{ d.note }}</p>
+        <p class="i-design__detail">{{ d.detail }}</p>
+      </article>
+      {% endfor %}
+    </div>
+
+    <p class="i-note">
+      What the three share is vocabulary, not pixels: the same seven status names, the same
+      currency and time formats, the same API. This page is a fourth design system, on purpose.
+    </p>
+  </div>
+</section>
+
+<!-- ======================================================================
+     06 — TEAM
+     ====================================================================== -->
+<section class="i-sec" id="team">
+  <div class="i-wrap">
+    <header class="i-sec__head">
+      <p class="i-eyebrow">06 — Team</p>
+      <h2 class="i-sec__title">Team xLLM.</h2>
+      <p class="i-sec__lede">
+        {{ site.course }}, {{ site.term }} — {{ site.topic }}.
+      </p>
+    </header>
+
+    <div class="i-team">
+      {% for name, area in team %}
+      <div class="i-team__member">
+        <span class="i-team__initials" aria-hidden="true">{{ name[0] }}{{ name.split()[-1][0] }}</span>
+        <p class="i-team__name">{{ name }}</p>
+        <p class="i-team__area">{{ area }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="i-cta">
+      <div>
+        <h3 class="i-cta__title">Start with the customer app.</h3>
+        <p class="i-cta__sub">Log in as <code>alex</code> / <code>demo1234</code> and order something.</p>
+      </div>
+      <div class="i-cta__actions">
+        <a class="i-btn i-btn--primary" href="{{ url_for('customer.login_page') }}">Customer app</a>
+        <a class="i-btn i-btn--ghost" href="{{ site.github }}" rel="noopener">GitHub</a>
+        <a class="i-btn i-btn--ghost" href="mailto:{{ site.email }}">Contact</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
