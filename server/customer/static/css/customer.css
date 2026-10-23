@@ -533,6 +533,8 @@ body.c-body {
 }
 /* 实拍图铺满缩略图；没有图时 .c-thumb 里的 emoji 照旧居中 */
 .c-thumb .c-photo {
+  opacity: 0;
+  transition: opacity .18s ease;
   /* ⚠️ 不要给 z-index：加了会在父级堆叠上下文里盖住菜品行右下角那个“+”，
      结果就是有图的菜点不了加购。这里靠 position:relative + DOM 顺序压住兜底 emoji 就够了。 */
   position: relative;
@@ -541,6 +543,7 @@ body.c-body {
   object-fit: cover;
   display: block;
 }
+.c-thumb .c-photo.is-loaded { opacity: 1; }
 .c-thumb--lg { width: 92px; height: 92px; font-size: 38px; }
 .c-thumb--md { width: 56px; height: 56px; font-size: 26px; border-radius: 10px; }
 .c-thumb--sm { width: 44px; height: 44px; font-size: 20px; border-radius: 9px; }

@@ -171,7 +171,7 @@
       return '<span class="m-dish__emoji m-dish__emoji--photo" aria-hidden="true">' +
         '<span class="m-dish__em">' + esc(emoji || '\ud83c\udf7d\ufe0f') + '</span>' +
         '<img src="' + esc(imageUrl) + '" alt="" loading="lazy" decoding="async" ' +
-        'onerror="this.remove()"></span>';
+        'onload="this.classList.add(\'is-loaded\')" onerror="this.remove()"></span>';
     }
     const hue = hueFor(name || 'dish');
     const bg = 'linear-gradient(135deg,hsl(' + hue + ' 72% 93%),hsl(' +

@@ -81,7 +81,8 @@
        不会出现浏览器那种碎图图标。 */
     return '<span class="c-em" aria-hidden="true">' + fallback + '</span>' +
       '<img class="c-photo" src="' + esc(imageUrl) + '" alt="" loading="lazy" ' +
-      'decoding="async" onerror="this.remove()">';
+      'decoding="async" onload="this.classList.add(\'is-loaded\')" ' +
+      'onerror="this.remove()">';
   }
 
   function esc(value) {
