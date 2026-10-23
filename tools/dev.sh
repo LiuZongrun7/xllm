@@ -32,6 +32,7 @@ if [ "${1:-}" = "--reset" ] || [ ! -f "$DB" ]; then
 fi
 
 echo "[dev] http://127.0.0.1:$PORT"
+echo "[dev]   site      /info/       (the root / redirects here)"
 echo "[dev]   customer  /customer/   alex        / demo1234"
 echo "[dev]   merchant  /merchant/   goldenwok   / demo1234"
 echo "[dev]   rider     /rider/      chen        / demo1234"
