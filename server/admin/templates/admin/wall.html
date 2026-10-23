@@ -1,0 +1,261 @@
+{% extends "admin/base.html" %}
+{% block title %}Operations wall · xLLM{% endblock %}
+
+{% block layout %}
+<header class="a-top">
+  <a class="a-logo" href="{{ url_for('admin.wall') }}">xLLM<span>.</span><span class="a-logo__sub">OPS</span></a>
+
+  <span class="a-top__divider" aria-hidden="true"></span>
+
+  <div>
+    <span class="a-top__eyebrow">Platform operations</span>
+    <span class="a-top__sub">Every order, kitchen and rider — live and read-only</span>
+  </div>
+
+  <span class="a-top__spacer"></span>
+
+  <div class="a-window" role="group" aria-label="Time window">
+    <button class="a-window__btn is-active" type="button" data-window="today">Today</button>
+    <button class="a-window__btn" type="button" data-window="24h">24h</button>
+    <button class="a-window__btn" type="button" data-window="7d">7d</button>
+  </div>
+
+  <div class="a-clock">
+    <span class="a-clock__time" id="clock-time">--:--:--</span>
+    <span class="a-clock__date" id="clock-date">—</span>
+  </div>
+
+  <div class="a-live" id="live-pill" data-state="live" title="Auto-refresh every 10 seconds. Click to pause.">
+    <span class="a-live__dot" aria-hidden="true"></span>
+    <span id="live-label">Live 10s</span>
+  </div>
+
+  <button class="a-icon-btn" id="refresh-btn" type="button" title="Refresh now" aria-label="Refresh now">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+  </button>
+
+  <button class="a-icon-btn" id="fullscreen-btn" type="button" title="Fullscreen" aria-label="Fullscreen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 15v5h-5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/></svg>
+  </button>
+
+  <form method="post" action="{{ url_for('admin.logout') }}">
+    <button class="a-ghost-btn" type="submit">Sign out</button>
+  </form>
+</header>
+
+<main class="a-main">
+  <!-- ── KPI 条：窗口内经营指标 + 此刻的现场压力 ── -->
+  <section class="a-kpis" aria-label="Key numbers">
+    <article class="a-kpi" data-accent="mint">
+      <div class="a-kpi__label">Orders <span data-window-tag>today</span></div>
+      <div class="a-kpi__value" id="kpi-orders">—</div>
+      <div class="a-kpi__foot">
+        <span class="a-chip" data-tone="flat" id="kpi-orders-delta">—</span>
+        <span class="a-kpi__note" id="kpi-orders-note">vs previous period</span>
+      </div>
+    </article>
+
+    <article class="a-kpi" data-accent="blue">
+      <div class="a-kpi__label">Gross value</div>
+      <div class="a-kpi__value" id="kpi-gross">—</div>
+      <div class="a-kpi__foot">
+        <span class="a-chip" data-tone="flat" id="kpi-gross-delta">—</span>
+        <span class="a-kpi__note" id="kpi-gross-note">avg basket —</span>
+      </div>
+    </article>
+
+    <article class="a-kpi" data-accent="amber">
+      <div class="a-kpi__label">In progress</div>
+      <div class="a-kpi__value" id="kpi-active">—</div>
+      <div class="a-kpi__foot">
+        <span class="a-kpi__note" id="kpi-active-note">live right now</span>
+      </div>
+    </article>
+
+    <article class="a-kpi" data-accent="mint">
+      <div class="a-kpi__label">Delivered</div>
+      <div class="a-kpi__value" id="kpi-delivered">—</div>
+      <div class="a-kpi__foot">
+        <span class="a-kpi__note" id="kpi-delivered-note">completion —</span>
+      </div>
+    </article>
+
+    <article class="a-kpi" data-accent="red">
+      <div class="a-kpi__label">Cancel rate</div>
+      <div class="a-kpi__value" id="kpi-cancel">—</div>
+      <div class="a-kpi__foot">
+        <span class="a-kpi__note" id="kpi-cancel-note">— cancelled</span>
+      </div>
+    </article>
+
+    <article class="a-kpi" data-accent="violet">
+      <div class="a-kpi__label">Avg delivery</div>
+      <div class="a-kpi__value" id="kpi-delivery">—</div>
+      <div class="a-kpi__foot">
+        <span class="a-kpi__note" id="kpi-delivery-note">kitchen — min</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ── 主栅格 ── -->
+  <section class="a-board">
+
+    <article class="a-card a-card--trend">
+      <div class="a-card__head">
+        <span class="a-card__title">Demand</span>
+        <div class="a-card__meta">
+          <span class="a-legend">
+            <span class="a-legend__item a-legend__item--orders"><i class="a-legend__swatch"></i>Orders</span>
+            <span class="a-legend__item a-legend__item--revenue"><i class="a-legend__swatch"></i>Revenue ¥</span>
+          </span>
+          <span id="trend-peak">—</span>
+        </div>
+      </div>
+      <div class="a-card__body">
+        <div class="a-chart-wrap" id="trend-wrap">
+          <svg class="a-chart" id="trend-chart" role="img" aria-label="Orders and revenue over time"></svg>
+          <div class="a-tip" id="trend-tip"></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="a-card a-card--feed">
+      <div class="a-card__head">
+        <span class="a-card__title">Live orders</span>
+        <div class="a-card__meta">
+          <span id="feed-meta">waiting for data…</span>
+        </div>
+      </div>
+      <div class="a-card__body" id="feed-body">
+        <div class="a-feed" id="feed"></div>
+      </div>
+    </article>
+
+    <article class="a-card a-card--mix">
+      <div class="a-card__head">
+        <span class="a-card__title">Status mix</span>
+        <div class="a-card__meta"><span id="mix-meta">—</span></div>
+      </div>
+      <div class="a-card__body">
+        <div class="a-mix__bar" id="mix-bar"></div>
+        <div class="a-mix__list" id="mix-list"></div>
+      </div>
+    </article>
+
+    <article class="a-card a-card--alerts">
+      <div class="a-card__head">
+        <span class="a-card__title">Needs attention</span>
+        <div class="a-card__meta"><span id="alerts-meta">—</span></div>
+      </div>
+      <div class="a-card__body">
+        <div class="a-alerts" id="alerts"></div>
+      </div>
+    </article>
+
+    <article class="a-card a-card--stores">
+      <div class="a-card__head">
+        <span class="a-card__title">Kitchens</span>
+        <div class="a-card__meta"><span id="stores-meta">—</span></div>
+      </div>
+      <div class="a-card__body a-card__body--flush">
+        <table class="a-table" id="stores-table">
+          <thead>
+            <tr>
+              <th>Restaurant</th>
+              <th>State</th>
+              <th>Load</th>
+              <th>Queue</th>
+              <th>Orders</th>
+              <th>Revenue</th>
+              <th>Rating</th>
+              <th>Cancel</th>
+            </tr>
+          </thead>
+          <tbody id="stores-body"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="a-card a-card--riders">
+      <div class="a-card__head">
+        <span class="a-card__title">Rider fleet</span>
+        <div class="a-card__meta"><span id="riders-meta">—</span></div>
+      </div>
+      <div class="a-card__body a-card__body--flush">
+        <table class="a-table" id="riders-table">
+          <thead>
+            <tr>
+              <th>Rider</th>
+              <th>On shift</th>
+              <th>In hand</th>
+              <th>Done</th>
+              <th>Avg trip</th>
+              <th>On time</th>
+              <th>Signal</th>
+            </tr>
+          </thead>
+          <tbody id="riders-body"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="a-card a-card--top">
+      <div class="a-card__head">
+        <span class="a-card__title">Top dishes</span>
+        <div class="a-card__meta"><span id="top-meta">—</span></div>
+      </div>
+      <div class="a-card__body">
+        <div class="a-top-list" id="top-items"></div>
+      </div>
+    </article>
+
+  </section>
+
+  <footer class="a-foot">
+    <span>Read-only console</span>
+    <span class="a-foot__dot" aria-hidden="true"></span>
+    <span id="foot-engine">engine —</span>
+    <span class="a-foot__dot" aria-hidden="true"></span>
+    <span id="foot-orders">orders —</span>
+    <span class="a-foot__spacer"></span>
+    <span id="foot-updated">not loaded yet</span>
+    <span class="a-foot__dot" aria-hidden="true"></span>
+    <span>signed in as {{ signed_in_as }}</span>
+  </footer>
+</main>
+
+<!-- ── 订单抽屉 ── -->
+<div class="a-scrim" id="scrim" hidden></div>
+<aside class="a-drawer" id="drawer" aria-hidden="true" aria-label="Order detail">
+  <div class="a-drawer__head">
+    <div>
+      <div class="a-drawer__no" id="drawer-no">Order</div>
+      <div class="a-drawer__sub" id="drawer-sub">Loading…</div>
+    </div>
+    <button class="a-icon-btn a-drawer__close" id="drawer-close" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="a-drawer__body" id="drawer-body"></div>
+  <div class="a-drawer__foot">
+    <button class="a-ghost-btn" id="drawer-refresh" type="button">Refresh</button>
+    <button class="a-btn" id="drawer-done" type="button" style="width:auto;margin-left:auto;padding:7px 16px;">Close</button>
+  </div>
+</aside>
+
+<div class="a-toast" id="toast" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var overview = "{{ url_for('admin_api.overview') }}";
+    window.XLLM_ADMIN = {
+      overview: overview,
+      order: overview.replace(/\/overview$/, "/orders/"),
+      login: "{{ url_for('admin.login') }}"
+    };
+  })();
+</script>
+<script src="{{ url_for('admin.static', filename='js/admin.js') }}"></script>
+{% endblock %}

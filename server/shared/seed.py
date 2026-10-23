@@ -398,6 +398,29 @@ def seed(reset: bool = False) -> None:
            [(noodle_menu[1], 1), (noodle_menu[6], 2)],
            "cancelled", now - timedelta(hours=9))
 
+    # ---- 最近两天的用餐高峰 ----
+    # 管理大屏的默认窗口是「今天」和「最近 24 小时」。如果这两天只有几笔散单，
+    # 趋势图会是一条直线，看不出这块墙到底在盯什么节奏。这里按真实作息铺单：
+    #   · 只生成"时间已经过去"的时段，绝不制造"未来已送达"的假数据
+    #   · 午市 11:25–13:15、晚市 18:20–20:35，两家店各自独立掷骰子
+    for day_offset in (0, 1):
+        for hour, minute in ((11, 25), (12, 10), (12, 45), (13, 15),
+                             (18, 20), (19, 5), (19, 50), (20, 35)):
+            created = (now - timedelta(days=day_offset)).replace(
+                hour=hour, minute=minute, second=0, microsecond=0)
+            if now - created < timedelta(minutes=60):
+                continue
+            for restaurant, menu in ((golden, golden_menu),
+                                     (noodle, noodle_menu),
+                                     (sushi, sushi_menu)):
+                for _ in range(random.choice((1, 1, 2))):
+                    picks = random.sample(menu, k=min(2, len(menu)))
+                    lines = [(item, random.randint(1, 2)) for item in picks]
+                    _order(random.choice((alex, mia)), restaurant, address_alex, lines,
+                           "delivered", created,
+                           rider=random.choice((chen, zhao, liu)),
+                           rating=random.choice((4, 4, 5, 5, 3)))
+
     # ---- 过去 14 天的历史单：商家端"营业分析"要有曲线 ----
     all_menus = [golden_menu, noodle_menu, sushi_menu]
     for day in range(1, 15):

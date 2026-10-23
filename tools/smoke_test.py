@@ -386,6 +386,83 @@ def main() -> int:
           missing.status_code == 404 and "Nothing here." in missing.get_data(as_text=True),
           missing.status_code)
 
+    print("\n=== operations console (/admin) ===")
+    ops = app.test_client()
+
+    status, _ = call(ops, "get", "/api/admin/overview")
+    check("anonymous overview is refused", status == 401, status)
+
+    check("anonymous /admin/ redirects to the login page",
+          ops.get("/admin/").status_code == 302,
+          ops.get("/admin/").status_code)
+
+    bad = ops.post("/admin/login", data={"username": "admin", "password": "not-the-password"})
+    check("console rejects a wrong passphrase",
+          bad.status_code == 401 and b"Wrong username" in bad.data, bad.status_code)
+
+    good = ops.post(
+        "/admin/login",
+        data={"username": app.config["ADMIN_USER"],
+              "password": app.config["ADMIN_PASSWORD"]},
+        follow_redirects=False,
+    )
+    check("console login redirects back to the wall", good.status_code == 302, good.status_code)
+
+    status, body = call(ops, "get", "/api/admin/overview")
+    overview = body.get("data", {})
+    check("overview returns the wall payload",
+          status == 200 and body.get("ok") is True
+          and {"kpis", "trend", "status_mix", "restaurants", "riders",
+               "alerts", "live", "top_items"} <= set(overview),
+          status)
+
+    kpis = overview.get("kpis", {})
+    check("overview KPIs are numbers",
+          all(isinstance(kpis.get(key), (int, float))
+              for key in ("orders", "gross", "active", "delivered",
+                          "cancel_rate", "avg_delivery_minutes", "online_riders")),
+          kpis)
+
+    check("trend buckets line up with the window",
+          len(overview.get("trend", [])) in (7, 24),
+          len(overview.get("trend", [])))
+
+    week = call(ops, "get", "/api/admin/overview?window=7d")[1].get("data", {})
+    check("window switch changes the trend", len(week.get("trend", [])) == 7,
+          len(week.get("trend", [])))
+
+    fallback = call(ops, "get", "/api/admin/overview?window=nonsense")[1].get("data", {})
+    check("unknown window falls back to today",
+          fallback.get("window", {}).get("key") == "today", fallback.get("window"))
+
+    status, body = call(ops, "get", f"/api/admin/orders/{order_id}")
+    detail = body.get("data", {})
+    check("order drawer endpoint returns the timeline",
+          status == 200 and len(detail.get("timeline", [])) >= 1
+          and detail.get("minutes") is not None,
+          status)
+
+    status, _ = call(ops, "get", "/api/admin/orders/999999")
+    check("a missing order is a 404, not a 500", status == 404, status)
+
+    check("the wall renders for a signed-in operator",
+          ops.get("/admin/").status_code == 200,
+          ops.get("/admin/").status_code)
+
+    # 大屏的会话与三端并存：同一个浏览器里商家仍然登录着，大屏也能开
+    call(ops, "post", "/api/auth/login",
+         {"account": "goldenwok", "password": PASSWORD})
+    ops.post("/admin/login",
+             data={"username": app.config["ADMIN_USER"],
+                   "password": app.config["ADMIN_PASSWORD"]})
+    both = (call(ops, "get", "/api/merchant/store")[0],
+            call(ops, "get", "/api/admin/overview")[0])
+    ops.post("/admin/logout")
+    after = (call(ops, "get", "/api/merchant/store")[0],
+             call(ops, "get", "/api/admin/overview")[0])
+    check("console session coexists with the marketplace session",
+          both == (200, 200) and after == (200, 401), f"{both} → {after}")
+
     print("\n=== pages render ===")
     pages = [
         (anon, "/customer/login", 200),

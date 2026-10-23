@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block title %}xLLM Operations{% endblock %}</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+<link rel="stylesheet" href="{{ url_for('admin.static', filename='css/admin.css') }}">
+</head>
+<body class="a-page" data-page="{{ page|default('') }}"{% block body_attrs %}{% endblock %}>
+{% block layout %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

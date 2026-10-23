@@ -77,6 +77,11 @@ See [`docs/设计语言.md`](docs/设计语言.md) and the live specimens:
 - https://xllm.cloud/merchant/design-system
 - https://xllm.cloud/rider/design-system
 
+There is also a fourth, equally separate surface: the **operations wall** at `/admin/` —
+a dark, read-only console for platform staff (no marketplace account, no `users` row, no write
+endpoint). It shares only `reset.css` and the status vocabulary with the three apps.
+Details: [`docs/管理大屏.md`](docs/管理大屏.md).
+
 ## Screenshots
 
 The three interfaces, captured from the running application (see
@@ -118,12 +123,14 @@ set -a; . ./.env; set +a
 | Customer | `alex` | `mia` |
 | Merchant | `goldenwok` | `noodlebar`, `sakura`, `greenbowl` (paused) |
 | Rider | `chen` | `zhao`, `liu` |
+| Operations console | `admin` | set `ADMIN_PASSWORD` in `.env` to replace the demo passphrase |
 
 | URL | Purpose |
 |---|---|
 | `/` | **redirects to `/info/`** (the public site) |
 | `/info/` | public project site: what it is, demo entry points, lifecycle, design notes |
 | `/customer/` · `/merchant/` · `/rider/` | the three interfaces |
+| `/admin/` | operations wall — KPI, live orders, kitchen load, rider fleet, alerts (read-only) |
 | `/customer/design-system` · `/merchant/design-system` · `/rider/design-system` | design specimens |
 | `/api/ping` · `/api/db-ping` | liveness · database connectivity |
 
@@ -132,7 +139,7 @@ set -a; . ./.env; set +a
 `tools/smoke_test.py` rebuilds a throw-away database, seeds it, then plays customer → merchant →
 rider through the whole order lifecycle plus the failure paths (minimum order, sold-out dish,
 out-of-radius address, late cancellation, double review, atomic claim, GPS sanity, IDOR on all
-three roles, page rendering, and the public site itself — 108 checks):
+three roles, page rendering, the public site, and the operations console — 121 checks):
 
 ```bash
 cd server

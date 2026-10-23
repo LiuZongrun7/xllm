@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ code }} · xLLM Operations{% endblock %}
+{% block body_attrs %} data-page="error"{% endblock %}
+
+{% block layout %}
+<div class="a-errpage">
+  <div>
+    <div class="a-errpage__code">{{ code }}</div>
+    <p class="a-errpage__msg">{{ message }}</p>
+    <a class="a-ghost-btn" href="{{ url_for('admin.wall') }}" style="display:inline-block;">Back to the wall</a>
+    <a class="a-ghost-btn" href="{{ url_for('admin.login') }}" style="display:inline-block;">Sign in</a>
+  </div>
+</div>
+{% endblock %}

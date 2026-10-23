@@ -12,6 +12,7 @@ Flask 后端入口（应用工厂模式）
     customer/   A —— 顾客端页面 + 顾客侧接口
     merchant/   B —— 商家端页面 + 商家侧接口
     rider/      C —— 骑手端页面 + 骑手侧接口
+    admin/      E —— 管理大屏（只读，平台运营视角）
     info/       ——  公开官网（/info），不读数据库、不需要登录
     static/     全站唯一共享的前端资源（只有 reset.css）
 
@@ -48,6 +49,7 @@ from customer.routes import api as customer_api, pages as customer_pages
 from merchant.routes import api as merchant_api, pages as merchant_pages
 from rider.routes import api as rider_api, pages as rider_pages
 from info.routes import pages as info_pages
+from admin.routes import api as admin_api, pages as admin_pages
 
 from shared import models  # noqa: F401  —— 必须 import，SQLAlchemy 才知道有哪些表
 
@@ -83,6 +85,10 @@ def create_app(config_object: type = Config) -> Flask:
     app.register_blueprint(rider_pages)
     app.register_blueprint(rider_api)
 
+    # --- 管理大屏：只读的运营视角，与三端的登录互不影响 ---
+    app.register_blueprint(admin_pages)
+    app.register_blueprint(admin_api)
+
     # --- 根路径：官网是"门面"，三端从官网的演示入口进 ---
     # 用 302 而不是 301：这是课程演示站，入口随时可能调整，
     # 而且 301 会被浏览器长期缓存，改回来很麻烦。
@@ -92,7 +98,7 @@ def create_app(config_object: type = Config) -> Flask:
 
     # --- 错误页：哪一端的 URL 出错，就用哪一端的皮肤 ---
     def _role_from_path() -> str | None:
-        for role in ("customer", "merchant", "rider"):
+        for role in ("customer", "merchant", "rider", "admin"):
             if request.path.startswith(f"/{role}"):
                 return role
         return None

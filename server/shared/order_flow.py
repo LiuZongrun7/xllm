@@ -213,17 +213,22 @@ def prep_load(restaurant_id: int) -> int:
     ).count()
 
 
-def restaurant_state(restaurant: Restaurant, now: datetime | None = None) -> dict:
+def restaurant_state(restaurant: Restaurant, now: datetime | None = None,
+                     load: int | None = None) -> dict:
     """顾客端看到的"这家店现在能不能下单"。
 
     三种不能下单的原因必须区分开，因为顾客能做的动作不同：
         paused → 店家手动打烊（等一会儿再来）
         hours  → 不在营业时段（显示几点开门）
         full   → 备餐产能满（店家忙不过来）
+
+    load 可由调用方传入（例如管理大屏一次查完所有门店的负载），
+    不传就退回单店查询 —— 单店页面不需要关心这件事。
     """
     now = now or datetime.now()
     hours = hours_state(restaurant, now)
-    load = prep_load(restaurant.id)
+    if load is None:
+        load = prep_load(restaurant.id)
     capacity = restaurant.max_concurrent_orders or 20
 
     if not restaurant.is_open:

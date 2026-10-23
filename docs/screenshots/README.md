@@ -26,6 +26,9 @@
 | `rider-history.png` | 配送历史 | 430×900 |
 | `rider-settings.png` | 骑手设置 | 430×900 |
 | `rider-login.png` | 骑手登录 | 430×900 |
+| `admin-wall.png` | 管理大屏（今日） | 1920×1080 |
+| `admin-order.png` | 大屏订单抽屉 | 1920×1080 |
+| `admin-login.png` | 运营控制台登录 | 1440×900 |
 
 ## 怎么重新截
 

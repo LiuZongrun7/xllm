@@ -76,6 +76,18 @@ class Config:
     AMAP_SECURITY_CODE = os.environ.get("AMAP_SECURITY_JS_CODE", "")
     AMAP_WEB_KEY = os.environ.get("AMAP_WEB_KEY", "")
 
+    # ---------------- 管理大屏（/admin） ----------------
+    # 运营账号不属于 users 表里的任何一种角色，所以它没有数据库记录，
+    # 只有这一对凭据 —— 见 server/admin/routes.py 顶部说明。
+    #
+    # ADMIN_PASSWORD 的默认值是演示口令，与三个演示账号一致，
+    # 这样答辩时不用先配环境变量也能打开大屏；正式环境请务必覆盖：
+    #     ADMIN_PASSWORD='...'  写进服务器 .env
+    # 只要密码不是默认值，登录页上的演示提示会自动消失。
+    ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+    ADMIN_DEMO_PASSWORD = "demo1234"
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD") or ADMIN_DEMO_PASSWORD
+
     # ---------------- 会话 ----------------
     # 线上全站 HTTPS，所以 cookie 应当只走加密通道。
     # 本地用 http://127.0.0.1 调试时设成 0，否则浏览器不会带上 cookie。

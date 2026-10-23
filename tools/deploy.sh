@@ -60,4 +60,6 @@ curl -s -o /dev/null -w '  /api/db-ping     %{http_code}\n' https://xllm.cloud/a
 curl -s -o /dev/null -w '  /customer/       %{http_code}\n' https://xllm.cloud/customer/
 curl -s -o /dev/null -w '  /merchant/login  %{http_code}\n' https://xllm.cloud/merchant/login
 curl -s -o /dev/null -w '  /rider/login     %{http_code}\n' https://xllm.cloud/rider/login
+curl -s -o /dev/null -w '  /admin/login     %{http_code}\n' https://xllm.cloud/admin/login
+curl -s -o /dev/null -w '  /admin/ (→ login) %{http_code}\n' https://xllm.cloud/admin/
 echo "[deploy] done"

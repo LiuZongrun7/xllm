@@ -1,0 +1,69 @@
+{% extends "admin/base.html" %}
+{% block title %}Sign in · xLLM Operations{% endblock %}
+{% block body_attrs %} data-page="login"{% endblock %}
+
+{% block layout %}
+<div class="a-login">
+  <div class="a-login__glow" aria-hidden="true"></div>
+
+  <div class="a-login__card">
+    <div class="a-login__brand">
+      <span class="a-logo">xLLM<span>.</span></span>
+      <span class="a-logo__sub">OPS</span>
+    </div>
+
+    <h1 class="a-login__title">Operations console</h1>
+    <p class="a-login__lede">One wall for every order, kitchen and rider on the platform. Read-only.</p>
+
+    {% if error %}
+    <div class="a-error" role="alert">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 16.5v.5"/></svg>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('admin.login_post') }}" autocomplete="off">
+      <input type="hidden" name="next" value="{{ request.args.get('next', '/admin/') }}">
+
+      <div class="a-field">
+        <label class="a-field__label" for="username">Operator</label>
+        <input class="a-input" id="username" name="username" type="text"
+               autocomplete="username" spellcheck="false" autofocus
+               placeholder="admin">
+      </div>
+
+      <div class="a-field">
+        <label class="a-field__label" for="password">Passphrase</label>
+        <input class="a-input" id="password" name="password" type="password"
+               autocomplete="current-password" placeholder="••••••••">
+      </div>
+
+      <button class="a-btn" type="submit">
+        Unlock the wall
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+    </form>
+
+    {% if demo_hint %}
+    <div class="a-login__hint">
+      Demo build — sign in with <code>admin</code> / <code>demo1234</code>.
+      Set <code>ADMIN_PASSWORD</code> in <code>.env</code> to replace it (this hint disappears).
+    </div>
+    {% endif %}
+
+    {% if marketplace_user %}
+    <div class="a-note">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4"/><path d="M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+      Marketplace session detected: <a href="/{{ 'merchant' if marketplace_user.role == 'restaurant' else marketplace_user.role }}/">{{ marketplace_user.name }}</a>.
+      The console has its own session — signing in here will not sign you out there.
+    </div>
+    {% endif %}
+
+    <div class="a-login__links">
+      <a href="/customer/">Customer →</a>
+      <a href="/merchant/">Merchant →</a>
+      <a href="/rider/">Rider →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

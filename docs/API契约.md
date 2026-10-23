@@ -10,7 +10,7 @@ xLLM · COMP3019J Final Project · Food Delivery Website
 | 项 | 约定 |
 |---|---|
 | 前缀 | `/api`，nginx **保留**前缀转发（`proxy_pass` 结尾不带斜杠） |
-| 分组 | `/api/auth/**`、`/api/customer/**`、`/api/merchant/**`、`/api/rider/**` |
+| 分组 | `/api/auth/**`、`/api/customer/**`、`/api/merchant/**`、`/api/rider/**`、`/api/admin/**` |
 | 认证 | Flask session（签名 cookie），登录后自动携带，前端无需 token |
 | 请求体 | `application/json` |
 | 成功 | `{"ok": true, "data": {...}}`（部分接口额外带 `message`） |
@@ -226,7 +226,22 @@ UPDATE orders SET rider_id = :me
 
 ---
 
-## 六、健康检查 `/api`
+## 六、管理大屏 `/api/admin`
+
+只读的运营视角，**没有写接口**。详见 [`管理大屏.md`](管理大屏.md)。
+
+| 路径 | 用途 | 未登录 |
+|---|---|---|
+| `GET /api/admin/overview?window=today\|24h\|7d` | 整屏数据（KPI / 趋势 / 状态分布 / 门店 / 骑手 / 告警 / 实时流水） | 401 |
+| `GET /api/admin/orders/<id>` | 抽屉里的单笔详情（时间轴 + 计时 + 骑手位置） | 401 |
+
+- 认证不走 `users` 表：`ADMIN_USER` / `ADMIN_PASSWORD` 环境变量 + 独立 session 键 `ops_session`；
+- `window` 不认识的取值回落到 `today`；`orders/<id>` 不存在返回 404；
+- 响应结构、指标口径与告警规则见 [`管理大屏.md`](管理大屏.md) §4–§5。
+
+---
+
+## 七、健康检查 `/api`
 
 | 路径 | 用途 |
 |---|---|
@@ -236,7 +251,7 @@ UPDATE orders SET rider_id = :me
 
 ---
 
-## 七、错误文案约定
+## 八、错误文案约定
 
 错误信息要**给下一步动作**，不只报错：
 
