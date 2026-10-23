@@ -106,6 +106,13 @@
         Every account below uses the password <code>demo1234</code>. Open the customer and the
         restaurant side by side, place an order, and watch it move through all three.
       </p>
+      {% if portal_url('customer').startswith('http') %}
+      <p class="i-note">
+        Each interface has its own domain — {{ portal_host('customer') }},
+        {{ portal_host('merchant') }} and {{ portal_host('rider') }} — so three people can be
+        signed in at once without fighting over one session.
+      </p>
+      {% endif %}
     </header>
 
     <div class="i-roles">
@@ -116,7 +123,7 @@
             {% if role.orientation == 'desktop' %}
             <div class="i-frame__bar" aria-hidden="true">
               <span></span><span></span><span></span>
-              <em>xllm.cloud/merchant/orders</em>
+              <em>{{ portal_url(role.key, 'orders')|replace('https://', '') }}</em>
             </div>
             {% endif %}
             <img src="{{ url_for('info.static', filename='img/' ~ role.image) }}"
@@ -139,7 +146,7 @@
           </ul>
 
           <div class="i-role__foot">
-            <a class="i-btn i-btn--tint" href="{{ url_for(role.endpoint) }}">{{ role.cta }}</a>
+            <a class="i-btn i-btn--tint" href="{{ portal_url(role.key, 'login') }}">{{ role.cta }}</a>
             <p class="i-cred"><span>demo</span> {{ role.account }} / demo1234</p>
           </div>
         </div>
@@ -338,7 +345,7 @@ docs/               <span class="i-tree__note">reports · API contract · design
         <p class="i-cta__sub">Log in as <code>alex</code> / <code>demo1234</code> and order something.</p>
       </div>
       <div class="i-cta__actions">
-        <a class="i-btn i-btn--primary" href="{{ url_for('customer.login_page') }}">Customer app</a>
+        <a class="i-btn i-btn--primary" href="{{ portal_url('customer', 'login') }}">Customer app</a>
         <a class="i-btn i-btn--ghost" href="{{ site.github }}" rel="noopener">GitHub</a>
         <a class="i-btn i-btn--ghost" href="mailto:{{ site.email }}">Contact</a>
       </div>

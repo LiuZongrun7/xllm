@@ -41,6 +41,7 @@ import os
 from flask import Flask, redirect, render_template, request, url_for
 
 from config import Config
+from shared import hosts
 from shared.extensions import db
 from shared.auth import bp as auth_bp
 from shared.health import bp as health_bp
@@ -68,6 +69,12 @@ def create_app(config_object: type = Config) -> Flask:
     # --- 扩展 ---
     db.init_app(app)
 
+    # --- 域名分流 ---
+    # 三个端各有一个子域名（customer / restaurant / delivery.xllm.cloud）。
+    # 这里只注册一个 before_request：根路径落到本端首页、跨端链接跳到对方的域名。
+    # 域名没配置时（本地开发）整个模块不生效，行为和以前完全一样。
+    hosts.install(app)
+
     # --- 公共蓝图（D）---
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp)
@@ -92,6 +99,9 @@ def create_app(config_object: type = Config) -> Flask:
     # --- 根路径：官网是"门面"，三端从官网的演示入口进 ---
     # 用 302 而不是 301：这是课程演示站，入口随时可能调整，
     # 而且 301 会被浏览器长期缓存，改回来很麻烦。
+    #
+    # 这条只管主域名。三个子域名上的 "/" 由 shared/hosts.py 提前拦掉，
+    # 直接落到各自端的首页（restaurant.xllm.cloud/ → /merchant/）。
     @app.get("/")
     def root():
         return redirect(url_for("info.index"))

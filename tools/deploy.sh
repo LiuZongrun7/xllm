@@ -62,4 +62,10 @@ curl -s -o /dev/null -w '  /merchant/login  %{http_code}\n' https://xllm.cloud/m
 curl -s -o /dev/null -w '  /rider/login     %{http_code}\n' https://xllm.cloud/rider/login
 curl -s -o /dev/null -w '  /admin/login     %{http_code}\n' https://xllm.cloud/admin/login
 curl -s -o /dev/null -w '  /admin/ (→ login) %{http_code}\n' https://xllm.cloud/admin/
+
+# 三个子域名：每个都是"域名根 → 本端首页 → 登录页"，所以只查最终码
+for sub in customer restaurant delivery; do
+  curl -s -o /dev/null -w "  $sub.xllm.cloud/ %{http_code} → %{redirect_url}\n" \
+       --max-time 20 "https://$sub.xllm.cloud/"
+done
 echo "[deploy] done"

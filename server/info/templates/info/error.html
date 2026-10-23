@@ -19,8 +19,8 @@
 
   <div class="i-err__actions">
     <a class="i-btn i-btn--primary" href="{{ url_for('info.index') }}">Back to the site</a>
-    <a class="i-btn i-btn--ghost" href="{{ url_for('customer.login_page') }}">Customer app</a>
-    <a class="i-btn i-btn--ghost" href="{{ url_for('merchant.login_page') }}">Restaurant console</a>
+    <a class="i-btn i-btn--ghost" href="{{ portal_url('customer', 'login') }}">Customer app</a>
+    <a class="i-btn i-btn--ghost" href="{{ portal_url('merchant', 'login') }}">Restaurant console</a>
   </div>
 
   <p class="i-err__foot">xLLM Food Delivery</p>

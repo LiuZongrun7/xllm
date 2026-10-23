@@ -88,9 +88,31 @@ class Config:
     ADMIN_DEMO_PASSWORD = "demo1234"
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD") or ADMIN_DEMO_PASSWORD
 
+    # ---------------- 域名（三个端各自一个子域名） ----------------
+    # 线上：
+    #     SITE_HOST     = xllm.cloud             官网 + 管理大屏
+    #     CUSTOMER_HOST = customer.xllm.cloud    顾客端
+    #     MERCHANT_HOST = restaurant.xllm.cloud  商家端
+    #     RIDER_HOST    = delivery.xllm.cloud    骑手端
+    #
+    # 四个都可以不设：留空时 shared/hosts.py 不做任何分流，
+    # 三端仍然在同一个域名下按 /customer /merchant /rider 前缀访问，
+    # 也就是本地开发和加子域名之前的线上行为。
+    #
+    # 只填协议以外的部分（不要带 https:// 和结尾斜杠）；
+    # 万一填了，shared/hosts.py 的 _norm() 会替你清掉。
+    SITE_HOST = os.environ.get("SITE_HOST", "")
+    CUSTOMER_HOST = os.environ.get("CUSTOMER_HOST", "")
+    MERCHANT_HOST = os.environ.get("MERCHANT_HOST", "")
+    RIDER_HOST = os.environ.get("RIDER_HOST", "")
+
     # ---------------- 会话 ----------------
     # 线上全站 HTTPS，所以 cookie 应当只走加密通道。
     # 本地用 http://127.0.0.1 调试时设成 0，否则浏览器不会带上 cookie。
+    #
+    # 注意：cookie 不设 Domain，就是"主机独占"。
+    # 于是 customer / restaurant / delivery 三个域名各有一份会话，
+    # 在商家域名登录不会把顾客域名的登录顶掉 —— 演示三端同时开着时正需要这个。
     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "0") == "1"
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"

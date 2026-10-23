@@ -504,6 +504,73 @@ def main() -> int:
     status, _ = call(customer, "get", "/merchant/")
     check("customer is redirected away from the merchant UI", status == 302)
 
+    # ------------------------------------------------------------------
+    # 子域名分流（shared/hosts.py）
+    #
+    # 线上三个端各一个域名。这里直接在 app.config 里打开域名，
+    # 再用测试客户端的 Host 头模拟浏览器 —— 不依赖 DNS、不依赖 nginx。
+    # ------------------------------------------------------------------
+    print("\n=== subdomain routing ===")
+    hosts = {"SITE_HOST": "xllm.cloud",
+             "CUSTOMER_HOST": "customer.xllm.cloud",
+             "MERCHANT_HOST": "restaurant.xllm.cloud",
+             "RIDER_HOST": "delivery.xllm.cloud"}
+    for key, value in hosts.items():
+        app.config[key] = value
+
+    def at(host: str, path: str):
+        """以某个域名访问，返回 (状态码, Location 头)"""
+        response = app.test_client().get(path, headers={"Host": host})
+        return response.status_code, response.headers.get("Location", "")
+
+    check("customer.xllm.cloud/ → /customer/",
+          at("customer.xllm.cloud", "/") == (302, "/customer/"),
+          at("customer.xllm.cloud", "/"))
+    check("restaurant.xllm.cloud/ → /merchant/",
+          at("restaurant.xllm.cloud", "/") == (302, "/merchant/"),
+          at("restaurant.xllm.cloud", "/"))
+    check("delivery.xllm.cloud/ → /rider/",
+          at("delivery.xllm.cloud", "/") == (302, "/rider/"),
+          at("delivery.xllm.cloud", "/"))
+    check("the main domain still opens the public site",
+          at("xllm.cloud", "/")[1].endswith("/info/"), at("xllm.cloud", "/"))
+
+    # 跨端链接：在顾客域名下点"商家入口"，要跳到商家自己的域名
+    status, location = at("customer.xllm.cloud", "/merchant/login")
+    check("a merchant page on the customer host moves domains",
+          (status, location) == (302, "https://restaurant.xllm.cloud/merchant/login"),
+          f"{status} {location}")
+
+    # 官网和大屏只留在主域名
+    status, location = at("delivery.xllm.cloud", "/info/")
+    check("the public site is pushed back to the main domain",
+          (status, location) == (302, "https://xllm.cloud/info/"), f"{status} {location}")
+
+    # 接口不做域名跳转：否则 fetch 会被 302 到别的主机
+    status, _ = at("customer.xllm.cloud", "/api/customer/restaurants")
+    check("the API answers on a role host without redirecting", status == 200, status)
+
+    # 本端页面照常渲染
+    check("the customer host serves its own pages",
+          at("customer.xllm.cloud", "/customer/login")[0] == 200)
+    check("the rider host serves its own pages",
+          at("delivery.xllm.cloud", "/rider/login")[0] == 200)
+
+    # 模板里的跨端链接要指向对方的域名，而不是站内相对路径
+    page = app.test_client().get("/info/", headers={"Host": "xllm.cloud"}).get_data(as_text=True)
+    check("the public site links the three subdomains",
+          all(f"https://{h}/" in page for h in
+              ("customer.xllm.cloud/customer", "restaurant.xllm.cloud/merchant",
+               "delivery.xllm.cloud/rider")),
+          "missing absolute portal links")
+
+    # 关掉域名后要退回原来的行为（本地开发）
+    for key in hosts:
+        app.config[key] = ""
+    check("without host config the root still goes to /info/",
+          at("customer.xllm.cloud", "/")[1].endswith("/info/"),
+          at("customer.xllm.cloud", "/"))
+
     print("\n" + "=" * 60)
     if FAILED:
         print(f"FAILED {len(FAILED)} / {PASSED + len(FAILED)} checks")
