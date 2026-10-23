@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<!--
+  设计报告 · 中文译本（对应同目录的 main.tex / main.pdf）
+  ---------------------------------------------------------------
+  本机 TeX 装的是 basic 版，没有 ctex / xeCJK，无法直接排版中文，
+  所以中文版用 HTML 写：任何浏览器「打印 → 另存为 PDF」即可得到
+  main-zh.pdf（A4，页边距 22mm，勾选页眉页脚以保留页码）。
+  结构图由 make_structure_zh.py 从 structure.svg 逐字翻译生成，
+  坐标与英文版完全一致；改了英文图后重新执行：
+
+      python3 make_structure.py && python3 make_structure_zh.py
+
+  提交请使用英文版 main.pdf，本文件只供组内阅读与答辩准备。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>xLLM 外卖订餐网站 — 设计报告（中文版）</title>
+<style>
+  @page { size: A4; }
+
+  html { font-size: 10.5pt; color: #000; }
+  body {
+    font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
+    line-height: 1.78;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  p {
+    margin: 0 0 5pt;
+    text-align: justify;
+    text-justify: inter-ideograph;
+  }
+
+  h1, h2, strong, th, .sans {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC",
+                 "Microsoft YaHei", sans-serif;
+  }
+
+  /* ---------- 标题区（对应 LaTeX 的 \reportheader） ---------- */
+  .doc-head { text-align: center; margin-bottom: 6pt; }
+  .doc-head p { text-align: center; }
+  .doc-head .course { font-size: 9pt; font-weight: 600; letter-spacing: .02em; }
+  .doc-head .rule { border: 0; border-top: 1px solid #000; margin: 3pt 0 10pt; }
+  .doc-head h1 { font-size: 21pt; font-weight: 700; margin: 0 0 2pt; letter-spacing: .04em; }
+  .doc-head .subtitle { font-size: 12pt; font-weight: 700; margin: 0 0 8pt; letter-spacing: .18em; }
+  .doc-head .team { font-size: 9.5pt; text-align: left; margin: 0; line-height: 1.6; }
+  .doc-head > p.team { text-align: left; }
+  .doc-head .note {
+    text-align: center; font-size: 8.6pt; color: #444; margin: 6pt 0 0;
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+  }
+
+  /* ---------- 章节 ---------- */
+  h2 {
+    font-size: 13.5pt;
+    font-weight: 700;
+    margin: 14pt 0 4pt;
+    letter-spacing: .02em;
+    page-break-after: avoid;
+  }
+
+  ul, ol { margin: 0 0 6pt; padding-left: 1.75em; }
+  li { margin: 1.5pt 0; text-align: justify; text-justify: inter-ideograph; }
+  li p { margin: 0; }
+
+  /* 条目开头的功能编号，保持与英文版一致的“加粗在前” */
+  .lead { font-weight: 700; }
+
+  /* ---------- 图 ---------- */
+  figure { margin: 10pt 0 9pt; text-align: center; page-break-inside: avoid; }
+  figure img { width: 78%; height: auto; }
+  figcaption { font-size: 8.8pt; margin-top: 4pt; line-height: 1.55; text-align: center; }
+
+  /* ---------- 表 ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.4pt;
+    line-height: 1.5;
+    margin: 4pt 0 6pt;
+  }
+  tr { page-break-inside: avoid; }
+  th, td { border: .55pt solid #000; padding: 2.4pt 3.6pt; vertical-align: top; text-align: left; }
+  th { font-weight: 600; background: #fff; }
+  caption {
+    caption-side: bottom;
+    font-size: 8.8pt;
+    line-height: 1.55;
+    padding-top: 3pt;
+    text-align: center;
+  }
+
+  /* 表格列宽：与 LaTeX 里的 |p{27mm}|Y|Y| 接近 */
+  col.c1 { width: 21%; }
+  col.c2 { width: 34%; }
+  col.c3 { width: 45%; }
+
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: .92em; }
+</style>
+</head>
+<body>
+
+<header class="doc-head">
+  <p class="course">COMP3019J Web 应用开发</p>
+  <hr class="rule">
+  <h1>外卖订餐网站</h1>
+  <p class="subtitle">设计报告</p>
+  <p class="team"><strong>团队：</strong>xLLM</p>
+  <p class="team"><strong>成员：</strong>Fu Rao（24107744）、Liu Jing（24107741）、
+     Liu Zongrun（24107745）、Zhou Jiaxu（24107758）</p>
+  <p class="note">中文译本，供组内阅读与答辩准备；正式提交请使用英文版 main.pdf。</p>
+</header>
+
+<section>
+<h2>1　项目想法</h2>
+
+<p>本地的外卖服务连接三方：订餐的顾客、若干家独立餐厅，以及取餐并配送的骑手。难点并不在任何一个动作本身，而在于服务必须在自身事实不断变化的情况下运转，并且三方看到的从来不是同一份东西。</p>
+
+<p>每家餐厅各自控制营业时间、菜单和备餐能力，这三者在一天当中都会变：一道菜卖完了，厨房忙起来了，店铺提前打烊。一单要真正完成，需要餐厅和骑手协调两个物理步骤——做好餐食、取走餐食——而顾客站在这两步之外，完全无从知道正在发生什么。现实中这会产生三类反复出现的失败。参与者重复劳动或互相等待；顾客打电话问餐厅订单到哪儿了，而餐厅同样答不上来；一旦出现延迟、菜品下架、地址错误或取消，正常路径就中断。底下还有一个隐私问题：如果让三方看到同一个视图，就会让一位顾客看到另一位顾客的家庭住址，让一家餐厅看到另一家的订单，并把骑手的联系方式暴露给所有人。</p>
+
+<p>因此我们要构建的服务必须同时做到两件事：把订单作为三方共同操作的<strong>共享记录</strong>来持有，并按每一方所负责的范围，给他们同一份记录的不同视图。</p>
+
+<p><strong>用户角色。</strong>我们识别出三个角色。他们的需求不同，权限也不同——这种差别是设计的核心，而不是事后补上的。</p>
+
+<ul>
+  <li><strong>顾客。</strong>需要从附近的餐厅订餐，并知道餐食何时送达。可以创建订单、读取和取消
+  <em>自己的</em>订单、撰写评价。绝不能看到其他顾客的订单或地址、餐厅内部的忙碌程度，或骑手的个人联系方式。</li>
+  <li><strong>餐厅员工。</strong>需要接单、备餐并把餐食交出去。可以管理<em>自己店铺</em>的营业时间、菜品与可售状态，并推动<em>自己店铺</em>的订单走完备餐流程。绝不能看到其他餐厅的订单或菜单，也不能改动订单上的金额。</li>
+  <li><strong>配送骑手。</strong>需要找到活并完成配送。可以看到已备好且无人认领的订单池、抢下其中一单、上报位置，并推动该订单走完配送流程。绝不能看到尚未备好的订单，或其他骑手已抢下的订单。</li>
+</ul>
+
+<p><strong>为什么有用。</strong>应用覆盖一单的完整生命周期，而不是其中某一步；它用一份各方都能据以行动的共享记录取代了非正式的电话协调，让异常路径变得显式，而不是留给临场发挥。</p>
+</section>
+
+<section>
+<h2>2　主要功能</h2>
+
+<p>前五个功能是<em>必需</em>的：没有它们，本主题的核心流程无法演示。其余是<em>可选</em>补充，只有在必需集合端到端跑通之后才会去做。</p>
+
+<ul>
+  <li><strong>F1 —— 账号与角色。</strong>每个角色通过各自的界面注册并登录；三者共享同一个认证模块与同一个会话，由角色决定该会话可以触及哪些记录。结果：得到一个已认证的会话，服务器用它为之后的每次请求授权。</li>
+  <li><strong>F2 —— 餐厅菜单与营业时间。</strong>餐厅员工按星期设置营业时间，添加和编辑菜品（价格、热量、剩余库存），并把某道菜标记为不可售。结果：对外菜单始终反映厨房此刻真正能做出的东西。</li>
+  <li><strong>F3 —— 浏览与下单。</strong>顾客浏览餐厅，在地图上点选配送地址，并下包含多道菜的订单。结果：生成一条订单记录，内含地址以及每道菜名称与价格的<em>快照</em>。</li>
+  <li><strong>F4 —— 订单推进。</strong>餐厅员工接单，标记为备餐中，再标记为已备好；骑手抢下已备好的订单，确认取餐，再确认送达。结果：订单在既定状态之间前进，同一条记录由两个不同角色依次更新。</li>
+  <li><strong>F5 —— 订单跟踪。</strong>顾客能看到自己的订单，以及每一单的当前状态与时间戳。结果：不必联系餐厅就能看到进度。</li>
+  <li><strong>F6 —— 评价（可选）。</strong>配送完成后，顾客以一到五星并附评论，评价餐厅与骑手。结果：一条附着在已完成订单上的质量信号。</li>
+  <li><strong>F7 —— 骑手位置（可选）。</strong>骑手在配送途中上报位置，顾客在地图上看到。结果：看到的是实时进度，而不只是一个状态标签。</li>
+  <li><strong>F8 —— 优惠券（可选）。</strong>顾客在结算时领取并应用折扣。结果：订单上记录一个折后总额。</li>
+</ul>
+
+<p><strong>优先级。</strong>F1–F5 是一次连贯演示的最低要求：只有它们才能把一单从请求推进到送达，并跨两个角色完成。F6–F8 增加价值，但本主题并不要求，所以排在最后、也最先被砍掉。</p>
+
+<p><strong>约束这些功能的规则。</strong></p>
+<ul>
+  <li><em>归属。</em>一条记录只能由拥有它的那一方修改：菜品由其所属餐厅，订单由其所属的顾客、餐厅或骑手。该检查在服务器上对每次查询执行，而不是靠在界面里隐藏按钮。</li>
+  <li><em>状态变更权限。</em>除取消之外，每一次状态变更只属于一个角色：只有餐厅可以接单和备餐，只有骑手可以取餐和送达。任何角色都不能跳过某个状态。</li>
+  <li><em>抢单唯一性。</em>订单只有在已备好且尚无骑手时才进入骑手池。抢单是一条带条件的更新，因此若两名骑手同时操作，恰好一人成功，另一人被告知订单已被抢走。</li>
+  <li><em>取消窗口。</em>订单处于 pending 或 accepted 时，顾客可以取消，因为此时还没有开始做菜。一旦厨房开始备餐，就只有餐厅可以取消，并由餐厅记录原因。</li>
+  <li><em>配送范围。</em>如果所选地址落在餐厅配置的配送半径之外，订单会被拒绝，并告知顾客原因。</li>
+  <li><em>记录完整性。</em>下单时地址与价格被复制进订单。因此之后对地址或菜单的修改，都不会改写历史订单。</li>
+</ul>
+</section>
+
+<section>
+<h2>3　应用设计</h2>
+
+<p><strong>应用结构。</strong>图 1 展示了主要部分。三个浏览器界面——顾客、商家、骑手——通过
+HTTPS 把请求发给反向代理，反向代理把每一个请求（页面以及 <code>/api</code>）都转给应用服务器。应用按业务域划分为若干功能模块，每个域一个模块。<em>认证模块</em>确定调用者是谁、持有什么角色。
+<em>餐厅模块</em>管理店铺资料、营业时间与菜品。<em>订单模块</em>创建订单并执行状态机，并且是唯一写入订单状态的模块。<em>骑手模块</em>管理可抢单池与位置上报。<em>评价模块</em>记录附着于已完成订单的评分。所有模块共享同一层数据访问，因此归属校验只写在一处。数据库保存表 1 中的记录。系统用到两个外部服务：一个是地图服务，由浏览器加载，用于选点和绘制骑手位置；另一个是邮件服务，只用于一次性验证码（验证码登录与重置密码）。配送半径由服务器自己计算，不经过地图服务。</p>
+
+<figure>
+  <img src="structure-zh.png" alt="应用结构图">
+  <figcaption>图 1：应用的主要部分。实线箭头表示经 HTTPS 传输的用户请求与响应；虚线箭头表示对数据库、邮件服务的调用，以及（由浏览器发起的）对地图服务的调用。</figcaption>
+</figure>
+
+<p><strong>数据。</strong>表 1 列出应用保存的记录、每条记录中存的信息，以及使用或更新它的功能。</p>
+
+<table>
+  <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
+  <thead>
+    <tr><th>记录</th><th>存储的信息</th><th>使用或更新它的功能</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>用户<br><span class="sans" style="font-size:.9em">users</span></td>
+        <td>角色、用户名、邮箱、显示名、密码哈希</td>
+        <td>F1 创建并认证；其余功能读取它来判断权限。</td></tr>
+    <tr><td>餐厅<br><span class="sans" style="font-size:.9em">restaurants</span></td>
+        <td>店主、名称、地址与坐标、配送半径、起送价、营业开关</td>
+        <td>F2 更新；F3 读取它列出店铺并校验配送范围。</td></tr>
+    <tr><td>骑手档案<br><span class="sans" style="font-size:.9em">rider_profiles</span></td>
+        <td>骑手、在线标记、车型、服务半径</td>
+        <td>F1 创建；骑手离线时 F4 拒绝其抢单。</td></tr>
+    <tr><td>营业时间<br><span class="sans" style="font-size:.9em">opening_hours</span></td>
+        <td>餐厅、星期、开闭时间、休息标记</td>
+        <td>F2 维护；F3 用它拒绝非营业时段的订单。</td></tr>
+    <tr><td>菜品<br><span class="sans" style="font-size:.9em">menu_items</span></td>
+        <td>餐厅、名称、价格、热量、库存、可售标记</td>
+        <td>F2 维护；F3 展示，并把价格复制进订单。</td></tr>
+    <tr><td>地址<br><span class="sans" style="font-size:.9em">customer_addresses</span></td>
+        <td>顾客、标签、联系人、地址文本、坐标、默认标记</td>
+        <td>F1 拥有；F3 选用其一并复制进订单。</td></tr>
+    <tr><td>订单<br><span class="sans" style="font-size:.9em">orders</span></td>
+        <td>顾客、餐厅、骑手、状态、地址与金额快照、距离、时间戳</td>
+        <td>F3 创建；F4、F5 更新与读取状态；F6 把评价挂到它上面。</td></tr>
+    <tr><td>订单明细<br><span class="sans" style="font-size:.9em">order_items</span></td>
+        <td>订单、菜品引用、名称与价格快照、数量</td>
+        <td>F3 写入；F4 读取，用来告诉厨房要做什么。</td></tr>
+    <tr><td>评价<br><span class="sans" style="font-size:.9em">reviews</span></td>
+        <td>订单、评价者、对象、评分、评论</td>
+        <td>F6 创建；F2 与 F5 读回评分。</td></tr>
+    <tr><td>骑手位置<br><span class="sans" style="font-size:.9em">rider_locations</span></td>
+        <td>骑手、订单、坐标、精度、时间</td>
+        <td>F7 逐条追加；F5 读最新一条用于展示。</td></tr>
+    <tr><td>优惠券与领取<br><span class="sans" style="font-size:.9em">coupons · user_coupons</span></td>
+        <td>码、归属、折扣、门槛、领取状态</td>
+        <td>F8 发放、领取并在订单上核销。</td></tr>
+    <tr><td>验证码<br><span class="sans" style="font-size:.9em">email_codes</span></td>
+        <td>邮箱、用途、哈希后的码、有效期、尝试次数</td>
+        <td>F1 在验证码登录与重置密码时发送并校验。</td></tr>
+  </tbody>
+  <caption>表 1：记录、每条记录中存储的信息，以及使用它们的功能。</caption>
+</table>
+
+<p><strong>记录之间如何连接。</strong><em>订单</em>是把各方连起来的那条记录：它指明下单的顾客、必须做菜的餐厅，以及（被抢下之后的）配送骑手，因此三个角色都在同一行上操作。一个订单拥有多条
+<em>订单明细</em>，每道菜一条；每条明细指向一个<em>菜品</em>，但同时自带名称与价格的副本，这正是菜单可以变化而不改写历史的原因。<em>餐厅</em>拥有自己的营业时间与菜品，<em>顾客</em>拥有一组地址；所选地址同样被复制进订单，理由一致。<em>评价</em>附着在已完成订单上，并指明对象——餐厅或骑手——而订单本身才证明评价者有权写这条评价。<em>骑手位置</em>在配送过程中逐条追加到订单上。</p>
+
+<p><strong>用户流程。</strong>以“下单并完成一单”这个任务为例。</p>
+
+<ol>
+  <li>顾客登录（F1）。认证模块读取 <em>users</em>，开启会话并返回角色，由角色选择顾客界面。</li>
+  <li>顾客打开一家餐厅（F3）。餐厅模块读取 <em>restaurants</em>、<em>opening_hours</em> 与
+  <em>menu_items</em>，只返回当前可售的菜品。</li>
+  <li>顾客在地图上点选配送地址，并把菜品加入购物车。地图服务把选中的点转换为坐标与可读地址。</li>
+  <li>顾客确认。订单模块先用餐厅半径校验距离，然后写入一条 <em>orders</em> 记录（把地址与总额复制进去），再按菜品写入对应的 <em>order_items</em>（把名称与价格复制进去）。订单以
+  <em>pending</em> 状态开始。结果：顾客可以查看进度（F5），餐厅可以看到这一单（F4）。</li>
+  <li>餐厅接单，标记为备餐中，再标记为已备好。每一步都更新 <em>orders</em> 行并写入对应的时间戳；只有拥有该订单的餐厅可以做这件事。</li>
+  <li>订单此时出现在骑手池中。骑手抢下它——一条带条件的更新，只有订单仍为 <em>ready</em> 且仍无人认领时才成功——随后确认取餐、再确认送达。<em>orders</em> 行依次变为 <em>delivering</em>
+  和 <em>delivered</em>。</li>
+  <li>顾客看到最终状态，并可以留下评价（F6），评价写在这一单上。</li>
+</ol>
+
+<p><em>改变流程的情形：取消。</em>假设顾客想在厨房已经开始备餐之后取消。正常路径没有免费的出口，因为原料已经投入。订单模块因此拒绝顾客的取消请求，并提示其联系餐厅，由餐厅决定。若餐厅同意，订单转为 <em>cancelled</em>，取消方与原因连同时间戳一起被记录；订单从餐厅队列与骑手池中消失，已支付的款项被标记为已退款。若餐厅拒绝，订单就沿正常路径继续。同一条规则也覆盖相反的时间点：订单仍处于 <em>pending</em> 或 <em>accepted</em> 时还没开始做菜，顾客可以直接取消，无需餐厅动作。因此这条规则是订单状态的性质，而不是请求来自哪个界面的性质。</p>
+</section>
+
+<section>
+<h2>4　技术选择</h2>
+
+<p><strong>浏览器。</strong>用 HTML5 与 CSS3 负责结构与呈现；用浏览器的 <code>fetch</code> API
+做交互、在不刷新页面的情况下调用服务器；服务器端用 Jinja2 模板渲染三个角色界面。浏览器只负责呈现与输入校验，包括采集坐标的地图。</p>
+
+<p><strong>服务器。</strong>Python 3.10 + Flask 3.1，使用 Werkzeug 的密码哈希与 Flask 会话，数据访问层用 SQLAlchemy 2.0。服务器是应用真正所在的地方：它认证每一个请求，逐条记录判断调用者是否有权读取或修改，执行订单状态机，并且是唯一持有数据库凭据的部分。</p>
+
+<p><strong>数据存储。</strong>MySQL 8，使用 InnoDB 与 utf8mb4，保存表 1 中的十二条记录。关系型存储是合适的选择，因为上述规则本身就是关系型的：归属是行上的一个列；抢单唯一性是一条带
+<code>rider_id IS NULL</code> 条件的 <code>UPDATE</code>；同一订单、同一对象的重复评价会被拒绝；而订单历史的保全靠复制值，而不是连接实时数据。外键在记录于角色之间传递时保证订单图的一致性。</p>
+
+<p><strong>为什么这套组合合适。</strong>服务器与数据层使用同一种语言，使归属校验集中在一处；服务端渲染页面配合异步请求，让三个界面保持简单，同时仍能在不刷新页面的情况下更新进度；关系模型把本主题自己的语言——可用性、归属、审批——直接表达为约束。</p>
+
+<p><strong>课堂之外的技术。</strong></p>
+
+<ul>
+  <li><em>地图服务（高德）。</em>用于让顾客在地图上点选配送地址，而不是手打地址，并用于校验配送范围。收益很直接：手打地址正是本主题所指地址问题的主要来源，在地图上点选从源头上消除了这种歧义。管理方式：只暴露一个按域名限制的浏览器 Key，并配一个安全密钥；半径校验用本地计算的直线距离，因此不需要服务端 Key，即使服务不可用下单流程仍能工作，地址输入也会退化为文本。集成已经完成，并做过端到端验证。</li>
+  <li><em>nginx 与 gunicorn（部署）。</em>反向代理负责终止 HTTPS 并转发请求；gunicorn 运行应用。这是一个运维选择：Flask 自带的服务器并不适合生产，而浏览器定位 API（F7 使用）需要
+  HTTPS。管理方式：配置固定且已写入文档，应用代码不受影响。</li>
+  <li><em>邮件服务（SMTP）。</em>只用于发送验证码登录与重置密码所需的一次性验证码。它是我们免费可得的唯一带外通道，因为在本地通过程序发短信需要付费的已注册签名与预先审核的模板。管理方式：发送被隔离，失败不会导致请求失败；验证码的有效期、单次使用与尝试次数上限都存在我们自己的数据库里，因此安全性并不依赖邮件服务。</li>
+</ul>
+
+<p><strong>分工与计划。</strong>分工按目录划分：Zhou Jiaxu 负责顾客端界面，Fu Rao 负责商家端界面，Liu Jing 负责骑手端界面，Liu Zongrun 负责共享层与部署。共享层在三个界面开工之前先行冻结；Milestone 2 打通一单的端到端流程，Milestone 3 补齐可选功能与异常流程。</p>
+</section>
+
+</body>
+</html>
