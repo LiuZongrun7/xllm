@@ -26,7 +26,7 @@ import random
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from shared.catalog import cuisine_emoji
+from shared.catalog import cuisine_emoji, dish_image, restaurant_cover
 from shared.extensions import db
 from shared.models import (CustomerAddress, MenuItem, OpeningHour, Order,
                            OrderItem, Restaurant, Review, RiderLocation,
@@ -178,6 +178,7 @@ def _menu_rows(restaurant: Restaurant, rows) -> list[MenuItem]:
             category=category,
             stock=stock,
             is_available=True,
+            image_url=dish_image(name),      # 没有对应实拍图的菜保持 None → 前端退回 emoji
             sort_order=index,
         )
         db.session.add(item)
@@ -336,6 +337,7 @@ def seed(reset: bool = False) -> None:
             lng=Decimal(str(spec["lng"])),
             lat=Decimal(str(spec["lat"])),
             description=spec["description"],
+            cover_url=restaurant_cover(spec["name"]),
             cuisine=spec["cuisine"],
             min_order_amount=Decimal(str(spec["min_order"])),
             delivery_fee=Decimal(str(spec["fee"])),

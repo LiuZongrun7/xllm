@@ -163,7 +163,16 @@
     }
     return h;
   }
-  function dishTile(name, emoji) {
+  /* 菜单缩略图：有实拍图就上图，没有就退回 emoji（和顾客端同一张图） */
+  function dishTile(name, emoji, imageUrl) {
+    if (imageUrl) {
+      /* emoji 垫在下面：图 404 时 onerror 摘掉 <img>，emoji 露出来，
+         不会留一块空白的粉色方块。 */
+      return '<span class="m-dish__emoji m-dish__emoji--photo" aria-hidden="true">' +
+        '<span class="m-dish__em">' + esc(emoji || '\ud83c\udf7d\ufe0f') + '</span>' +
+        '<img src="' + esc(imageUrl) + '" alt="" loading="lazy" decoding="async" ' +
+        'onerror="this.remove()"></span>';
+    }
     const hue = hueFor(name || 'dish');
     const bg = 'linear-gradient(135deg,hsl(' + hue + ' 72% 93%),hsl(' +
       ((hue + 26) % 360) + ' 58% 84%))';
@@ -1195,7 +1204,7 @@
       }
       const unlimited = item.stock == null;
       return '<tr data-item-id="' + item.id + '">' +
-        '<td class="m-td"><div class="m-dish">' + dishTile(item.name, item.emoji) +
+        '<td class="m-td"><div class="m-dish">' + dishTile(item.name, item.emoji, item.image_url) +
         '<div class="m-dish__text"><div class="m-cell-title">' + esc(item.name) + '</div>' +
         '<div class="m-cell-sub">' + esc(item.description || 'No description') + '</div></div></div></td>' +
         '<td class="m-td"><span class="m-chip m-chip--neutral">' + esc(item.category || '—') + '</span></td>' +

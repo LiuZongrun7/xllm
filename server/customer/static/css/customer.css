@@ -520,6 +520,25 @@ body.c-body {
   font-size: 38px;
   line-height: 1;
   user-select: none;
+  overflow: hidden;          /* 实拍图要裁在这个圆角里 */
+  position: relative;
+}
+/* 垫在实拍图下面的 emoji：图加载失败时露出来 */
+.c-thumb .c-em {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 实拍图铺满缩略图；没有图时 .c-thumb 里的 emoji 照旧居中 */
+.c-thumb .c-photo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .c-thumb--lg { width: 92px; height: 92px; font-size: 38px; }
 .c-thumb--md { width: 56px; height: 56px; font-size: 26px; border-radius: 10px; }
@@ -709,11 +728,16 @@ body.c-body {
 .c-hero {
   position: relative;
   height: 196px;
+  background-size: cover;
+  background-position: center 70%;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: linear-gradient(135deg, #FFD8C7, #FFB199);
+  /* ⚠️ 必须写 background-image 而不是 background：
+     用简写会把上面那两行 background-size / background-position 一起重置掉，
+     表现是封面图永远显示左上角。 */
+  background-image: linear-gradient(135deg, #FFD8C7, #FFB199);
 }
 .c-hero__glow {
   position: absolute;
@@ -737,6 +761,9 @@ body.c-body {
 @media (prefers-reduced-motion: reduce) {
   .c-hero__emoji { animation: none; }
 }
+.c-hero--photo .c-hero__glow,
+.c-hero--photo .c-hero__emoji { display: none; }
+
 .c-hero__back {
   position: absolute;
   top: 14px;

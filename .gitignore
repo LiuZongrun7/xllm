@@ -63,3 +63,6 @@ docs/M1/*.zip
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+
+# --- 出图的候选帧（gen-art.mjs 每张都留一份备选，挑图用；成品在上一级）---
+server/static/img/**/_candidates/

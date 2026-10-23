@@ -486,10 +486,15 @@ class Order(db.Model):
 
 
 def _item_row(item: "OrderItem") -> dict:
-    """订单明细 + 占位视觉：同一道菜在三端显示同一个 emoji"""
-    from shared.catalog import dish_emoji
+    """订单明细 + 占位视觉：同一道菜在三端显示同一个 emoji / 同一张实拍图
+
+    图按**菜名快照**查，不按 menu_item_id —— 菜被商家删掉以后，历史订单里的
+    那一行还得有图；反过来，改名之后旧订单显示旧名，也不该突然换一张新图。
+    """
+    from shared.catalog import dish_emoji, dish_image
     row = item.to_dict()
     row["emoji"] = dish_emoji(item.name_snapshot)
+    row["image_url"] = dish_image(item.name_snapshot)
     return row
 
 

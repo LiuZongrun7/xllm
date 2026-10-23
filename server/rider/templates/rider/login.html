@@ -12,7 +12,8 @@
 {% block content %}
 <main class="r-auth">
 
-  <section class="r-auth__hero">
+  <section class="r-auth__hero r-auth__hero--photo"
+           style="--r-hero:url('{{ url_for('rider.static', filename='img/login-rider.jpg') }}')">
     <h1 class="r-auth__title">Sign in to start delivering</h1>
     <p class="r-auth__sub">One account for xLLM. Sign in to see ready orders near you and keep your deliveries moving.</p>
   </section>

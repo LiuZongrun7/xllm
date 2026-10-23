@@ -59,3 +59,77 @@ def dish_emoji(name: str, category: str | None = None) -> str:
 
 def cuisine_emoji(cuisine: str | None) -> str:
     return _CUISINE_EMOJI.get((cuisine or "").strip().lower(), "🍽️")
+
+
+# ---------------------------------------------------------------------------
+# 实拍图 —— 菜品一张一张，店铺一张一张
+#
+# 图片本身在 server/static/img/food/ 下（三端共用：同一道菜在顾客端和商家端
+# 必须长得一样）。这里只维护"菜名 → 文件名"和"店名 → 文件名"两张表。
+#
+# ⚠️ 为什么按名字而不是按 id：id 在不同库（本地 SQLite / 线上 MySQL）里不一样，
+#    名字是种子数据的一部分，两边一致。换菜名要同时改这里，否则会退回 emoji ——
+#    这是刻意的设计：**缺图不是错误**，emoji 是永久可用的兜底。
+#
+# ⚠️ 图片全部是 AI 生成的（火山方舟 Seedream），提示词与色板在 docs/art-spec.json，
+#    重出用 `node tools/gen-art.mjs`。不引用任何第三方素材。
+# ---------------------------------------------------------------------------
+
+IMAGE_DIR = "/static/img/food"
+
+_DISH_IMAGES = {
+    # Golden Wok Kitchen
+    "Crispy Spring Rolls (4 pcs)": "dish-spring-rolls.jpg",
+    "Pork & Chive Dumplings (6 pcs)": "dish-dumplings.jpg",
+    "Hot & Sour Soup": "dish-hotsour.jpg",
+    "Teriyaki Chicken Bowl": "dish-teriyaki.jpg",
+    "Kung Pao Chicken": "dish-kungpao.jpg",
+    "Mapo Tofu": "dish-mapo.jpg",
+    "Sweet & Sour Pork": "dish-sweetsour.jpg",
+    "Beef Fried Rice": "dish-friedrice.jpg",
+    "Iced Lemon Tea": "dish-lemontea.jpg",
+    "Mango Pudding": "dish-mangopudding.jpg",
+    # Noodle Bar
+    "Beef Noodle Soup": "dish-beefnoodle.jpg",
+    "Spicy Dan Dan Noodles": "dish-dandan.jpg",
+    "Wonton Noodles": "dish-wonton.jpg",
+    "Scallion Oil Noodles": "dish-scallion.jpg",
+    "Cucumber Salad": "dish-cucumber.jpg",
+    "Braised Egg": "dish-braisedegg.jpg",
+    "Soy Milk": "dish-soymilk.jpg",
+    "Plum Juice": "dish-plumjuice.jpg",
+    # Sakura Sushi House
+    "Salmon Nigiri (4 pcs)": "dish-nigiri.jpg",
+    "Tuna Roll (8 pcs)": "dish-tunaroll.jpg",
+    "California Roll (8 pcs)": "dish-calroll.jpg",
+    "Sashimi Platter": "dish-sashimi.jpg",
+    "Edamame": "dish-edamame.jpg",
+    "Miso Soup": "dish-misosoup.jpg",
+    "Chawanmushi": "dish-chawanmushi.jpg",
+    "Cold Green Tea": "dish-greentea.jpg",
+    "Matcha Ice Cream": "dish-matcha.jpg",
+    # Green Bowl Salad
+    "Grilled Chicken Caesar": "dish-caesar.jpg",
+    "Avocado Quinoa Bowl": "dish-quinoa.jpg",
+    "Smoked Salmon Bowl": "dish-smoked.jpg",
+    "Cold-pressed Orange": "dish-orange.jpg",
+    "Green Detox Juice": "dish-detox.jpg",
+}
+
+_RESTAURANT_COVERS = {
+    "Golden Wok Kitchen": "cover-goldenwok.jpg",
+    "Noodle Bar": "cover-noodlebar.jpg",
+    "Sakura Sushi House": "cover-sakura.jpg",
+    "Green Bowl Salad": "cover-greenbowl.jpg",
+}
+
+
+def dish_image(name: str | None) -> str | None:
+    """菜名 → 可直接放进 <img src> 的路径；没有就返回 None，前端退回 emoji"""
+    filename = _DISH_IMAGES.get((name or "").strip())
+    return f"{IMAGE_DIR}/{filename}" if filename else None
+
+
+def restaurant_cover(name: str | None) -> str | None:
+    filename = _RESTAURANT_COVERS.get((name or "").strip())
+    return f"{IMAGE_DIR}/{filename}" if filename else None

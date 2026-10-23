@@ -63,9 +63,14 @@ server/            Flask application
 └── info/          the public project site    (/info) — no database, no session
 database/          schema.sql · ER diagrams
 docs/              reports, API contract, design docs, deployment guide
-deploy/            systemd unit
-tools/             migrate.py · smoke_test.py · Amap verification page
+deploy/            systemd unit · nginx site configs
+tools/             migrate.py · smoke_test.py · gen-art.mjs · install-tls.sh
 ```
+
+Photography is generated, not borrowed: 4 restaurant covers, one photo per dish (32) and a
+rider sign-in shot, produced with Volcengine Ark Seedream from the prompts in
+[`docs/art-spec.json`](docs/art-spec.json). How to regenerate or add one:
+[`docs/插图与配图.md`](docs/插图与配图.md).
 
 **The directory tree *is* the division of work** — one folder per role, so each member can open
 their own slice during the demonstration. Details: [`docs/代码结构.md`](docs/代码结构.md).

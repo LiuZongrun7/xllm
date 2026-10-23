@@ -72,6 +72,18 @@
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
+  /* 有实拍图就上图，没有就退回 emoji。
+     图来自 docs/art-spec.json，缺图不是错误 —— 新菜、被删掉的菜都还能正常显示。 */
+  function photoOrEmoji(imageUrl, emoji) {
+    var fallback = esc(emoji || '\uD83C\uDF7D\uFE0F');
+    if (!imageUrl) return fallback;
+    /* emoji 永远垫在下面：图 404 的时候 onerror 把 <img> 摘掉，emoji 就露出来了，
+       不会出现浏览器那种碎图图标。 */
+    return '<span class="c-em" aria-hidden="true">' + fallback + '</span>' +
+      '<img class="c-photo" src="' + esc(imageUrl) + '" alt="" loading="lazy" ' +
+      'decoding="async" onerror="this.remove()">';
+  }
+
   function esc(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
@@ -438,7 +450,8 @@
           name: String(row.name || 'Dish'),
           price: Number(row.price) || 0,
           qty: Math.min(Math.round(qty), MAX_QTY),
-          emoji: row.emoji || '\uD83C\uDF7D\uFE0F'
+          emoji: row.emoji || '\uD83C\uDF7D\uFE0F',
+          image_url: row.image_url || null
         };
       });
       if (!Object.keys(items).length) return emptyCart();
@@ -528,7 +541,8 @@
       name: item.name || 'Dish',
       price: Number(item.price) || 0,
       qty: Math.min(nextQty, MAX_QTY),
-      emoji: item.emoji || '\uD83C\uDF7D\uFE0F'
+      emoji: item.emoji || '\uD83C\uDF7D\uFE0F',
+      image_url: item.image_url || null
     };
     writeCart(cart);
     return hasItems ? 'ok' : 'ok';
@@ -574,7 +588,7 @@
         '<span class="c-restcard__fee">(' + card.review_count + ')</span>' : '');
     return '<a class="c-restcard" href="/customer/restaurant/' + card.id + '">' +
       '<span class="c-thumb c-thumb--lg" style="background:' + restaurantTint(card.id) + '">' +
-        esc(card.emoji || '\uD83C\uDF7D\uFE0F') + '</span>' +
+        photoOrEmoji(card.cover_url, card.emoji) + '</span>' +
       '<span class="c-restcard__main">' +
         '<span class="c-restcard__top"><span class="c-restcard__name">' + esc(card.name) + '</span>' +
           restaurantStateChip(card) + '</span>' +
@@ -821,7 +835,7 @@
       var soldOut = dish.sold_out || dish.stock === 0;
       return '<div class="c-dishresult" data-dish-id="' + dish.id + '">' +
         '<span class="c-thumb c-thumb--md" style="background:' + tint('dish-' + dish.id + dish.name) + '">' +
-          esc(dish.emoji || '\uD83C\uDF7D\uFE0F') + '</span>' +
+          photoOrEmoji(dish.image_url, dish.emoji) + '</span>' +
         '<span class="c-dishresult__main">' +
           '<span class="c-dishresult__name">' + esc(dish.name) + '</span>' +
           '<span class="c-dishresult__sub">' + esc(dish.restaurant_name || '') + ' \u00B7 ' +
@@ -940,7 +954,7 @@
       try {
         var outcome = await addToCart(
           { id: dish.restaurant_id, name: dish.restaurant_name },
-          { id: dish.id, name: dish.name, price: dish.price, emoji: dish.emoji, stock: dish.stock }
+          { id: dish.id, name: dish.name, price: dish.price, emoji: dish.emoji, image_url: dish.image_url, stock: dish.stock }
         );
         if (outcome === 'max') {
           toast('Only ' + dish.stock + ' of ' + dish.name + ' left today', 'error');
@@ -1000,7 +1014,7 @@
           '<div class="c-dishrow__thumbwrap">' +
             '<span class="c-thumb c-thumb--dish" style="background:' +
               tint('dish-' + item.id + item.name, 90, 76) + '">' +
-              esc(item.emoji || '\uD83C\uDF7D\uFE0F') + '</span>' +
+              photoOrEmoji(item.image_url, item.emoji) + '</span>' +
             (soldOut ? '' : '<button class="c-addbtn" type="button" data-add="' + item.id + '" ' +
               'aria-label="Add ' + esc(item.name) + '"' + disabledAttr + '>' + ICON.plus + '</button>') +
           '</div>' +
@@ -1160,8 +1174,17 @@
         var data = await api('/api/customer/restaurants/' + RESTAURANT_ID);
         restaurant = data;
         canOrder = !!(data.state && data.state.accepting);
-        emojiEl.textContent = data.emoji || '\uD83C\uDF7D\uFE0F';
-        hero.style.background = restaurantHeroTint(data.id);
+        if (data.cover_url) {
+          hero.classList.add('c-hero--photo');
+          /* ⚠️ size / position 要一起写成行内样式：骨架屏阶段走过的
+             `hero.style.background = ...` 简写已经在行内留下了
+             background-size:auto / position:0% 0%，它比样式表里的规则优先。 */
+          hero.style.background = 'center 70% / cover no-repeat url("' + data.cover_url + '")';
+          emojiEl.textContent = '';
+        } else {
+          emojiEl.textContent = data.emoji || '\uD83C\uDF7D\uFE0F';
+          hero.style.background = restaurantHeroTint(data.id);
+        }
         document.title = data.name + ' \u00B7 xLLM';
         renderInfo(data);
         renderMenu(data);
@@ -1256,7 +1279,7 @@
       var linesHtml = lines.map(function (row) {
         return '<li class="c-cartline">' +
           '<span class="c-thumb c-thumb--md" style="background:' + tint('dish-' + row.id + row.name) + '">' +
-            esc(row.emoji) + '</span>' +
+            photoOrEmoji(row.image_url, row.emoji) + '</span>' +
           '<div class="c-cartline__main">' +
             '<div class="c-cartline__name">' + esc(row.name) + '</div>' +
             '<div class="c-cartline__unit num">' + money(row.price) + ' each</div>' +
@@ -1288,7 +1311,7 @@
       content.innerHTML =
         '<div class="c-carthead">' +
           '<span class="c-thumb c-thumb--md" style="background:' + restaurantTint(restaurant ? restaurant.id : cart.restaurant_id) + '">' +
-            esc(restaurant && restaurant.emoji || '\uD83C\uDF7D\uFE0F') + '</span>' +
+            photoOrEmoji(restaurant && restaurant.cover_url, restaurant && restaurant.emoji) + '</span>' +
           '<div class="c-carthead__main"><div class="c-carthead__name">' +
             esc(cart.restaurant_name || (restaurant && restaurant.name) || 'Your cart') + '</div>' +
             '<div class="c-carthead__meta num">' +

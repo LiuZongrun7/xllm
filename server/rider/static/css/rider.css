@@ -632,6 +632,20 @@
   border-radius: var(--r-card);
   background: linear-gradient(155deg, #FBEEDC 0%, #FFFFFF 62%);
 }
+/* 登录页实拍图：图在下、压一层从透明到深的渐变，标题落在照片底部。
+   渐变必须和图片写在同一个 background 里（第一层在上面），
+   分成两条规则会被后写的 background-image 顶掉。 */
+.r-auth__hero--photo {
+  min-height: 320px;
+  justify-content: flex-end;
+  border-color: transparent;
+  background:
+    linear-gradient(180deg, rgba(18, 20, 18, .08) 38%, rgba(18, 20, 18, .74) 100%),
+    center 42% / cover no-repeat var(--r-hero);
+}
+.r-auth__hero--photo .r-auth__title { color: #fff; }
+.r-auth__hero--photo .r-auth__sub { color: rgba(255, 255, 255, .84); }
+
 .r-auth__title { font-size: 24px; font-weight: 800; line-height: 1.2; letter-spacing: -.02em; }
 .r-auth__sub { font-size: var(--fs-5); line-height: 1.55; color: var(--r-text-2); }
 .r-auth__card { display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-5); }
