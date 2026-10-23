@@ -660,24 +660,6 @@
 .r-auth__title { font-size: 24px; font-weight: 800; line-height: 1.2; letter-spacing: -.02em; }
 .r-auth__sub { font-size: var(--fs-5); line-height: 1.55; color: var(--r-text-2); }
 .r-auth__card { display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-5); }
-.r-auth__side {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0 var(--sp-1);
-}
-.r-auth__side a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 48px;
-  font-size: var(--fs-5);
-  font-weight: 700;
-  color: var(--r-text-2);
-  border-bottom: 1px solid var(--r-line);
-}
-.r-auth__side a:last-child { border-bottom: 0; }
-.r-auth__side a:hover { color: var(--r-text); }
 .r-auth__note { font-size: 13px; line-height: 1.5; color: var(--r-text-2); text-align: center; }
 .r-auth__legal { font-size: 12px; line-height: 1.5; color: var(--r-text-3); text-align: center; }
 

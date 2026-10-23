@@ -1243,7 +1243,6 @@ textarea.c-input { height: auto; min-height: 84px; padding: 12px; line-height: 1
 .c-auth__switch { align-self: center; margin-top: 14px; }
 .c-auth__terms { font-size: var(--fs-6); color: var(--c-text-3); line-height: 1.55; margin-top: 4px; }
 .c-auth__foot { margin-top: auto; padding-top: 22px; display: flex; flex-direction: column; gap: 10px; }
-.c-auth__portals { display: flex; align-items: center; gap: 8px; font-size: var(--fs-6); }
 .c-auth__foot .c-meta { font-size: var(--fs-4); }
 .c-auth > .c-alert { margin: 0; }
 

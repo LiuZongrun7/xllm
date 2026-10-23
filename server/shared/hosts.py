@@ -70,6 +70,9 @@ def portal_url(role: str, sub: str = "") -> str:
         portal_url("merchant")        → https://restaurant.xllm.cloud/merchant/
         portal_url("rider", "login")  → https://delivery.xllm.cloud/rider/login
 
+    ⚠️ 只给"平台方"的两个页面用：官网 /info 和管理大屏 /admin。
+       三端自己是三个独立产品，页面里不互相链接（见 docs/前端实现约定.md §一）。
+
     没配域名时返回 /merchant/ 、/rider/login 这样的相对路径，
     所以同一个模板在本地和线上都能用。
     """
@@ -108,7 +111,8 @@ def route_by_host():
       2. 角色域名下的根路径 → 该端首页（/customer/ 之类）。
          首页自己会判断登录态，没登录再跳登录页，不用这里操心。
       3. 角色域名下访问了另一个端的页面 → 302 到那个端的域名。
-         于是 "Merchant portal →" 这种链接在顾客域名下点也是对的。
+         这是 URL 层面的兜底（旧书签、手输地址），**界面上不提供这种入口** ——
+         三个端是三个独立产品，互不链接；入口只出现在官网 /admin 和 /info。
       4. 角色域名下访问 /info 或 /admin → 送回主域名，官网和管理大屏只在一个地方。
     """
     role = host_role()
@@ -146,7 +150,7 @@ def route_by_host():
 def install(app) -> None:
     """在 create_app() 里调用一次"""
     app.before_request(route_by_host)
-    # 模板里直接写 {{ portal_url('merchant', 'login') }}，不用到处拼字符串
+    # 官网/大屏用：{{ portal_url('merchant', 'login') }}。三端页面里不要用。
     app.jinja_env.globals["portal_url"] = portal_url
     app.jinja_env.globals["portal_host"] = portal_host
     app.jinja_env.globals["site_url"] = site_url

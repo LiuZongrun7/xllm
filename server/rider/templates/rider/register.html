@@ -84,15 +84,6 @@
     <p class="r-formfoot">Already have an account? <a href="{{ url_for('rider.login_page') }}">Sign in</a></p>
   </section>
 
-  <nav class="r-auth__side" aria-label="Other xLLM portals">
-    <a href="{{ portal_url('customer', 'login') }}">Customer portal
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </a>
-    <a href="{{ portal_url('merchant', 'login') }}">Merchant portal
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </a>
-  </nav>
-
-  <p class="r-auth__legal">Rider accounts are for delivery partners only. Restaurant staff should use the merchant portal.</p>
+  <p class="r-auth__legal">Rider accounts are for delivery partners only.</p>
 </main>
 {% endblock %}

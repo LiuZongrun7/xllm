@@ -796,14 +796,6 @@
 .m-hero__step.is-active .m-hero__step-dot { background: #fff; border-color: #fff; }
 .m-hero__step-title { font-size: var(--fs-4); font-weight: 600; }
 .m-hero__step-desc { font-size: var(--fs-6); opacity: .72; line-height: 1.5; }
-.m-hero__foot {
-  display: flex; flex-wrap: wrap; gap: 8px 18px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, .25);
-  font-size: var(--fs-5);
-}
-.m-hero__foot a:hover { text-decoration: underline; }
-
 .m-auth__main {
   display: flex; align-items: center; justify-content: center;
   padding: 56px 40px;
