@@ -635,13 +635,24 @@
 /* 登录页实拍图：图在下、压一层从透明到深的渐变，标题落在照片底部。
    渐变必须和图片写在同一个 background 里（第一层在上面），
    分成两条规则会被后写的 background-image 顶掉。 */
+/* 登录页头图：横向铺到屏幕两边，只在底部收成圆角，
+   照片就不再是"页面中间的一张图框"，而是这一屏的背景。
+   底部渐变负责把标题托住、并把视线交给下面的表单卡片。 */
 .r-auth__hero--photo {
-  min-height: 320px;
+  min-height: 340px;
+  margin: -4px calc(var(--sp-4) * -1) 0;
+  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) + 12px);
   justify-content: flex-end;
-  border-color: transparent;
+  border: 0;
+  border-radius: 0 0 26px 26px;
   background:
-    linear-gradient(180deg, rgba(18, 20, 18, .08) 38%, rgba(18, 20, 18, .74) 100%),
-    center 42% / cover no-repeat var(--r-hero);
+    linear-gradient(180deg,
+      rgba(16, 18, 16, .34) 0%,
+      rgba(16, 18, 16, .06) 30%,
+      rgba(16, 18, 16, .30) 68%,
+      rgba(16, 18, 16, .78) 100%),
+    center 44% / cover no-repeat var(--r-hero);
+  box-shadow: 0 18px 34px -20px rgba(20, 22, 20, .55);
 }
 .r-auth__hero--photo .r-auth__title { color: #fff; }
 .r-auth__hero--photo .r-auth__sub { color: rgba(255, 255, 255, .84); }

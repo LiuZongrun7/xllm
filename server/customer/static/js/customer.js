@@ -347,11 +347,10 @@
     var out = '';
     for (var i = 0; i < (count || 2); i += 1) {
       out += '<div class="c-card c-restcard-skel">' +
-        '<span class="c-skel c-skel--thumb"></span>' +
+        '<span class="c-skel" style="display:block;width:100%;aspect-ratio:16/10;border-radius:14px"></span>' +
         '<div class="c-restcard-skel__body">' +
-        '<span class="c-skel" style="width:62%;height:16px"></span>' +
-        '<span class="c-skel" style="width:82%;height:12px"></span>' +
-        '<span class="c-skel" style="width:44%;height:12px"></span>' +
+        '<span class="c-skel" style="width:56%;height:16px"></span>' +
+        '<span class="c-skel" style="width:38%;height:12px"></span>' +
         '</div></div>';
     }
     return out;
@@ -587,20 +586,31 @@
       : '<span><span class="c-restcard__star" aria-hidden="true">' + ICON.starTiny + '</span> ' +
         Number(card.rating).toFixed(1) + '</span>' + (card.review_count ?
         '<span class="c-restcard__fee">(' + card.review_count + ')</span>' : '');
-    return '<a class="c-restcard" href="/customer/restaurant/' + card.id + '">' +
-      '<span class="c-thumb c-thumb--lg" style="background:' + restaurantTint(card.id) + '">' +
-        photoOrEmoji(card.cover_url, card.emoji) + '</span>' +
-      '<span class="c-restcard__main">' +
-        '<span class="c-restcard__top"><span class="c-restcard__name">' + esc(card.name) + '</span>' +
-          restaurantStateChip(card) + '</span>' +
-        '<span class="c-restcard__meta">' + rating +
-          '<span class="c-dot">\u00B7</span><span>' + esc(distance) + '</span>' +
-          '<span class="c-dot">\u00B7</span><span>' + (card.eta_minutes || 25) + ' min</span></span>' +
-        '<span class="c-restcard__tags">' +
-          '<span class="c-chip c-chip--neutral">' + esc(card.cuisine || 'Food') + '</span>' +
-          '<span class="c-restcard__fee num">' + money(card.min_order_amount) + ' min \u00B7 ' +
-            money(card.delivery_fee) + ' delivery</span>' +
+    /* 卡片是"图满版 + 底部渐变压字"：
+       店名压在照片下缘的渐变上，价格和菜系留在白色页脚 ——
+       照片不再是贴在卡片左边的一个小方块，整张卡就是那张图。 */
+    var media = card.cover_url
+      ? '<img class="c-photo" src="' + esc(card.cover_url) + '" alt="" loading="lazy" ' +
+        'decoding="async" onload="this.classList.add(\'is-loaded\')" onerror="this.remove()">'
+      : '<span class="c-restcard__fallback" aria-hidden="true">' +
+        esc(card.emoji || '\uD83C\uDF7D\uFE0F') + '</span>';
+    return '<a class="c-restcard c-restcard--photo" href="/customer/restaurant/' + card.id + '">' +
+      '<span class="c-restcard__media" style="background:' + restaurantTint(card.id) + '">' +
+        media +
+        '<span class="c-restcard__scrim" aria-hidden="true"></span>' +
+        '<span class="c-restcard__badge">' + restaurantStateChip(card) + '</span>' +
+        '<span class="c-restcard__caption">' +
+          '<span class="c-restcard__name">' + esc(card.name) + '</span>' +
+          '<span class="c-restcard__meta">' + rating +
+            '<span class="c-dot">\u00B7</span><span>' + esc(distance) + '</span>' +
+            '<span class="c-dot">\u00B7</span><span>' + (card.eta_minutes || 25) + ' min</span>' +
+          '</span>' +
         '</span>' +
+      '</span>' +
+      '<span class="c-restcard__foot">' +
+        '<span class="c-chip c-chip--neutral">' + esc(card.cuisine || 'Food') + '</span>' +
+        '<span class="c-restcard__fee num">' + money(card.min_order_amount) + ' min \u00B7 ' +
+          money(card.delivery_fee) + ' delivery</span>' +
       '</span></a>';
   }
 
