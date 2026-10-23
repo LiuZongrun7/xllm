@@ -46,7 +46,7 @@ STATS = [
     ("3", "role-specific interfaces"),
     ("13", "database tables"),
     ("7", "order states"),
-    ("100", "automated checks"),
+    ("132", "automated checks"),
 ]
 
 # 三端入口卡片。#demo 里按这个顺序渲染。
