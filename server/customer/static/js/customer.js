@@ -91,6 +91,11 @@
     });
   }
 
+  function compactAmount(value) {
+    var n = Number(value) || 0;
+    return n % 1 === 0 ? String(n) : n.toFixed(2);
+  }
+
   function money(value) {
     var n = Number(value);
     if (!isFinite(n)) n = 0;
@@ -1442,6 +1447,8 @@
     var placeBtn = $('#place-order');
     var restaurant = null;
     var addresses = [];
+    var coupons = [];
+    var selectedCoupon = null;
 
     if (!cart.restaurant_id || !cartLines(cart).length) {
       var emptySkeleton = $('#checkout-loading');
@@ -1550,12 +1557,21 @@
       return [{ label: 'Back to cart', href: '/customer/cart' }];
     }
 
+    function couponRow() {
+      var discount = selectedCoupon ? Number(selectedCoupon.discount_preview) || 0 : 0;
+      var label = selectedCoupon ? '−' + money(discount) : (coupons.length ? 'Choose' : 'None available');
+      return '<button type="button" class="c-summary__row c-summary__row--action"' +
+        ' id="co-coupon-row"' + (coupons.length ? '' : ' disabled') + '>' +
+        '<span>Coupon</span><span class="num">' + esc(label) + '</span></button>';
+    }
+
     function render() {
       var lines = cartLines(cart);
       var subtotal = cartSubtotal(cart);
       var fee = Number(restaurant.delivery_fee) || 0;
       var minOrder = Number(restaurant.min_order_amount) || 0;
-      var total = subtotal + fee;
+      var discount = selectedCoupon ? Number(selectedCoupon.discount_preview) || 0 : 0;
+      var total = subtotal + fee - discount;
       var belowMin = minOrder > 0 && subtotal < minOrder;
 
       renderAddresses();
@@ -1578,6 +1594,7 @@
 
       $('#co-summary').innerHTML = warning +
         summaryRow('Subtotal', money(subtotal)) +
+        couponRow() +
         summaryRow('Delivery fee', money(fee)) +
         summaryRow('Total', money(total), 'c-summary__row--total');
 
@@ -1585,6 +1602,78 @@
       placeBtn.textContent = 'Place order \u00B7 ' + money(total);
       content.hidden = false;
       bar.hidden = false;
+    }
+
+    function pickRow(coupon) {
+      var percent = coupon.discount_type === 'percent';
+      var amount = percent ? compacClamp(coupon)
+        : '−\u00A5' + compactAmount(coupon.discount_value);
+      var selected = selectedCoupon && selectedCoupon.id === coupon.id;
+      return '<button type="button" class="c-couponpick' + (selected ? ' is-selected' : '') + '"' +
+        ' data-pick="' + coupon.id + '"' + (coupon.applicable ? '' : ' disabled') + '>' +
+        '<span class="c-couponpick__amount">' + esc(amount) + '</span>' +
+        '<span class="c-couponpick__body">' +
+          '<span class="c-couponpick__title">' + esc(coupon.title) + '</span>' +
+          '<span class="c-couponpick__reason">' +
+            esc(coupon.applicable
+              ? 'Saves ' + money(coupon.discount_preview) + ' on this order'
+              : (coupon.reason || 'Not available')) +
+          '</span></span>' +
+        '<span class="c-couponpick__radio" aria-hidden="true"></span></button>';
+    }
+
+    function compacClamp(coupon) {
+      return (coupon.max_discount_amount
+        ? Math.round(coupon.discount_value) + '% · max \u00A5' + compactAmount(coupon.max_discount_amount)
+        : Math.round(coupon.discount_value) + '%');
+    }
+
+    function openCouponSheet() {
+      var sheet = $('#co-coupon-sheet');
+      var list = $('#co-coupon-list');
+      if (!sheet || !list) return;
+      list.innerHTML = coupons.length
+        ? coupons.map(pickRow).join('')
+        : '<div class="c-empty"><div class="c-empty__title">No coupons yet</div>' +
+          '<div class="c-empty__desc">Buy a coupon pack and your discounts show up here.</div>' +
+          '<a class="c-btn c-btn--ghost c-btn--inline" href="/customer/coupons/store">Browse packs</a></div>';
+      openModal(sheet);
+    }
+
+    function wireCouponPicker() {
+      var summary = $('#co-summary');
+      if (summary) {
+        summary.addEventListener('click', function (ev) {
+          if (ev.target.closest('#co-coupon-row')) openCouponSheet();
+        });
+      }
+
+      var list = $('#co-coupon-list');
+      if (list) {
+        list.addEventListener('click', function (ev) {
+          var btn = ev.target.closest('[data-pick]');
+          if (!btn) return;
+          var picked = coupons.filter(function (c) {
+            return String(c.id) === btn.getAttribute('data-pick');
+          })[0];
+          if (!picked) return;
+          selectedCoupon = picked;
+          closeModal($('#co-coupon-sheet'));
+          render();
+          wireCouponPicker();
+        });
+      }
+
+      var none = $('#co-coupon-none');
+      if (none && !none.dataset.bound) {
+        none.dataset.bound = '1';
+        none.addEventListener('click', function () {
+          selectedCoupon = null;
+          closeModal($('#co-coupon-sheet'));
+          render();
+          wireCouponPicker();
+        });
+      }
     }
 
     placeBtn.addEventListener('click', async function () {
@@ -1605,6 +1694,7 @@
         }),
         remark: remark
       };
+      if (selectedCoupon) payload.user_coupon_id = selectedCoupon.id;
       setBusy(placeBtn, true);
       try {
         var data = await api('/api/customer/orders', { method: 'POST', body: payload });
@@ -1626,9 +1716,19 @@
         ]);
         addresses = results[0].addresses || [];
         restaurant = results[1];
+
+        try {
+          var wallet = await api('/api/customer/coupons?restaurant_id=' +
+            cart.restaurant_id + '&items_amount=' + cartSubtotal(cart).toFixed(2));
+          coupons = wallet.available || [];
+        } catch (couponErr) {
+          coupons = [];
+        }
+
         var skeleton = $('#checkout-loading');
         if (skeleton) skeleton.hidden = true;
         render();
+        wireCouponPicker();
       } catch (err) {
         var skeletonEl = $('#checkout-loading');
         if (skeletonEl) skeletonEl.hidden = true;
@@ -2904,6 +3004,163 @@
   /* ---------------------------------------------------------
      Boot
      --------------------------------------------------------- */
+
+  /* ---------------------------------------------------------
+     COUPONS — my wallet
+     --------------------------------------------------------- */
+  function initCoupons() {
+    var loading = $('#coupon-loading');
+    var listEl = $('#coupon-list');
+    var emptyEl = $('#coupon-empty');
+    var errorEl = $('#coupon-error');
+    var state = { data: null, tab: 'available' };
+
+    var EMPTY = {
+      available: ['No coupons available',
+        'Coupon packs give you a stack of discounts on future orders.'],
+      used: ['Nothing used yet', 'Coupons you redeem at checkout show up here.'],
+      expired: ['Nothing expired', 'Coupons that run out of time end up here.']
+    };
+
+    function card(coupon) {
+      var percent = coupon.discount_type === 'percent';
+      var amount = percent
+        ? '<span class="c-coupon__amount">' + Math.round(coupon.discount_value) +
+          '<small>%</small></span>'
+        : '<span class="c-coupon__amount"><small>\u00A5</small>' +
+          compactAmount(coupon.discount_value) + '</span>';
+      var threshold = Number(coupon.min_order_amount) > 0
+        ? '\u00A5' + compactAmount(coupon.min_order_amount) + ' minimum'
+        : 'No minimum';
+      var bits = [];
+      if (coupon.status === 'used') bits.push('Used ' + fmtDateTime(coupon.used_at));
+      else if (coupon.status === 'expired') bits.push('Expired ' + fmtDate(coupon.expires_at));
+      else bits.push('Expires ' + fmtDate(coupon.expires_at));
+      bits.push(coupon.source === 'new_user' ? 'New member coupon' : 'Coupon pack');
+      var badge = coupon.status === 'unused' && coupon.source === 'new_user'
+        ? '<span class="c-coupon__badge c-coupon__badge--new">New member</span>' : '';
+      var muted = coupon.status === 'unused' ? '' : ' c-coupon--muted';
+      return '<div class="c-coupon' + muted + '">' +
+        '<div class="c-coupon__value">' + amount +
+          '<span class="c-coupon__threshold">' + esc(threshold) + '</span></div>' +
+        '<div class="c-coupon__main">' +
+          '<span class="c-coupon__title">' + esc(coupon.title) + '</span>' +
+          '<span class="c-coupon__meta">' + esc(bits.join(' \u00B7 ')) + '</span>' +
+          badge + '</div></div>';
+    }
+
+    function render() {
+      var rows = (state.data && state.data[state.tab]) || [];
+      listEl.innerHTML = rows.map(card).join('');
+      listEl.hidden = rows.length === 0;
+      emptyEl.hidden = rows.length !== 0;
+      if (!rows.length) {
+        var copy = EMPTY[state.tab] || EMPTY.available;
+        $('#coupon-empty-title').textContent = copy[0];
+        $('#coupon-empty-desc').textContent = copy[1];
+      }
+    }
+
+    function setTab(tab) {
+      state.tab = tab;
+      $$('.c-seg__btn').forEach(function (btn) {
+        var active = btn.getAttribute('data-tab') === tab;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      render();
+    }
+
+    $$('.c-seg__btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { setTab(btn.getAttribute('data-tab')); });
+    });
+
+    api('/api/customer/coupons').then(function (data) {
+      state.data = data;
+      var counts = data.counts || {};
+      $('#cp-count-available').textContent = counts.available || 0;
+      $('#cp-count-used').textContent = counts.used || 0;
+      $('#cp-count-expired').textContent = counts.expired || 0;
+      if (loading) loading.hidden = true;
+      setTab('available');
+    }).catch(function (err) {
+      if (loading) loading.hidden = true;
+      showError(errorEl, err.message);
+    });
+  }
+
+  /* ---------------------------------------------------------
+     COUPON PACKS — the shelf
+     --------------------------------------------------------- */
+  function initCouponStore() {
+    var loading = $('#store-loading');
+    var listEl = $('#store-list');
+    var errorEl = $('#store-error');
+
+    function packCard(pack) {
+      var items = (pack.items || []).map(function (item) {
+        return '<div class="c-pack__item"><span>' + esc(item.title) + ' \u00D7 ' +
+          item.quantity + '</span><b>' + esc(item.label) + '</b></div>';
+      }).join('');
+      var note = 'Valid ' + pack.validity_days + ' days \u00B7 limit ' +
+        pack.per_user_limit + ' per account' +
+        (pack.remaining != null ? ' \u00B7 ' + pack.remaining + ' left' : '');
+      return '<div class="c-pack' + (pack.can_buy ? '' : ' c-pack--disabled') + '">' +
+        '<div class="c-pack__head">' +
+          '<div><div class="c-pack__title">' + esc(pack.title) + '</div>' +
+            '<div class="c-pack__sub">' + esc(pack.subtitle || '') + '</div></div>' +
+          '<div class="c-pack__price"><b>' + money(pack.price) + '</b>' +
+            '<small>' + money(pack.face_value) + '</small></div></div>' +
+        '<div class="c-pack__items">' + items + '</div>' +
+        '<div class="c-pack__foot"><div class="c-pack__note">' + esc(note) + '</div>' +
+          '<button class="c-btn c-pack__buy" type="button" data-buy="' + pack.id + '"' +
+            (pack.can_buy ? '' : ' disabled') + '>' +
+            esc(pack.can_buy ? 'Buy' : (pack.reason || 'Unavailable')) + '</button></div></div>';
+    }
+
+    function render(packs) {
+      listEl.innerHTML = packs.map(packCard).join('');
+      listEl.hidden = false;
+    }
+
+    async function buy(packId, button) {
+      var pack = current.filter(function (p) { return String(p.id) === String(packId); })[0];
+      if (!pack) return;
+      var confirmed = await confirmDialog({
+        title: 'Buy ' + pack.title + '?',
+        body: money(pack.price) + ' for ' + pack.coupon_count + ' coupons worth ' +
+          money(pack.face_value) + '. Coupons are prepaid and non-refundable.',
+        confirmText: 'Pay ' + money(pack.price)
+      });
+      if (!confirmed) return;
+      setBusy(button, true);
+      try {
+        var data = await api('/api/customer/coupon-packages/' + packId + '/purchase',
+          { method: 'POST', body: {} });
+        toast(data.message || 'Coupons added');
+        setTimeout(function () { location.href = '/customer/coupons'; }, 700);
+      } catch (err) {
+        setBusy(button, false);
+        showError(errorEl, err.message);
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    var current = [];
+    api('/api/customer/coupon-packages').then(function (data) {
+      current = data.packages || [];
+      if (loading) loading.hidden = true;
+      render(current);
+      listEl.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('[data-buy]');
+        if (btn && !btn.disabled) buy(btn.getAttribute('data-buy'), btn);
+      });
+    }).catch(function (err) {
+      if (loading) loading.hidden = true;
+      showError(errorEl, err.message);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     initBackButtons();
     var routes = {
@@ -2916,6 +3173,8 @@
       order: initOrder,
       addresses: initAddresses,
       account: initAccount,
+      coupons: initCoupons,
+      'coupons-store': initCouponStore,
       login: initLogin,
       register: initRegister
     };

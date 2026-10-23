@@ -32,20 +32,21 @@ Scope, requirements (`FR-1` … `FR-26`) and design rationale are in
 
 | Role | Pages |
 |---|---|
-| **Customer** (phone UI) | sign in / register / verification-code sign in / reset password · restaurant list with cuisine filter · search restaurants + dishes · restaurant menu with cart · cart · checkout with address + delivery-radius check + mock payment · order history · live order progress, cancel, rate · address book · profile |
+| **Customer** (phone UI) | sign in / register / verification-code sign in / reset password · restaurant list with cuisine filter · search restaurants + dishes · restaurant menu with cart · cart · checkout with address + delivery-radius check + mock payment · order history · live order progress, cancel, rate · **coupons: new-member coupon, paid coupon packs, wallet, checkout redemption** · address book · profile |
 | **Merchant** (desktop UI) | sign in / register · store onboarding · overview KPIs · four-column order board · order detail with accept / decline / start preparing / mark ready / flag delay · menu CRUD with stock, sold-out switch and one-click restock · opening hours + capacity settings · analytics (7/14/30 days) · issues and after-sales |
 | **Rider** (phone UI) | sign in / register · workbench with online toggle, claimable pool and active deliveries · atomic `Grab order` (two riders cannot win the same order) · order detail with pickup / delivered actions and Gaode navigation links · automatic + manual location reporting · delivery history · settings |
 
 Shared server-side behaviour: one order state machine, ownership checks on every query,
 opening-hours/capacity gating, delivery-radius validation (Haversine), stock checks, delay flags,
-duplicate-review protection, GPS sanity checks, and email verification codes.
+duplicate-review protection, GPS sanity checks, email verification codes, and official coupon
+issuance (paid packs, atomic redemption, refund on cancellation).
 
 ## Stack
 
 | Layer | Technology |
 |---|---|
 | Backend | Python 3.10+ · Flask 3.1 · SQLAlchemy 2.0 |
-| Database | MySQL 8 (13 tables) · SQLite for local development |
+| Database | MySQL 8 (16 tables) · SQLite for local development |
 | Templates | Jinja2 |
 | Front end | HTML5 · CSS3 · vanilla JS (`fetch`) |
 | Deployment | nginx (TLS) + gunicorn + systemd |
@@ -174,7 +175,7 @@ DATABASE_URL="sqlite:////tmp/xllm-smoke.db" ../.venv/bin/python ../tools/smoke_t
 | [`docs/项目规划.md`](docs/项目规划.md) | scope, risks, roadmap, division of work |
 | [`docs/API契约.md`](docs/API契约.md) | endpoint contract, payloads, status machine, error copy |
 | [`docs/代码结构.md`](docs/代码结构.md) | who owns which file |
-| [`docs/数据库设计.md`](docs/数据库设计.md) | schema rationale (13 tables) |
+| [`docs/数据库设计.md`](docs/数据库设计.md) | schema rationale (16 tables) |
 | [`docs/认证设计.md`](docs/认证设计.md) | login / verification-code / password-reset design |
 | [`docs/设计语言.md`](docs/设计语言.md) | three independent design systems |
 | [`docs/前端实现约定.md`](docs/前端实现约定.md) | front-end rules: boundaries, states, formatting |

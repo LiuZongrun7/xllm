@@ -1,0 +1,46 @@
+{% extends "customer/base.html" %}
+{% block title %}Coupon packs · xLLM{% endblock %}
+{% block page_key %}coupons-store{% endblock %}
+{% block main_class %}c-main--tabs{% endblock %}
+
+{% block header %}
+<header class="c-topbar">
+  <div class="c-topbar__inner">
+    <a class="c-topbar__back" href="/customer/coupons" aria-label="Back to coupons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </a>
+    <h1 class="c-topbar__title">Coupon packs</h1>
+    <span class="c-topbar__spacer" aria-hidden="true"></span>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="c-couponpage">
+  <div class="c-alert" id="store-error" role="alert" hidden></div>
+
+  <section class="c-storenintro">
+    <h2 class="c-h2">Buy once, save on every order</h2>
+    <p class="c-meta">Packs are issued by xLLM. Coupons land in your account immediately and can be
+      used one per order — with any restaurant.</p>
+  </section>
+
+  <div id="store-loading" class="c-couponlist">
+    <span class="c-skel" style="width:100%;height:150px;border-radius:16px"></span>
+    <span class="c-skel" style="width:100%;height:150px;border-radius:16px"></span>
+  </div>
+
+  <div id="store-list" class="c-couponlist" hidden></div>
+
+  <p class="c-couponfoot">
+    Coupons are prepaid and non-refundable. Each coupon expires after the pack's validity period.
+    Discounts are funded by xLLM — your restaurant is paid in full.
+  </p>
+</div>
+{% endblock %}
+
+{% block bottom %}
+{% set tab = 'account' %}
+{% include 'customer/_tabbar.html' %}
+{% endblock %}

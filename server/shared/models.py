@@ -380,6 +380,12 @@ class Order(db.Model):
     discount_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     total_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
 
+    # ---- 优惠券快照（官方发券；券改名/停用后历史订单仍可回看）----
+    coupon_id = db.Column(_fk(), db.ForeignKey("coupons.id"), nullable=True)
+    coupon_title = db.Column(db.String(60), nullable=True)
+    coupon_funded_by = db.Column(db.Enum("platform", "restaurant",
+                                         name="coupon_funder"), nullable=True)
+
     # ---- 配送与预估 ----
     distance_km = db.Column(db.Numeric(6, 2), nullable=True)
     estimated_delivery_at = db.Column(db.DateTime, nullable=True)
@@ -443,6 +449,8 @@ class Order(db.Model):
             "delivery_fee": _f(self.delivery_fee),
             "discount_amount": _f(self.discount_amount),
             "total_amount": _f(self.total_amount),
+            "coupon_title": self.coupon_title,
+            "coupon_funded_by": self.coupon_funded_by,
             "distance_km": _f(self.distance_km),
             "remark": self.remark,
             "cancel_reason": self.cancel_reason,
@@ -592,6 +600,11 @@ class Coupon(db.Model):
     start_at = db.Column(db.DateTime, nullable=True)
     end_at = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # 补贴由谁承担：平台券从营销预算出，商家券从商家结款里扣
+    funded_by = db.Column(db.Enum("platform", "restaurant", name="coupon_funder"),
+                          nullable=False, default="platform")
+    # 百分比券的封顶（fixed 券为 NULL）
+    max_discount_amount = db.Column(db.Numeric(10, 2), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=_now)
 
 
@@ -606,6 +619,103 @@ class UserCoupon(db.Model):
     order_id = db.Column(_fk(), db.ForeignKey("orders.id"), nullable=True)
     claimed_at = db.Column(db.DateTime, nullable=False, default=_now)
     used_at = db.Column(db.DateTime, nullable=True)
+    # 来源：付费券包 / 新人限时券（免费领取暂不开放）
+    source = db.Column(db.Enum("purchase", "new_user", name="user_coupon_source"),
+                       nullable=False, default="purchase")
+    purchase_id = db.Column(_fk(), db.ForeignKey("coupon_purchases.id"), nullable=True)
+    # 每张券自己的到期时间（= 发行时间 + 券包有效期；新人券固定 48h）
+    expires_at = db.Column(db.DateTime, nullable=True)
+
+    coupon = db.relationship("Coupon", lazy="joined")
+
+
+class CouponPackage(db.Model):
+    """券包 —— 可售的「商品」，官方发券的售卖单元。
+
+    一次购买会按 CouponPackageItem 批量生成 UserCoupon；
+    价格可以低于面额，差额就是平台的营销成本。
+    """
+
+    __tablename__ = "coupon_packages"
+
+    id = db.Column(_pk(), primary_key=True, autoincrement=True)
+    code = db.Column(db.String(32), nullable=False, unique=True)
+    title = db.Column(db.String(60), nullable=False)
+    subtitle = db.Column(db.String(120), nullable=True)
+    price = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    face_value = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    coupon_count = db.Column(db.Integer, nullable=False, default=1)
+    validity_days = db.Column(db.Integer, nullable=False, default=30)
+    per_user_limit = db.Column(db.Integer, nullable=False, default=1)
+    total_quantity = db.Column(db.Integer, nullable=True)
+    sold_count = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    start_at = db.Column(db.DateTime, nullable=True)
+    end_at = db.Column(db.DateTime, nullable=True)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, nullable=False, default=_now)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id, "code": self.code, "title": self.title,
+            "subtitle": self.subtitle,
+            "price": _f(self.price), "face_value": _f(self.face_value),
+            "coupon_count": self.coupon_count,
+            "validity_days": self.validity_days,
+            "per_user_limit": self.per_user_limit,
+            "remaining": (None if self.total_quantity is None
+                          else max(self.total_quantity - self.sold_count, 0)),
+        }
+
+
+class CouponPackageItem(db.Model):
+    """券包内容：(券模板, 张数)。
+
+    规则放在 coupons 里而不是复制一份：券包只是"卖哪些模板、各几张"的清单，
+    这样 user_coupons.coupon_id 始终指向一张真实存在的券模板。
+    """
+
+    __tablename__ = "coupon_package_items"
+
+    id = db.Column(_pk(), primary_key=True, autoincrement=True)
+    package_id = db.Column(_fk(), db.ForeignKey("coupon_packages.id",
+                                                ondelete="CASCADE"), nullable=False)
+    coupon_id = db.Column(_fk(), db.ForeignKey("coupons.id"), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+
+    package = db.relationship(
+        "CouponPackage",
+        backref=db.backref("items", cascade="all, delete-orphan", lazy="selectin"),
+    )
+    coupon = db.relationship("Coupon", lazy="joined")
+
+    def label(self) -> str:
+        if self.coupon is None:
+            return "Coupon"
+        if self.coupon.discount_type == "percent":
+            value = f"{float(self.coupon.discount_value):g}% off"
+        else:
+            value = f"¥{float(self.coupon.discount_value):.0f} off"
+        if self.coupon.min_order_amount and float(self.coupon.min_order_amount) > 0:
+            value += f" over ¥{float(self.coupon.min_order_amount):.0f}"
+        return value
+
+
+class CouponPurchase(db.Model):
+    """券包购买记录（模拟支付，没有真实网关）。"""
+
+    __tablename__ = "coupon_purchases"
+
+    id = db.Column(_pk(), primary_key=True, autoincrement=True)
+    user_id = db.Column(_fk(), db.ForeignKey("users.id"), nullable=False)
+    package_id = db.Column(_fk(), db.ForeignKey("coupon_packages.id"), nullable=False)
+    price_paid = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    coupon_count = db.Column(db.Integer, nullable=False, default=0)
+    payment_status = db.Column(db.Enum("paid", "refunded", name="purchase_status"),
+                               nullable=False, default="paid")
+    created_at = db.Column(db.DateTime, nullable=False, default=_now)
+
+    package = db.relationship("CouponPackage")
 
 
 # ---------------------------------------------------------------------------

@@ -107,6 +107,11 @@ def register():
     db.session.add(user)
     db.session.commit()
 
+    # 新人限时券：只有顾客有，注册即发（48 小时内有效）
+    if user.role == "customer":
+        from shared.coupons import grant_new_user
+        grant_new_user(user)
+
     # 注册即登录，省掉一次手动登录（演示友好）
     login_user(user)
     return ok(user.to_dict(), status=201)

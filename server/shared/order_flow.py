@@ -112,6 +112,9 @@ def transition(order: Order, target: str, actor: str,
             actor if actor in ("restaurant", "rider", "system") else "system")
         if order.payment_status == "paid":
             order.payment_status = "refunded"
+        # 券和钱一起回滚：未过期的退回 unused，过期的直接作废
+        from shared.coupons import release_for_order   # 局部导入，避免循环依赖
+        release_for_order(order)
 
     db.session.commit()
     return order

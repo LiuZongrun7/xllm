@@ -28,9 +28,10 @@ from decimal import Decimal
 
 from shared.catalog import cuisine_emoji, dish_image, restaurant_cover
 from shared.extensions import db
-from shared.models import (CustomerAddress, MenuItem, OpeningHour, Order,
-                           OrderItem, Restaurant, Review, RiderLocation,
-                           RiderProfile, User)
+from shared.models import (Coupon, CouponPackage, CouponPackageItem,
+                           CouponPurchase, CustomerAddress, MenuItem,
+                           OpeningHour, Order, OrderItem, Restaurant, Review,
+                           RiderLocation, RiderProfile, User, UserCoupon)
 from shared.order_flow import haversine_km
 
 DEMO_PASSWORD = "demo1234"
@@ -295,6 +296,96 @@ def _location(rider: User, order: Order, minutes_ago: int = 3):
 # ---------------------------------------------------------------------------
 #  主流程
 # ---------------------------------------------------------------------------
+def _seed_coupon_catalogue() -> dict:
+    """券模板 + 四个券包。
+
+    券包是"商品"：有价格、库存、限购、有效期；模板只描述"这张券长什么样"。
+    价格低于面额的部分是平台营销成本（券是平台补贴，商家按原价结算）。
+    """
+    specs = {
+        "C5": dict(title="¥5 off", discount_type="fixed",
+                   discount_value=Decimal("5.00"),
+                   min_order_amount=Decimal("0.00"), funded_by="platform"),
+        "P20": dict(title="20% off (up to ¥12)", discount_type="percent",
+                    discount_value=Decimal("20.00"),
+                    min_order_amount=Decimal("0.00"),
+                    max_discount_amount=Decimal("12.00"), funded_by="platform"),
+        "NEW15": dict(title="¥15 off your first order", discount_type="fixed",
+                      discount_value=Decimal("15.00"),
+                      min_order_amount=Decimal("40.00"), funded_by="platform"),
+    }
+    templates = {}
+    for code, spec in specs.items():
+        coupon = Coupon.query.filter_by(code=code).first()
+        if coupon is None:
+            coupon = Coupon(code=code, is_active=True, **spec)
+            db.session.add(coupon)
+        templates[code] = coupon
+    db.session.flush()
+
+    packs = [
+        dict(code="PACK3", title="3 × ¥5 off", subtitle="A small top-up",
+             price=Decimal("4.90"), face_value=Decimal("15.00"),
+             validity_days=30, per_user_limit=3, total_quantity=500,
+             sort_order=1, items=[("C5", 3)]),
+        dict(code="PACK6", title="6 × ¥5 off", subtitle="Most popular",
+             price=Decimal("9.90"), face_value=Decimal("30.00"),
+             validity_days=30, per_user_limit=2, total_quantity=500,
+             sort_order=2, items=[("C5", 6)]),
+        dict(code="PACK8P", title="3 × 20% off", subtitle="Best on big orders — up to ¥12 each",
+             price=Decimal("6.90"), face_value=Decimal("36.00"),
+             validity_days=30, per_user_limit=2, total_quantity=300,
+             sort_order=3, items=[("P20", 3)]),
+        dict(code="PACK12", title="12 × ¥5 off", subtitle="For regulars",
+             price=Decimal("19.90"), face_value=Decimal("60.00"),
+             validity_days=30, per_user_limit=1, total_quantity=200,
+             sort_order=4, items=[("C5", 12)]),
+    ]
+    for spec in packs:
+        package = CouponPackage.query.filter_by(code=spec["code"]).first()
+        if package is not None:
+            continue
+        item_specs = spec.pop("items")
+        package = CouponPackage(**spec, is_active=True, coupon_count=
+                                sum(qty for _, qty in item_specs))
+        db.session.add(package)
+        db.session.flush()
+        for code, quantity in item_specs:
+            db.session.add(CouponPackageItem(
+                package_id=package.id, coupon_id=templates[code].id,
+                quantity=quantity))
+
+    db.session.commit()
+    return templates
+
+
+def _seed_demo_coupons(alex, mia, templates) -> None:
+    """让演示账户一登录就有券可看：新人券 + 一次券包购买 + 一张过期的。"""
+    from shared.coupons import grant_new_user, grant_package
+
+    grant_new_user(alex)
+    grant_new_user(mia)
+
+    pack = CouponPackage.query.filter_by(code="PACK6").first()
+    if pack is not None and not CouponPurchase.query.filter_by(
+            user_id=alex.id, package_id=pack.id).first():
+        grant_package(alex, pack)
+
+    # 过期券：展示"已过期"分组（不影响任何订单）
+    template = templates.get("C5")
+    if template is not None:
+        exists = UserCoupon.query.filter_by(user_id=alex.id,
+                                            coupon_id=template.id,
+                                            status="expired").first()
+        if exists is None:
+            db.session.add(UserCoupon(
+                user_id=alex.id, coupon_id=template.id, status="expired",
+                source="purchase",
+                expires_at=datetime.now() - timedelta(days=3),
+            ))
+            db.session.commit()
+
+
 def seed(reset: bool = False) -> None:
     if reset:
         db.drop_all()
@@ -442,28 +533,51 @@ def seed(reset: bool = False) -> None:
 
     db.session.commit()
 
+    # ---- 官方发券：券模板 + 券包货架 + 演示账户手里的券 ----
+    templates = _seed_coupon_catalogue()
+    _seed_demo_coupons(alex, mia, templates)
+
     print("[seed] done")
     print(f"[seed]   users       {User.query.count()}")
     print(f"[seed]   restaurants {Restaurant.query.count()}")
     print(f"[seed]   menu items  {MenuItem.query.count()}")
     print(f"[seed]   orders      {Order.query.count()}")
     print(f"[seed]   reviews     {Review.query.count()}")
+    print(f"[seed]   coupon packs {CouponPackage.query.count()}"
+          f" · issued coupons {UserCoupon.query.count()}")
     print("[seed] demo accounts (password: %s)" % DEMO_PASSWORD)
     print("[seed]   customer  alex / customer1@xllm.cloud")
     print("[seed]   merchant  goldenwok / merchant1@xllm.cloud")
     print("[seed]   rider     chen / rider1@xllm.cloud")
 
 
+def seed_coupons_only() -> None:
+    """只补券目录与演示券 —— 给已有数据的库用（生产环境不加 --reset 也能跑）。"""
+    from shared.coupons import grant_new_user
+
+    templates = _seed_coupon_catalogue()
+    for user in User.query.filter_by(role="customer").all():
+        grant_new_user(user)
+    print("[seed] coupon catalogue ready:",
+          f"{CouponPackage.query.count()} packs,",
+          f"{UserCoupon.query.count()} coupons issued")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed the xLLM demo dataset")
     parser.add_argument("--reset", action="store_true",
                         help="drop all tables first (destroys existing data!)")
+    parser.add_argument("--coupons-only", action="store_true",
+                        help="only create coupon templates/packs and new-member coupons")
     args = parser.parse_args()
 
     from app import create_app            # 延迟 import：需要 config 已经生效
     app = create_app()
     with app.app_context():
-        seed(reset=args.reset)
+        if args.coupons_only:
+            seed_coupons_only()
+        else:
+            seed(reset=args.reset)
 
 
 if __name__ == "__main__":

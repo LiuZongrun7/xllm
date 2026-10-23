@@ -463,6 +463,106 @@ def main() -> int:
     check("console session coexists with the marketplace session",
           both == (200, 200) and after == (200, 401), f"{both} → {after}")
 
+    print("\n=== coupons (official issuance + paid packs) ===")
+    status, body = call(customer, "get", "/api/customer/coupon-packages")
+    packs = body.get("data", {}).get("packages", [])
+    check("coupon shelf lists packs", status == 200 and len(packs) >= 3, status)
+    pack3 = next(p for p in packs if p["code"] == "PACK3")
+    check("a pack shows its price and contents",
+          abs(pack3["price"] - 4.9) < 0.01 and pack3["coupon_count"] == 3, pack3)
+
+    status, body = call(customer, "get", "/api/customer/coupons")
+    before = body["data"]["counts"]["available"]
+    check("a new member coupon is issued at signup", before >= 1, before)
+
+    status, body = call(customer, "post",
+                        f"/api/customer/coupon-packages/{pack3['id']}/purchase", {})
+    check("buying a pack issues its coupons",
+          status == 201 and body["data"]["purchase"]["coupon_count"] == 3, body)
+    status, body = call(customer, "get", "/api/customer/coupons")
+    check("the wallet grows by the pack size",
+          body["data"]["counts"]["available"] == before + 3, body["data"]["counts"])
+
+    status, detail_body = call(customer, "get", f"/api/customer/restaurants/{golden['id']}")
+    items = [i for g in detail_body["data"]["menu"] for i in g["items"] if not i["sold_out"]]
+    picks = sorted(items, key=lambda i: -i["price"])[:2]
+    amount = sum(i["price"] for i in picks)
+    status, body = call(customer, "get",
+                        f"/api/customer/coupons?restaurant_id={golden['id']}"
+                        f"&items_amount={amount:.2f}")
+    usable = [c for c in body["data"]["available"] if c.get("applicable")]
+    check("the wallet marks coupons usable for this cart", bool(usable),
+          body["data"]["counts"])
+    coupon = usable[0]
+
+    def order_with(user_coupon_id):
+        return call(customer, "post", "/api/customer/orders", {
+            "restaurant_id": golden["id"], "address_id": address["id"],
+            "items": [{"menu_item_id": i["id"], "quantity": 1} for i in picks],
+            "user_coupon_id": user_coupon_id,
+        })
+
+    status, body = order_with(coupon["id"])
+    check("an order accepts a coupon", status == 201, body)
+    placed = body["data"]["order"]
+    check("the discount is recorded on the order",
+          abs(placed["discount_amount"] - coupon["discount_preview"]) < 0.01, placed)
+    check("total = items + fee - discount",
+          abs(placed["total_amount"] - (placed["items_amount"] +
+                                        placed["delivery_fee"] -
+                                        placed["discount_amount"])) < 0.01, placed)
+
+    status, body = order_with(coupon["id"])
+    check("the same coupon cannot be used twice", status == 409, body)
+
+    status, body = call(customer, "post",
+                        f"/api/customer/orders/{placed['id']}/cancel",
+                        {"reason": "coupon test"})
+    check("cancelling the order returns the coupon", status == 200, body)
+    status, body = call(customer, "get", "/api/customer/coupons")
+    check("the returned coupon is unused again",
+          any(c["id"] == coupon["id"] for c in body["data"]["available"]),
+          body["data"]["counts"])
+
+    pack12 = next(p for p in packs if p["code"] == "PACK12")
+    first = call(customer, "post",
+                 f"/api/customer/coupon-packages/{pack12['id']}/purchase", {})[0]
+    second = call(customer, "post",
+                  f"/api/customer/coupon-packages/{pack12['id']}/purchase", {})[0]
+    check("per-user purchase limit is enforced", first == 201 and second == 409,
+          (first, second))
+
+    other = login("mia")
+    call(other, "post", "/api/customer/addresses", {
+        "label": "Mia home", "contact_name": "Mia Wang",
+        "contact_phone": "13800000002",
+        "address_text": "18F, 268 Wuning Road, Putuo, Shanghai",
+        "lng": 121.4230, "lat": 31.2380, "is_default": True,
+    })
+    mia_address = call(other, "get", "/api/customer/addresses")[1]["data"]["addresses"][0]
+    status, body = call(other, "post", "/api/customer/orders", {
+        "restaurant_id": golden["id"], "address_id": mia_address["id"],
+        "items": [{"menu_item_id": picks[0]["id"], "quantity": 1}],
+        "user_coupon_id": coupon["id"],
+    })
+    check("another customer cannot spend my coupon", status == 404, (status, body))
+
+    status, body = call(customer, "get", "/api/customer/coupons")
+    expired_rows = body["data"]["expired"]
+    if expired_rows:
+        status, body = order_with(expired_rows[0]["id"])
+        check("an expired coupon is rejected", status == 409, body)
+
+    pack8 = next(p for p in packs if p["code"] == "PACK8P")
+    call(customer, "post", f"/api/customer/coupon-packages/{pack8['id']}/purchase", {})
+    status, body = call(customer, "get",
+                        f"/api/customer/coupons?restaurant_id={golden['id']}"
+                        f"&items_amount=200.00")
+    percent = [c for c in body["data"]["available"]
+               if c["discount_type"] == "percent" and c.get("applicable")]
+    check("a percentage coupon is capped at its maximum",
+          bool(percent) and percent[0]["discount_preview"] == 12.0, percent)
+
     print("\n=== pages render ===")
     pages = [
         (anon, "/customer/login", 200),
@@ -480,6 +580,8 @@ def main() -> int:
         (customer, "/customer/checkout", 200),
         (customer, "/customer/addresses", 200),
         (customer, "/customer/account", 200),
+        (customer, "/customer/coupons", 200),
+        (customer, "/customer/coupons/store", 200),
         (customer, "/customer/search", 200),
         (merchant, "/merchant/", 200),
         (merchant, "/merchant/orders", 200),

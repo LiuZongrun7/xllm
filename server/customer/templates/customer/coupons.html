@@ -1,0 +1,59 @@
+{% extends "customer/base.html" %}
+{% block title %}Coupons · xLLM{% endblock %}
+{% block page_key %}coupons{% endblock %}
+{% block main_class %}c-main--tabs{% endblock %}
+
+{% block header %}
+<header class="c-topbar">
+  <div class="c-topbar__inner">
+    <h1 class="c-topbar__title c-topbar__title--left">Coupons</h1>
+    <a class="c-topbar__action" href="/customer/coupons/store">Get packs</a>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="c-couponpage">
+  <div class="c-alert" id="coupon-error" role="alert" hidden></div>
+
+  <div class="c-seg" role="tablist" aria-label="Coupon status">
+    <button class="c-seg__btn is-active" id="cp-tab-available" data-tab="available"
+            type="button" role="tab" aria-selected="true">
+      Available <span class="c-seg__count" id="cp-count-available">0</span>
+    </button>
+    <button class="c-seg__btn" id="cp-tab-used" data-tab="used" type="button" role="tab" aria-selected="false">
+      Used <span class="c-seg__count" id="cp-count-used">0</span>
+    </button>
+    <button class="c-seg__btn" id="cp-tab-expired" data-tab="expired" type="button" role="tab" aria-selected="false">
+      Expired <span class="c-seg__count" id="cp-count-expired">0</span>
+    </button>
+  </div>
+
+  <div id="coupon-loading" class="c-couponlist">
+    <span class="c-skel" style="width:100%;height:86px;border-radius:14px"></span>
+    <span class="c-skel" style="width:100%;height:86px;border-radius:14px"></span>
+  </div>
+
+  <div id="coupon-list" class="c-couponlist" hidden></div>
+
+  <div id="coupon-empty" class="c-empty" hidden>
+    <div class="c-empty__title" id="coupon-empty-title">No coupons here yet</div>
+    <div class="c-empty__desc" id="coupon-empty-desc">Buy a coupon pack to get a stack of discounts.</div>
+    <a class="c-btn c-btn--ghost c-btn--inline" href="/customer/coupons/store">Browse coupon packs</a>
+  </div>
+
+  <a class="c-storepromo" href="/customer/coupons/store">
+    <span class="c-storepromo__icon" aria-hidden="true">%</span>
+    <span class="c-storepromo__text">
+      <span class="c-storepromo__title">Coupon packs</span>
+      <span class="c-storepromo__sub">Pay ¥9.90, get ¥30 of coupons</span>
+    </span>
+    <span class="c-storepromo__chev" aria-hidden="true">›</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block bottom %}
+{% set tab = 'account' %}
+{% include 'customer/_tabbar.html' %}
+{% endblock %}

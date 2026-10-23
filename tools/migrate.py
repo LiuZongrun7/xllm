@@ -44,6 +44,17 @@ COLUMNS = [
     ("orders", "delay_flagged_at", "DATETIME NULL", "DATETIME"),
     ("orders", "delay_reason", "VARCHAR(100) NULL", "VARCHAR(100)"),
     ("orders", "address_updated_at", "DATETIME NULL", "DATETIME"),
+    # ---- 优惠券（官方发券 + 付费券包）----
+    ("orders", "coupon_id", "BIGINT UNSIGNED NULL", "INTEGER"),
+    ("orders", "coupon_title", "VARCHAR(60) NULL", "VARCHAR(60)"),
+    ("orders", "coupon_funded_by", "VARCHAR(20) NULL", "VARCHAR(20)"),
+    ("coupons", "funded_by", "VARCHAR(20) NOT NULL DEFAULT 'platform'",
+     "VARCHAR(20) NOT NULL DEFAULT 'platform'"),
+    ("coupons", "max_discount_amount", "DECIMAL(10,2) NULL", "NUMERIC(10,2)"),
+    ("user_coupons", "source", "VARCHAR(20) NOT NULL DEFAULT 'purchase'",
+     "VARCHAR(20) NOT NULL DEFAULT 'purchase'"),
+    ("user_coupons", "purchase_id", "BIGINT UNSIGNED NULL", "INTEGER"),
+    ("user_coupons", "expires_at", "DATETIME NULL", "DATETIME"),
 ]
 
 

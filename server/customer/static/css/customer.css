@@ -1519,3 +1519,251 @@ body.c-modal-open { overflow: hidden; }
   .c-toast { bottom: 110px; }
 }
 
+
+/* ============================================================
+   优惠券（官方发券：券包 + 我的券）
+   —— 券本身是"票券"的形态：左侧面额、中间规则、右侧状态。
+      三端里只有顾客端有这一块，所以类名仍然是 c- 前缀。
+   ============================================================ */
+.c-couponpage { padding: 4px 16px 32px; }
+
+.c-topbar__action {
+  flex: none;
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--c-primary);
+  text-decoration: none;
+  padding: 8px 4px;
+}
+.c-topbar__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--c-text);
+}
+.c-topbar__back svg { width: 22px; height: 22px; }
+
+/* 分段控件：可用 / 已用 / 已过期 */
+.c-seg {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: #F5F5F5;
+  border-radius: var(--r-pill);
+  margin: 10px 0 16px;
+}
+.c-seg__btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-pill);
+  padding: 9px 6px;
+  font: inherit;
+  font-size: var(--fs-6);
+  font-weight: 600;
+  color: var(--c-text-2);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.c-seg__btn.is-active {
+  background: #fff;
+  color: var(--c-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .10);
+}
+.c-seg__count {
+  display: inline-block;
+  margin-left: 2px;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-3);
+}
+.c-seg__btn.is-active .c-seg__count { color: var(--c-text-2); }
+
+.c-couponlist { display: flex; flex-direction: column; gap: 12px; }
+
+/* 一张券 */
+.c-coupon {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-card);
+  background: #fff;
+  overflow: hidden;
+}
+.c-coupon__value {
+  width: 96px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 14px 8px;
+  background: var(--c-primary-weak);
+  color: var(--c-primary);
+  border-right: 1px dashed var(--c-line-strong);
+}
+.c-coupon__amount { font-size: 24px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.c-coupon__amount small { font-size: 13px; font-weight: 700; margin-right: 1px; }
+.c-coupon__threshold { font-size: var(--fs-7); color: var(--c-primary); opacity: .8; }
+
+.c-coupon__main { flex: 1; min-width: 0; padding: 13px 14px; display: flex; flex-direction: column; gap: 3px; }
+.c-coupon__title { font-size: var(--fs-5); font-weight: 600; }
+.c-coupon__meta { font-size: var(--fs-7); color: var(--c-text-3); line-height: 1.45; }
+.c-coupon__badge {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: var(--r-pill);
+  background: var(--c-success-bg);
+  color: var(--c-success);
+}
+.c-coupon__badge--new { background: #EEE9FF; color: var(--c-accent); }
+
+.c-coupon__action {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding-right: 14px;
+}
+.c-coupon__use {
+  border: 0;
+  background: var(--c-primary);
+  color: #fff;
+  font: inherit;
+  font-size: var(--fs-6);
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.c-coupon__use:disabled { background: #EDEDED; color: var(--c-text-3); cursor: default; }
+
+/* 不可用 / 已用 / 已过期 */
+.c-coupon--muted .c-coupon__value { background: #F6F6F6; color: var(--c-text-3); }
+.c-coupon--muted .c-coupon__threshold { color: var(--c-text-3); }
+.c-coupon--muted .c-coupon__title { color: var(--c-text-2); }
+.c-coupon--muted .c-coupon__badge { background: #F0F0F0; color: var(--c-text-3); }
+
+/* 去商店的入口条 */
+.c-storepromo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: var(--r-card);
+  background: linear-gradient(100deg, #FFF3EF, #FFF9F6);
+  border: 1px solid #FFE1D8;
+  text-decoration: none;
+  color: inherit;
+}
+.c-storepromo__icon {
+  width: 36px; height: 36px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--c-primary);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+}
+.c-storepromo__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.c-storepromo__title { font-size: var(--fs-5); font-weight: 700; }
+.c-storepromo__sub { font-size: var(--fs-7); color: var(--c-text-2); }
+.c-storepromo__chev { color: var(--c-text-3); font-size: 20px; line-height: 1; }
+
+/* 券包货架 */
+.c-storenintro { margin: 8px 0 18px; }
+.c-storenintro .c-h2 { font-size: 20px; }
+.c-storenintro .c-meta { margin-top: 6px; line-height: 1.55; }
+
+.c-pack {
+  border: 1px solid var(--c-line-strong);
+  border-radius: 18px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+}
+.c-pack__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.c-pack__title { font-size: var(--fs-3); font-weight: 700; }
+.c-pack__sub { font-size: var(--fs-7); color: var(--c-text-2); margin-top: 2px; }
+.c-pack__price { display: flex; align-items: baseline; gap: 6px; }
+.c-pack__price b { font-size: 22px; letter-spacing: -.02em; }
+.c-pack__price small { font-size: var(--fs-7); color: var(--c-text-3); text-decoration: line-through; }
+
+.c-pack__items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #FAFAFA;
+}
+.c-pack__item { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: var(--fs-6); }
+.c-pack__item span:first-child { color: var(--c-text-2); }
+.c-pack__item b { font-weight: 700; }
+
+.c-pack__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.c-pack__note { flex: 1; min-width: 0; font-size: var(--fs-7); color: var(--c-text-3); line-height: 1.4; }
+/* .c-btn 默认是整行宽的移动端按钮，这里要收成固定宽度 */
+.c-pack__buy { flex: none; width: auto; min-width: 96px; height: 40px; padding: 0 18px; font-size: var(--fs-5); }
+.c-pack--disabled { opacity: .62; }
+
+.c-couponfoot { margin-top: 20px; font-size: var(--fs-7); color: var(--c-text-3); line-height: 1.6; }
+
+/* 结算页：可点击的汇总行 */
+.c-summary__row--action {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-5);
+  color: var(--c-text);
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.c-summary__row--action span:last-child { color: var(--c-primary); font-weight: 600; }
+.c-summary__row--action[disabled] { cursor: default; }
+.c-summary__row--action[disabled] span:last-child { color: var(--c-text-3); font-weight: 400; }
+
+/* 结算页：选券弹层 */
+#co-coupon-sheet .c-modal__sheet { max-height: 72vh; display: flex; flex-direction: column; }
+.c-couponpicker { overflow-y: auto; margin: 14px 0 12px; display: flex; flex-direction: column; gap: 10px; }
+.c-couponpick {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.c-couponpick.is-selected { border-color: var(--c-primary); box-shadow: 0 0 0 1px var(--c-primary) inset; }
+.c-couponpick:disabled { opacity: .55; cursor: default; }
+.c-couponpick__amount { font-size: 18px; font-weight: 800; color: var(--c-primary); min-width: 54px; }
+.c-couponpick__body { flex: 1; min-width: 0; }
+.c-couponpick__title { font-size: var(--fs-5); font-weight: 600; display: block; }
+.c-couponpick__reason { font-size: var(--fs-7); color: var(--c-text-3); display: block; margin-top: 2px; }
+.c-couponpick__radio {
+  width: 20px; height: 20px; flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-line-strong);
+}
+.c-couponpick.is-selected .c-couponpick__radio {
+  border-color: var(--c-primary);
+  background: radial-gradient(circle, var(--c-primary) 0 5px, transparent 5px);
+}

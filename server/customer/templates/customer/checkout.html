@@ -107,6 +107,16 @@
     </section>
   </div>
 </div>
+<div class="c-modal" id="co-coupon-sheet" hidden>
+  <div class="c-modal__backdrop" data-close></div>
+  <div class="c-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="co-coupon-title">
+    <div class="c-modal__handle"></div>
+    <h2 class="c-h2" id="co-coupon-title">Use a coupon</h2>
+    <p class="c-meta">One coupon per order. Discounts apply to the items subtotal.</p>
+    <div class="c-couponpicker" id="co-coupon-list"></div>
+    <button class="c-btn c-btn--ghost" id="co-coupon-none" type="button">Don't use a coupon</button>
+  </div>
+</div>
 {% endblock %}
 
 {% block bottom %}

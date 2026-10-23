@@ -44,12 +44,15 @@ from flask import Blueprint, current_app, render_template, request
 
 from shared.catalog import cuisine_emoji, dish_emoji
 from shared.extensions import db
-from shared.models import (CustomerAddress, MenuItem, Order, OrderItem,
-                           Restaurant, Review)
+from shared.models import (CouponPackage, CouponPurchase, CustomerAddress,
+                           MenuItem, Order, OrderItem, Restaurant, Review,
+                           UserCoupon)
 from shared.order_flow import (FlowError, customer_actions, estimate_delivery_at,
                                haversine_km, money, new_order_no, rating_summary,
                                recent_locations, restaurant_state, transition)
 from shared.security import current_user, log_denied, require_role, role_page
+from shared import coupons as coupon_engine
+from shared.coupons import CouponError
 from shared.utils import body, clean, err, ok
 
 # 页面
@@ -239,6 +242,20 @@ def addresses_page():
 @role_page(ROLE, "customer.login_page")
 def account_page():
     return render_template("customer/account.html", page="account")
+
+
+@pages.get("/coupons")
+@role_page(ROLE, "customer.login_page")
+def coupons_page():
+    """我的券：可用 / 已用 / 已过期。"""
+    return render_template("customer/coupons.html", page="account")
+
+
+@pages.get("/coupons/store")
+@role_page(ROLE, "customer.login_page")
+def coupon_store_page():
+    """券包货架：官方发券的唯一售卖入口。"""
+    return render_template("customer/coupon-store.html", page="account")
 
 
 # ===========================================================================
@@ -476,8 +493,24 @@ def place_order():
             f"{float(restaurant.delivery_radius_km):.0f} km delivery radius — "
             f"pick a closer address", 409)
 
+    # 优惠券（可选）：先确认是自己的券，再交给唯一计价入口
+    user_coupon = None
+    raw_coupon = d.get("user_coupon_id")
+    if raw_coupon not in (None, "", 0, "0"):
+        try:
+            user_coupon_id = int(raw_coupon)
+        except (TypeError, ValueError):
+            return err("Invalid coupon")
+        user_coupon = UserCoupon.query.filter_by(
+            id=user_coupon_id, user_id=user.id).first()
+        if user_coupon is None:
+            return err("Coupon not found", 404)
+
+    quote = coupon_engine.price_order(restaurant, items_amount, user_coupon)
+    if user_coupon is not None and quote["coupon_error"]:
+        return err(quote["coupon_error"], 409)
+
     fee = Decimal(str(restaurant.delivery_fee))
-    total = items_amount + fee
 
     order = Order(
         order_no=new_order_no(),
@@ -492,8 +525,11 @@ def place_order():
         delivery_contact_phone=address.contact_phone,
         items_amount=items_amount,
         delivery_fee=fee,
-        discount_amount=Decimal("0.00"),
-        total_amount=total,
+        discount_amount=quote["discount_amount"],
+        total_amount=quote["total_amount"],
+        coupon_id=user_coupon.coupon_id if user_coupon else None,
+        coupon_title=user_coupon.coupon.title if user_coupon else None,
+        coupon_funded_by=user_coupon.coupon.funded_by if user_coupon else None,
         distance_km=Decimal(str(distance)),
         estimated_delivery_at=estimate_delivery_at(
             restaurant.avg_prep_minutes, distance),
@@ -501,6 +537,11 @@ def place_order():
     )
     db.session.add(order)
     db.session.flush()
+
+    # 核销必须是条件更新：两人同时用同一张券，只能成功一次
+    if user_coupon is not None and not coupon_engine.redeem(user, user_coupon, order):
+        db.session.rollback()
+        return err("This coupon has already been used", 409)
 
     for item, quantity in lines:
         db.session.add(OrderItem(
@@ -687,6 +728,96 @@ def active_order():
                           "delivering")),
     ).order_by(Order.created_at.desc()).first())
     return ok({"order": order.to_dict(detail=True) if order else None})
+
+
+# ===========================================================================
+#  接口 · 优惠券
+# ===========================================================================
+@api.get("/coupons")
+@require_role(ROLE)
+def my_coupons():
+    """我的券。带上 restaurant_id + items_amount 时顺便算出"这单能不能用"。"""
+    rid = request.args.get("restaurant_id", type=int)
+    amount = request.args.get("items_amount")
+    items_amount = Decimal(amount) if amount not in (None, "") else None
+    return ok(coupon_engine.summarize(current_user(), restaurant_id=rid,
+                                      items_amount=items_amount))
+
+
+@api.get("/coupon-packages")
+@require_role(ROLE)
+def coupon_packages():
+    """券包货架 —— 按限购和库存算好 can_buy，前端不用自己推。"""
+    user = current_user()
+    now = datetime.now()
+    rows = (CouponPackage.query.filter_by(is_active=True)
+            .order_by(CouponPackage.sort_order, CouponPackage.id).all())
+
+    bought = dict(
+        db.session.query(CouponPurchase.package_id, db.func.count())
+        .filter(CouponPurchase.user_id == user.id)
+        .group_by(CouponPurchase.package_id).all()
+    )
+
+    packages = []
+    for pkg in rows:
+        mine = bought.get(pkg.id, 0)
+        remaining = (None if pkg.total_quantity is None
+                     else max(pkg.total_quantity - pkg.sold_count, 0))
+        reason = None
+        if pkg.start_at and now < pkg.start_at:
+            reason = "Not on sale yet"
+        elif pkg.end_at and now > pkg.end_at:
+            reason = "No longer on sale"
+        elif remaining is not None and remaining <= 0:
+            reason = "Sold out"
+        elif mine >= (pkg.per_user_limit or 1):
+            reason = "Purchase limit reached"
+
+        data = pkg.to_dict()
+        data.update({
+            "items": [{"coupon_id": item.coupon_id, "label": item.label(),
+                       "title": item.coupon.title if item.coupon else "Coupon",
+                       "quantity": item.quantity}
+                      for item in pkg.items],
+            "purchased": mine,
+            "can_buy": reason is None,
+            "reason": reason,
+        })
+        packages.append(data)
+
+    return ok({"packages": packages,
+               "wallet": {"available": _coupon_count(user)}})
+
+
+def _coupon_count(user) -> int:
+    return sum(1 for c in UserCoupon.query.filter_by(user_id=user.id).all()
+               if coupon_engine.effective_status(c) == "unused")
+
+
+@api.post("/coupon-packages/<int:package_id>/purchase")
+@require_role(ROLE)
+def purchase_coupon_package(package_id: int):
+    """购买券包（模拟支付）。一次事务：扣库存 + 记购买 + 发券。"""
+    package = db.session.get(CouponPackage, package_id)
+    if package is None:
+        return err("Coupon pack not found", 404)
+    try:
+        purchase, issued = coupon_engine.grant_package(current_user(), package)
+    except CouponError as exc:
+        db.session.rollback()
+        return err(exc.message, exc.status)
+
+    return ok({
+        "purchase": {
+            "id": purchase.id,
+            "price_paid": float(purchase.price_paid),
+            "coupon_count": purchase.coupon_count,
+            "package_title": package.title,
+        },
+        "coupons": [coupon_engine.serialize(c) for c in issued],
+        "message": f"{purchase.coupon_count} coupons added to your account",
+    }, status=201)
 
 
 # ===========================================================================

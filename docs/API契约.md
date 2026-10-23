@@ -122,6 +122,23 @@ xLLM · COMP3019J Final Project · Food Delivery Website
 
 时间轴节点：`{status, label, at, state}`，`state ∈ done|current|todo|cancelled`。
 
+### 优惠券与券包
+
+券由平台**官方发行**：新人限时券（注册自动到账，48 小时）+ **付费券包**（买断一组券）。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/customer/coupons` | 我的券：`available` / `used` / `expired`；带 `restaurant_id` + `items_amount` 时附 `applicable`、`reason`、`discount_preview` |
+| GET | `/api/customer/coupon-packages` | 券包货架：价格、面额、张数、有效期、限购、剩余、`can_buy` |
+| POST | `/api/customer/coupon-packages/<id>/purchase` | 购买券包（模拟支付）：原子扣库存 → 记购买 → 批量发券 |
+
+下单时在 body 里加 `user_coupon_id`：
+
+* 金额只由服务端计算：`total = items + delivery_fee − discount`；
+* 核销是条件更新（`status='unused'` 才成功），重复使用返回 `409`；
+* 取消订单会把券退回（已过期则作废）；
+* 别人的券返回 `404`，与"订单不存在"一致，不泄露存在性。
+
 ### 资料
 
 `GET /profile` → `{user, default_address, order_count}`
