@@ -736,6 +736,80 @@ body.c-body {
 .c-bottombar__total { font-size: 20px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
 .c-bottombar__cta { width: auto; flex: 1; max-width: 230px; }
 
+/* 底栏左边的购物车图标 + 角标
+   图标是 AI 出的四帧精灵图（静止 / 压扁 / 弹起 / 落稳），加购时逐帧播放一次。
+   按钮底色用白，是因为贴纸本体是红车身 + 白描边，压在红底上描边会糊掉。 */
+.c-cartbtn {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #FFE1D8;
+  box-shadow: 0 6px 14px -8px rgba(38, 18, 10, .5);
+  transition: transform .16s ease;
+}
+.c-cartbtn:active { transform: scale(.94); }
+
+.c-cartbtn__art {
+  width: 28px;
+  height: 28px;
+  background-image: url("/customer/static/img/cart-sprite.webp");
+  background-size: 400% 100%;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+}
+/* 四帧：每帧对应背景横向 33.333% 的位移（400% 尺寸下正好是一格） */
+@keyframes c-cart-play {
+  0%   { background-position: 0% 0; }
+  25%  { background-position: 33.333% 0; }
+  50%  { background-position: 66.666% 0; }
+  75%  { background-position: 100% 0; }
+  100% { background-position: 100% 0; }
+}
+.c-cartbtn__art.is-playing {
+  animation: c-cart-play .34s step-end 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .c-cartbtn__art.is-playing { animation: none; }
+}
+
+.c-cartbtn__badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 19px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+}
+/* 数量变化时弹一下，让"放进去了"这件事被看见 */
+.c-cartbtn__badge.is-pop { animation: c-cartpop .32s cubic-bezier(.2, .8, .3, 1.3); }
+@keyframes c-cartpop {
+  0%   { transform: scale(.6); }
+  60%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .c-cartbtn__badge.is-pop { animation: none; }
+}
+
+/* 搜索页的底栏要浮在 tabbar 上面，否则会把它盖掉 */
+.c-bottombar--above-tabs { bottom: calc(52px + env(safe-area-inset-bottom)); }
+/* 底栏浮在 tabbar 上时，toast 得再往上让一截 */
+body.has-cartbar .c-toast { bottom: calc(146px + env(safe-area-inset-bottom)); }
+.c-searchpage.has-cartbar { padding-bottom: 78px; }
+
 /* 固定 tabbar */
 .c-tabbar--fixed {
   position: fixed;

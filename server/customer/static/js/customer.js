@@ -578,6 +578,27 @@
   /* ---------------------------------------------------------
      Shared renderers
      --------------------------------------------------------- */
+  /* 购物车角标：数字变了才动一下，首次渲染不弹 */
+  function popBadge(el, count) {
+    if (!el) return;
+    var changed = el.dataset.count !== String(count);
+    el.textContent = count;
+    el.dataset.count = String(count);
+    if (!changed) return;
+    el.classList.remove('is-pop');
+    void el.offsetWidth;             // 强制重排，动画才能重播
+    el.classList.add('is-pop');
+
+    /* 购物车图标也播一遍四帧（静止→压扁→弹起→落稳） */
+    var btn = el.closest('.c-cartbtn');
+    var art = btn && btn.querySelector('.c-cartbtn__art');
+    if (art) {
+      art.classList.remove('is-playing');
+      void art.offsetWidth;
+      art.classList.add('is-playing');
+    }
+  }
+
   function restaurantStateChip(card) {
     var state = card.state || {};
     var cls = 'c-chip';
@@ -1105,6 +1126,7 @@
           { id: dish.id, name: dish.name, price: dish.price, emoji: dish.emoji,
           image_url: dish.image_url, image_sm: dish.image_sm, stock: dish.stock }
         );
+        updateSearchCartBar();
         if (outcome === 'max') {
           toast('Only ' + dish.stock + ' of ' + dish.name + ' left today', 'error');
         } else if (outcome === 'cancelled') {
@@ -1211,7 +1233,9 @@
       bar.hidden = false;
       $('#rest-cart-count').textContent = plural(count, 'item');
       $('#rest-cart-total').textContent = money(cartSubtotal(cart));
+      popBadge($('#rest-cart-badge'), count);
     }
+
 
     function renderInfo(data) {
       $('#rest-name').textContent = data.name;
@@ -3228,6 +3252,23 @@
       showError(errorEl, err.message);
     });
   }
+
+    function updateSearchCartBar() {
+      var bar = $('#search-cartbar');
+      if (!bar) return;
+      var cart = readCart();
+      var count = cartCount(cart);
+      bar.hidden = !count;
+      var page = $('.c-searchpage');
+      if (page) page.classList.toggle('has-cartbar', count > 0);
+      /* 搜索页的底栏浮在 tabbar 上面，toast 要让开，否则会压在底栏上 */
+      document.body.classList.toggle('has-cartbar', count > 0);
+      if (!count) return;
+      $('#search-cart-count').textContent = cart.restaurant_name || plural(count, 'item');
+      $('#search-cart-total').textContent = money(cartSubtotal(cart));
+      popBadge($('#search-cart-badge'), count);
+    }
+    updateSearchCartBar();
 
   /* ---------------------------------------------------------
      COUPON PACKS — the shelf

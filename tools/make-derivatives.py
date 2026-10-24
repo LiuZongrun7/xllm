@@ -30,7 +30,8 @@ TARGETS = [ROOT / "server" / "static" / "img", ROOT / "server" / "customer" / "s
            ROOT / "server" / "info" / "static" / "img"]
 LONG_EDGE = 480
 QUALITY = 78
-EXTS = {".jpg", ".jpeg", ".webp", ".png"}
+# 只处理 JPEG/PNG：贴纸、券底板这些是带 alpha 的 WebP，本身就不是缩略图用的
+EXTS = {".jpg", ".jpeg", ".png"}
 
 
 def main() -> int:
