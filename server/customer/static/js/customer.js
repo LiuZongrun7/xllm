@@ -431,60 +431,123 @@
   }
 
   /* ---------------------------------------------------------
-     Cart (localStorage)
+     Cart (localStorage) —— 每家店一个独立的购物车
+
+     存储形状（v2）：
+       { carts: { "<restaurant_id>": { restaurant_id, restaurant_name,
+                                       updated_at, items: { "<item_id>": row } } } }
+
+     老版本是"只能有一辆车"，存的是 { restaurant_id, items }；
+     readCarts() 第一次读到时会把老数据搬进 v2 结构，然后删掉老 key。
+
+     为什么改成按店分：外卖本来就是"每家店一单"，逼用户二选一是设计错误 ——
+     想同时点两家店，应该是两个车，各自结算、各自配送。
      --------------------------------------------------------- */
-  function emptyCart() {
-    return { restaurant_id: 0, restaurant_name: '', items: {} };
+  var CARTS_KEY = 'xllm.carts.v2';
+
+  function emptyCart(restaurantId, restaurantName) {
+    return {
+      restaurant_id: Number(restaurantId) || 0,
+      restaurant_name: restaurantName || '',
+      updated_at: 0,
+      items: {}
+    };
   }
 
-  function readCart() {
-    try {
-      var raw = localStorage.getItem(CART_KEY);
-      if (!raw) return emptyCart();
-      var parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object' || !parsed.items) return emptyCart();
-      var items = {};
-      Object.keys(parsed.items).forEach(function (key) {
-        var row = parsed.items[key];
-        if (!row) return;
-        var qty = Number(row.qty);
-        var id = Number(row.id);
-        if (!id || !isFinite(qty) || qty <= 0) return;
-        items[String(id)] = {
-          id: id,
-          name: String(row.name || 'Dish'),
-          price: Number(row.price) || 0,
-          qty: Math.min(Math.round(qty), MAX_QTY),
-          emoji: row.emoji || '\uD83C\uDF7D\uFE0F',
-          image_url: row.image_url || null,
-          image_sm: row.image_sm || null
-        };
-      });
-      if (!Object.keys(items).length) return emptyCart();
-      return {
-        restaurant_id: Number(parsed.restaurant_id) || 0,
-        restaurant_name: String(parsed.restaurant_name || ''),
-        items: items
+  function _normalise(cart) {
+    var items = {};
+    Object.keys((cart && cart.items) || {}).forEach(function (key) {
+      var row = cart.items[key];
+      if (!row) return;
+      var qty = Number(row.qty);
+      var id = Number(row.id);
+      if (!id || !isFinite(qty) || qty <= 0) return;
+      items[String(id)] = {
+        id: id,
+        name: String(row.name || 'Dish'),
+        price: Number(row.price) || 0,
+        qty: Math.min(Math.round(qty), MAX_QTY),
+        emoji: row.emoji || '\uD83C\uDF7D\uFE0F',
+        image_url: row.image_url || null,
+        image_sm: row.image_sm || null
       };
+    });
+    return {
+      restaurant_id: Number(cart.restaurant_id) || 0,
+      restaurant_name: String(cart.restaurant_name || ''),
+      updated_at: Number(cart.updated_at) || 0,
+      items: items
+    };
+  }
+
+  /* 所有有东西的购物车，最近动过的排前面 */
+  function readCarts() {
+    var out = {};
+    try {
+      var raw = localStorage.getItem(CARTS_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        Object.keys((parsed && parsed.carts) || {}).forEach(function (rid) {
+          var cart = _normalise(parsed.carts[rid]);
+          if (cart.restaurant_id && Object.keys(cart.items).length) out[rid] = cart;
+        });
+      } else {
+        /* 迁移：老 key 里如果还有一辆车，搬到新结构里 */
+        var legacy = localStorage.getItem(CART_KEY);
+        if (legacy) {
+          var old = _normalise(JSON.parse(legacy));
+          if (old.restaurant_id && Object.keys(old.items).length) {
+            old.updated_at = Date.now();
+            out[String(old.restaurant_id)] = old;
+            localStorage.setItem(CARTS_KEY, JSON.stringify({ carts: out }));
+          }
+          localStorage.removeItem(CART_KEY);
+        }
+      }
     } catch (err) {
-      return emptyCart();
+      return {};
     }
+    return out;
+  }
+
+  function allCarts() {
+    var carts = readCarts();
+    return Object.keys(carts).map(function (rid) { return carts[rid]; })
+      .sort(function (a, b) { return (b.updated_at || 0) - (a.updated_at || 0); });
+  }
+
+  function readCart(restaurantId) {
+    var carts = readCarts();
+    var cart = carts[String(Number(restaurantId) || 0)];
+    return cart || emptyCart(restaurantId);
   }
 
   function writeCart(cart) {
     try {
-      if (!cart || !cart.items || !Object.keys(cart.items).length) {
-        localStorage.removeItem(CART_KEY);
-        return;
+      var carts = readCarts();
+      var rid = String(Number(cart.restaurant_id) || 0);
+      if (!rid || rid === '0' || !Object.keys(cart.items || {}).length) {
+        delete carts[rid];
+      } else {
+        cart.updated_at = Date.now();
+        carts[rid] = cart;
       }
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+      if (!Object.keys(carts).length) {
+        localStorage.removeItem(CARTS_KEY);
+      } else {
+        localStorage.setItem(CARTS_KEY, JSON.stringify({ carts: carts }));
+      }
     } catch (err) {
       toast('Your browser blocked local storage, so the cart cannot be saved', 'error');
     }
   }
 
+  function clearCart(restaurantId) {
+    writeCart(emptyCart(restaurantId));
+  }
+
   function cartLines(cart) {
-    return Object.keys(cart.items || {}).map(function (key) { return cart.items[key]; });
+    return Object.keys((cart && cart.items) || {}).map(function (key) { return cart.items[key]; });
   }
 
   function cartCount(cart) {
@@ -495,16 +558,25 @@
     return cartLines(cart).reduce(function (sum, row) { return sum + row.price * row.qty; }, 0);
   }
 
+  /* 所有车加起来的件数与金额（底栏、角标用） */
+  function cartsTotal() {
+    var carts = allCarts();
+    return carts.reduce(function (acc, cart) {
+      acc.count += cartCount(cart);
+      acc.subtotal += cartSubtotal(cart);
+      acc.stores += 1;
+      return acc;
+    }, { count: 0, subtotal: 0, stores: 0 });
+  }
+
   function cartQty(restaurantId, itemId) {
-    var cart = readCart();
-    if (Number(cart.restaurant_id) !== Number(restaurantId)) return 0;
+    var cart = readCart(restaurantId);
     var row = cart.items[String(itemId)];
     return row ? row.qty : 0;
   }
 
   function decrementItem(restaurantId, itemId) {
-    var cart = readCart();
-    if (Number(cart.restaurant_id) !== Number(restaurantId)) return;
+    var cart = readCart(restaurantId);
     var row = cart.items[String(itemId)];
     if (!row) return;
     row.qty -= 1;
@@ -513,26 +585,12 @@
   }
 
   /**
-   * Add one unit. Returns:
-   *   'ok'        added
-   *   'replaced'  previous cart cleared first
-   *   'max'       stock limit reached
-   *   'cancelled' user kept the other restaurant's cart
+   * 往某家店的车里加一件。没有"换店要清空"这件事了 —— 每家店各有一辆。
+   *   'ok'   加进去了
+   *   'max'  到库存上限了
    */
-  async function addToCart(restaurant, item) {
-    var cart = readCart();
-    var hasItems = cartLines(cart).length > 0;
-    if (hasItems && cart.restaurant_id && Number(restaurant.id) !== Number(cart.restaurant_id)) {
-      var replace = await confirmDialog({
-        title: 'Start a new cart?',
-        body: 'Your cart has items from ' + cart.restaurant_name + '. Adding this dish will clear them.',
-        confirmText: 'Start new cart',
-        cancelText: 'Keep my cart'
-      });
-      if (!replace) return 'cancelled';
-      cart = emptyCart();
-      hasItems = false;
-    }
+  function addToCart(restaurant, item) {
+    var cart = readCart(restaurant.id);
     cart.restaurant_id = Number(restaurant.id) || 0;
     cart.restaurant_name = restaurant.name || cart.restaurant_name;
 
@@ -552,7 +610,7 @@
       image_sm: item.image_sm || null
     };
     writeCart(cart);
-    return hasItems ? 'ok' : 'ok';
+    return 'ok';
   }
 
   /* Recent searches */
@@ -1156,11 +1214,8 @@
           image_url: dish.image_url, image_sm: dish.image_sm, stock: dish.stock }
         );
         updateSearchCartBar();
-    onPageRefresh(updateSearchCartBar);
         if (outcome === 'max') {
           toast('Only ' + dish.stock + ' of ' + dish.name + ' left today', 'error');
-        } else if (outcome === 'cancelled') {
-          toast('Kept your cart from ' + readCart().restaurant_name);
         } else {
           toast('Added ' + dish.name + ' to your cart');
         }
@@ -1252,7 +1307,7 @@
     }
 
     function updateCartBar() {
-      var cart = readCart();
+      var cart = readCart(restaurant.id);
       var bar = $('#rest-cartbar');
       if (!bar) return;
       if (Number(cart.restaurant_id) !== Number(restaurant.id) || !cartCount(cart)) {
@@ -1438,8 +1493,6 @@
           var outcome = await addToCart(restaurant, item);
           if (outcome === 'max') {
             toast('Only ' + item.stock + ' of ' + item.name + ' left today', 'error');
-          } else if (outcome === 'cancelled') {
-            toast('Kept your cart from ' + readCart().restaurant_name);
           } else {
             syncRows();
             updateCartBar();
@@ -1467,112 +1520,146 @@
     var loading = $('#cart-loading');
     var content = $('#cart-content');
     var empty = $('#cart-empty');
-    var bar = $('#cart-bar');
     var errorEl = $('#cart-error');
-    var restaurant = null;
-    var cart = readCart();
+    var restaurants = {};          // restaurant_id → 店铺信息（运费、起送价、配送时长）
+
+    function lineHtml(row, rid) {
+      return '<li class="c-cartline">' +
+        '<span class="c-thumb c-thumb--md" style="background:' + tint('dish-' + row.id + row.name) + '">' +
+          photoOrEmoji(row.image_sm || row.image_url, row.emoji) + '</span>' +
+        '<div class="c-cartline__main">' +
+          '<div class="c-cartline__name">' + esc(row.name) + '</div>' +
+          '<div class="c-cartline__unit num">' + money(row.price) + ' each</div>' +
+          '<div class="c-cartline__controls">' +
+            '<div class="c-qty">' +
+              '<button class="c-qty__btn" type="button" data-cart-minus="' + row.id + '" ' +
+                'aria-label="Remove one ' + esc(row.name) + '">' + ICON.minus + '</button>' +
+              '<span class="c-qty__val num">' + row.qty + '</span>' +
+              '<button class="c-qty__btn" type="button" data-cart-plus="' + row.id + '" ' +
+                'aria-label="Add one ' + esc(row.name) + '">' + ICON.plus + '</button>' +
+            '</div>' +
+            '<button class="c-cartline__remove" type="button" data-cart-remove="' + row.id + '" ' +
+              'aria-label="Remove ' + esc(row.name) + ' from this cart">' + ICON.trash + '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="c-cartline__total num">' + money(row.price * row.qty) + '</div>' +
+        '</li>';
+    }
+
+    /* 一家店一组：店头 + 明细 + 小计 + 结算按钮。有几辆车就渲染几组。 */
+    function groupHtml(cart) {
+      var rid = Number(cart.restaurant_id);
+      var restaurant = restaurants[rid];
+      var fee = restaurant ? Number(restaurant.delivery_fee) || 0 : 0;
+      var minOrder = restaurant ? Number(restaurant.min_order_amount) || 0 : 0;
+      var subtotal = cartSubtotal(cart);
+      var belowMin = minOrder > 0 && subtotal < minOrder;
+
+      var hint = belowMin
+        ? '<div class="c-alert c-alert--warning c-minhint">' +
+            '<div class="c-alert__body"><span class="c-alert__text">Add ' +
+            money(minOrder - subtotal) + ' more to reach the ' + money(minOrder) +
+            ' minimum order.</span></div></div>'
+        : '';
+
+      return '<section class="c-cartgroup" data-rid="' + rid + '">' +
+        '<div class="c-carthead">' +
+          '<span class="c-thumb c-thumb--md" style="background:' + restaurantTint(rid) + '">' +
+            photoOrEmoji(restaurant && (restaurant.cover_sm || restaurant.cover_url),
+                         restaurant && restaurant.emoji) + '</span>' +
+          '<div class="c-carthead__main">' +
+            '<div class="c-carthead__name">' + esc(cart.restaurant_name || 'Your cart') + '</div>' +
+            '<div class="c-carthead__meta num">' +
+              (restaurant
+                ? (restaurant.eta_minutes || 25) + ' min \u00B7 ' + money(fee) + ' delivery'
+                : 'Loading restaurant\u2026') +
+            '</div>' +
+          '</div>' +
+          '<a class="c-btn c-btn--text" href="/customer/restaurant/' + rid + '">Add items</a>' +
+        '</div>' +
+        '<div class="c-cartlist">' +
+          '<div class="c-cartlist__title">' + plural(cartCount(cart), 'item') +
+            '<button class="c-cartgroup__clear" type="button" data-clear-cart="' + rid + '">Clear</button>' +
+          '</div>' +
+          '<ul>' + cartLines(cart).map(function (row) { return lineHtml(row, rid); }).join('') +
+          '</ul>' +
+        '</div>' +
+        hint +
+        '<div class="c-summary c-cartgroup__sum">' +
+          summaryRow('Subtotal', money(subtotal)) +
+          summaryRow('Delivery fee', money(fee)) +
+          summaryRow('Total', money(subtotal + fee), 'c-summary__row--total') +
+        '</div>' +
+        (belowMin
+          ? '<button class="c-btn c-cartgroup__cta" type="button" disabled>' +
+            'Add ' + money(minOrder - subtotal) + ' more to check out</button>'
+          : '<a class="c-btn c-cartgroup__cta" href="/customer/checkout?rid=' + rid + '">' +
+            'Checkout from ' + esc(cart.restaurant_name || 'this store') + '</a>') +
+        '</section>';
+    }
 
     function render() {
-      cart = readCart();
-      var lines = cartLines(cart);
-      if (!lines.length) {
+      var carts = allCarts();
+      loading.hidden = true;
+      if (!carts.length) {
         content.hidden = true;
         empty.hidden = false;
-        bar.hidden = true;
         return;
       }
       empty.hidden = true;
       content.hidden = false;
-
-      var fee = restaurant ? Number(restaurant.delivery_fee) || 0 : 0;
-      var minOrder = restaurant ? Number(restaurant.min_order_amount) || 0 : 0;
-      var subtotal = cartSubtotal(cart);
-      var total = subtotal + fee;
-      var belowMin = minOrder > 0 && subtotal < minOrder;
-
-      var linesHtml = lines.map(function (row) {
-        return '<li class="c-cartline">' +
-          '<span class="c-thumb c-thumb--md" style="background:' + tint('dish-' + row.id + row.name) + '">' +
-            photoOrEmoji(row.image_sm || row.image_url, row.emoji) + '</span>' +
-          '<div class="c-cartline__main">' +
-            '<div class="c-cartline__name">' + esc(row.name) + '</div>' +
-            '<div class="c-cartline__unit num">' + money(row.price) + ' each</div>' +
-            '<div class="c-cartline__controls">' +
-              '<div class="c-qty">' +
-                '<button class="c-qty__btn" type="button" data-cart-minus="' + row.id + '" ' +
-                  'aria-label="Remove one ' + esc(row.name) + '">' + ICON.minus + '</button>' +
-                '<span class="c-qty__val num">' + row.qty + '</span>' +
-                '<button class="c-qty__btn" type="button" data-cart-plus="' + row.id + '" ' +
-                  'aria-label="Add one ' + esc(row.name) + '">' + ICON.plus + '</button>' +
-              '</div>' +
-              '<button class="c-cartline__remove" type="button" data-cart-remove="' + row.id + '" ' +
-                'aria-label="Remove ' + esc(row.name) + ' from cart">' + ICON.trash + '</button>' +
-            '</div>' +
-          '</div>' +
-          '<div class="c-cartline__total num">' + money(row.price * row.qty) + '</div>' +
-          '</li>';
-      }).join('');
-
-      var alertHtml = '';
-      if (belowMin) {
-        alertHtml = '<div class="c-alert c-alert--warning c-minhint">' +
-          '<div class="c-alert__body"><span class="c-alert__text">Add ' + money(minOrder - subtotal) +
-          ' more to reach the ' + money(minOrder) + ' minimum order.</span>' +
-          '<div class="c-alert__actions"><a class="c-alert__action" href="/customer/restaurant/' +
-          cart.restaurant_id + '">Add more items</a></div></div></div>';
-      }
-
-      content.innerHTML =
-        '<div class="c-carthead">' +
-          '<span class="c-thumb c-thumb--md" style="background:' + restaurantTint(restaurant ? restaurant.id : cart.restaurant_id) + '">' +
-            photoOrEmoji(restaurant && (restaurant.cover_sm || restaurant.cover_url), restaurant && restaurant.emoji) + '</span>' +
-          '<div class="c-carthead__main"><div class="c-carthead__name">' +
-            esc(cart.restaurant_name || (restaurant && restaurant.name) || 'Your cart') + '</div>' +
-            '<div class="c-carthead__meta num">' +
-              (restaurant ? (restaurant.eta_minutes || 25) + ' min \u00B7 ' + money(fee) + ' delivery' : 'Loading restaurant\u2026') +
-            '</div></div>' +
-          '<a class="c-btn c-btn--text" href="/customer/restaurant/' +
-            (restaurant ? restaurant.id : cart.restaurant_id) + '">Add items</a>' +
-        '</div>' +
-        '<div class="c-cartlist">' +
-          '<div class="c-cartlist__title">' + plural(cartCount(cart), 'item') + '</div>' +
-          '<ul>' + linesHtml + '</ul>' +
-        '</div>' +
-        '<div class="c-card c-card__body" style="margin-top:16px">' +
-          '<div class="c-summary">' +
-            summaryRow('Subtotal', money(subtotal)) +
-            summaryRow('Delivery fee', money(fee)) +
-            summaryRow('Total', money(total), 'c-summary__row--total') +
-          '</div>' +
-        '</div>' +
-        alertHtml +
-        '<div class="c-cartactions">' +
-          '<a class="c-btn c-btn--ghost" href="/customer/restaurant/' +
-            (restaurant ? restaurant.id : cart.restaurant_id) + '">Add more items</a>' +
-        '</div>';
-
-      bar.hidden = false;
-      $('#cart-bar-count').textContent = plural(cartCount(cart), 'item');
-      $('#cart-bar-total').textContent = money(total);
+      content.innerHTML = carts.map(groupHtml).join('');
     }
 
-    content.addEventListener('click', function (ev) {
+    async function load() {
+      var carts = allCarts();
+      if (!carts.length) { render(); return; }
+      await Promise.all(carts.map(function (cart) {
+        return api('/api/customer/restaurants/' + cart.restaurant_id)
+          .then(function (data) { restaurants[cart.restaurant_id] = data; })
+          .catch(function () { /* 店铺信息拿不到也能看明细 */ });
+      }));
+      render();
+    }
+
+    content.addEventListener('click', async function (ev) {
+      var clear = ev.target.closest('[data-clear-cart]');
+      if (clear) {
+        var clearRid = Number(clear.dataset.clearCart);
+        var confirmed = await confirmDialog({
+          title: 'Clear this cart?',
+          body: 'The items from this restaurant will be removed. Other carts stay as they are.',
+          confirmText: 'Clear cart',
+          cancelText: 'Keep it'
+        });
+        if (!confirmed) return;
+        clearCart(clearRid);
+        render();
+        toast('Cart cleared');
+        return;
+      }
+
       var plus = ev.target.closest('[data-cart-plus]');
       var minus = ev.target.closest('[data-cart-minus]');
       var remove = ev.target.closest('[data-cart-remove]');
       if (!plus && !minus && !remove) return;
 
+      var group = ev.target.closest('.c-cartgroup');
+      if (!group) return;
+      var rid = Number(group.dataset.rid);
       var id = Number((plus || minus || remove).dataset.cartPlus ||
         (minus && minus.dataset.cartMinus) || (remove && remove.dataset.cartRemove));
-      cart = readCart();
+
+      var cart = readCart(rid);
       var row = cart.items[String(id)];
       if (!row) { render(); return; }
 
       if (plus) {
         var menuItem = null;
+        var restaurant = restaurants[rid];
         if (restaurant && restaurant.menu) {
-          restaurant.menu.forEach(function (group) {
-            (group.items || []).forEach(function (item) {
+          restaurant.menu.forEach(function (group2) {
+            (group2.items || []).forEach(function (item) {
               if (item.id === id) menuItem = item;
             });
           });
@@ -1582,58 +1669,16 @@
           return;
         }
         row.qty = Math.min(row.qty + 1, MAX_QTY);
-        writeCart(cart);
-        render();
-        return;
-      }
-      if (minus) {
+      } else {
         row.qty -= 1;
-        if (row.qty <= 0) delete cart.items[String(id)];
-        writeCart(cart);
-        render();
-        return;
       }
-      var name = row.name;
-      delete cart.items[String(id)];
+      if (row.qty <= 0 || remove) delete cart.items[String(id)];
       writeCart(cart);
       render();
-      toast('Removed ' + name);
-    });
-
-    async function load() {
-      if (!cart.restaurant_id || !cartLines(cart).length) {
-        loading.hidden = true;
-        empty.hidden = false;
-        return;
-      }
-      try {
-        restaurant = await api('/api/customer/restaurants/' + cart.restaurant_id);
-        loading.hidden = true;
-        render();
-      } catch (err) {
-        loading.hidden = true;
-        showError(errorEl, err.message, [
-          { label: 'Browse restaurants', href: '/customer/' },
-          { label: 'Clear cart', run: function () {
-            writeCart(emptyCart());
-            render();
-            toast('Cart cleared');
-          } }
-        ]);
-      }
-    }
-
-    $('#cart-checkout').addEventListener('click', function (ev) {
-      if (!cartLines(readCart()).length) {
-        ev.preventDefault();
-        toast('Your cart is empty', 'error');
-      }
     });
 
     /* 别的标签页改了购物车、或者从 bfcache 退回来 —— 重新读一遍再渲染 */
-    onPageRefresh(function () {
-      if (restaurant) render();
-    });
+    onPageRefresh(render);
 
     load();
   }
@@ -1642,7 +1687,10 @@
      CHECKOUT
      --------------------------------------------------------- */
   function initCheckout() {
-    var cart = readCart();
+    /* 多家店各一辆车，所以结算页必须知道"结算哪一辆"：?rid=<restaurant_id>。
+       没带参数就取最近动过的那一辆（例如从底栏的 View cart 进来）。 */
+    var wantedRid = Number(new URLSearchParams(location.search).get('rid')) || 0;
+    var cart = wantedRid ? readCart(wantedRid) : (allCarts()[0] || emptyCart(0));
     var errorEl = $('#checkout-error');
     var empty = $('#checkout-empty');
     var content = $('#checkout-content');
@@ -1901,7 +1949,7 @@
       setBusy(placeBtn, true);
       try {
         var data = await api('/api/customer/orders', { method: 'POST', body: payload });
-        writeCart(emptyCart());
+        clearCart(cart.restaurant_id);
         toast(data.message || 'Order placed');
         location.href = '/customer/orders/' + data.order.id;
       } catch (err) {
@@ -3296,19 +3344,21 @@
     function updateSearchCartBar() {
       var bar = $('#search-cartbar');
       if (!bar) return;
-      var cart = readCart();
-      var count = cartCount(cart);
-      bar.hidden = !count;
+      var totals = cartsTotal();
+      bar.hidden = !totals.count;
       var page = $('.c-searchpage');
-      if (page) page.classList.toggle('has-cartbar', count > 0);
+      if (page) page.classList.toggle('has-cartbar', totals.count > 0);
       /* 搜索页的底栏浮在 tabbar 上面，toast 要让开，否则会压在底栏上 */
-      document.body.classList.toggle('has-cartbar', count > 0);
-      if (!count) return;
-      $('#search-cart-count').textContent = cart.restaurant_name || plural(count, 'item');
-      $('#search-cart-total').textContent = money(cartSubtotal(cart));
-      popBadge($('#search-cart-badge'), count);
+      document.body.classList.toggle('has-cartbar', totals.count > 0);
+      if (!totals.count) return;
+      $('#search-cart-count').textContent = totals.stores > 1
+        ? plural(totals.count, 'item') + ' \u00B7 ' + totals.stores + ' stores'
+        : plural(totals.count, 'item');
+      $('#search-cart-total').textContent = money(totals.subtotal);
+      popBadge($('#search-cart-badge'), totals.count);
     }
     updateSearchCartBar();
+    onPageRefresh(updateSearchCartBar);
 
   /* ---------------------------------------------------------
      COUPON PACKS — the shelf

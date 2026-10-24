@@ -1,7 +1,7 @@
 {% extends "customer/base.html" %}
 {% block title %}Cart · xLLM{% endblock %}
 {% block page_key %}cart{% endblock %}
-{% block main_class %}c-main--bar c-main--plain{% endblock %}
+{% block main_class %}c-main--plain c-main--cartlist{% endblock %}
 
 {% block header %}
 <header class="c-topbar c-topbar--line">
@@ -41,17 +41,5 @@
   </div>
 
   <div id="cart-content" hidden></div>
-</div>
-{% endblock %}
-
-{% block bottom %}
-<div class="c-bottombar" id="cart-bar" hidden>
-  <div class="c-bottombar__inner">
-    <div class="c-bottombar__sum">
-      <span class="c-bottombar__count" id="cart-bar-count">0 items</span>
-      <span class="c-bottombar__total num" id="cart-bar-total">¥0.00</span>
-    </div>
-    <a class="c-btn c-bottombar__cta" id="cart-checkout" href="/customer/checkout">Go to checkout</a>
-  </div>
 </div>
 {% endblock %}

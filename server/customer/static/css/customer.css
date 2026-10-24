@@ -997,6 +997,43 @@ body.has-cartbar .c-toast { bottom: calc(146px + env(safe-area-inset-bottom)); }
 
 /* ── 首页的双列餐厅网格 ──
    一屏能看到四家，图在上、决策信息在下，横向比较不用点进去。 */
+/* ── 购物车：一家店一组 ──
+   每家店一个独立的车，所以购物车页是"若干张卡片叠起来"，
+   而不是一页一单。每张卡片自己带小计和结算按钮。 */
+.c-cartpage { padding: 8px 16px 32px; }
+.c-main--cartlist { padding-bottom: 24px; }
+
+.c-cartgroup {
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 24px -18px rgba(38, 18, 10, .5), 0 1px 3px rgba(38, 18, 10, .05);
+}
+.c-cartgroup .c-carthead { padding: 0 0 10px; }
+.c-cartlist__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-7);
+  color: var(--c-text-3);
+  padding: 2px 0 6px;
+}
+.c-cartgroup__clear {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  color: var(--c-text-3);
+  font: inherit;
+  font-size: var(--fs-7);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.c-cartgroup__sum { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--c-line); }
+.c-cartgroup__cta { margin-top: 12px; width: 100%; }
+.c-cartgroup .c-cartlist { padding: 0; }
+.c-cartgroup .c-cartline { padding: 10px 0; }
+
 /* ── 口味宫格 ──
    一排方图 + 下面的字，替换掉原来那排文字胶囊。
    图用的是该分类下第一家店的封面，所以"格子背后真的有店"。 */
