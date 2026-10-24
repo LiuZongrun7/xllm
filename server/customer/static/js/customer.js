@@ -579,6 +579,32 @@
      Shared renderers
      --------------------------------------------------------- */
   /* 购物车角标：数字变了才动一下，首次渲染不弹 */
+  /* ------------------------------------------------------------------
+     页面"保鲜"
+
+     两件事会让页面上的购物车 / 订单状态变旧，而 JS 根本不会重跑：
+
+       1. 浏览器的前进后退会把整页从 bfcache 原样还回来（pageshow.persisted）；
+       2. 另一个标签页改了购物车，本页收不到通知（storage 事件只发给别的文档）；
+       3. 切回标签页时，订单状态可能已经被商家改过了。
+
+     所以每个页面注册一个"重新读一遍本地/服务端状态"的函数，由这三件事触发。
+     ------------------------------------------------------------------ */
+  var pageRefresh = [];
+  function onPageRefresh(fn) { pageRefresh.push(fn); }
+  function refreshPage() {
+    pageRefresh.forEach(function (fn) {
+      try { fn(); } catch (err) { /* 一个页面出错不影响别的 */ }
+    });
+  }
+  window.addEventListener('pageshow', function (ev) { if (ev.persisted) refreshPage(); });
+  window.addEventListener('storage', function (ev) {
+    if (ev.key === null || ev.key === CART_KEY) refreshPage();
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) refreshPage();
+  });
+
   function popBadge(el, count) {
     if (!el) return;
     var changed = el.dataset.count !== String(count);
@@ -949,6 +975,9 @@
       }
     }
 
+    /* 切回标签页 / 从 bfcache 回来时，订单状态可能已经被商家改过了 */
+    onPageRefresh(loadActiveOrder);
+
     loadGreeting();
     loadActiveOrder();
     /* 顺序有意义：先拿券，卡片上的优惠标签才有东西可挂。
@@ -1127,6 +1156,7 @@
           image_url: dish.image_url, image_sm: dish.image_sm, stock: dish.stock }
         );
         updateSearchCartBar();
+    onPageRefresh(updateSearchCartBar);
         if (outcome === 'max') {
           toast('Only ' + dish.stock + ' of ' + dish.name + ' left today', 'error');
         } else if (outcome === 'cancelled') {
@@ -1235,6 +1265,11 @@
       $('#rest-cart-total').textContent = money(cartSubtotal(cart));
       popBadge($('#rest-cart-badge'), count);
     }
+
+    /* 从购物车页返回、或别的标签页改了车 —— 加减号和底栏都重新对一遍 */
+    onPageRefresh(function () {
+      if (restaurant) { syncRows(); updateCartBar(); }
+    });
 
 
     function renderInfo(data) {
@@ -1593,6 +1628,11 @@
         ev.preventDefault();
         toast('Your cart is empty', 'error');
       }
+    });
+
+    /* 别的标签页改了购物车、或者从 bfcache 退回来 —— 重新读一遍再渲染 */
+    onPageRefresh(function () {
+      if (restaurant) render();
     });
 
     load();
