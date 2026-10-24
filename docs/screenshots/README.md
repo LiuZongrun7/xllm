@@ -10,6 +10,8 @@
 | `customer-home.png` | 顾客端首页 | 430×900 |
 | `customer-restaurant.png` | 餐厅菜单 | 430×900 |
 | `customer-checkout.png` | 结算页 | 430×900 |
+| `customer-coupons.png` | 我的优惠券 | 430×900 |
+| `customer-coupon-store.png` | 券包商店 | 430×900 |
 | `customer-order.png` | 订单进度 | 430×900 |
 | `customer-orders.png` | 我的订单 | 430×900 |
 | `customer-login.png` | 顾客登录 | 430×900 |
