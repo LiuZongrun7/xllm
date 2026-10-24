@@ -923,6 +923,55 @@ body.c-body {
 
 /* ── 首页的双列餐厅网格 ──
    一屏能看到四家，图在上、决策信息在下，横向比较不用点进去。 */
+/* ── 口味宫格 ──
+   一排方图 + 下面的字，替换掉原来那排文字胶囊。
+   图用的是该分类下第一家店的封面，所以"格子背后真的有店"。 */
+.c-cuisinetile {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 70px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-text-2);
+  font: inherit;
+  cursor: pointer;
+}
+.c-cuisinetile__media {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background-size: cover;
+  background-position: center;
+  background-color: #F2F2F2;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.c-cuisinetile:hover .c-cuisinetile__media { transform: translateY(-2px); }
+.c-cuisinetile__media--all {
+  display: grid;
+  place-items: center;
+  background: var(--c-primary-weak);
+  color: var(--c-primary);
+}
+.c-cuisinetile__media--all svg { width: 24px; height: 24px; }
+.c-cuisinetile__label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--c-text-2);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.c-cuisinetile.is-active .c-cuisinetile__media {
+  box-shadow: 0 0 0 2px var(--c-primary), inset 0 0 0 1px rgba(0, 0, 0, .05);
+}
+.c-cuisinetile.is-active .c-cuisinetile__label { color: var(--c-primary); font-weight: 700; }
+
 .c-restgrid {
   display: grid;
   grid-template-columns: 1fr 1fr;

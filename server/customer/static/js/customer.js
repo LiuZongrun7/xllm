@@ -719,7 +719,7 @@
      HOME
      --------------------------------------------------------- */
   function initHome() {
-    var state = { cuisine: '', openOnly: false, cuisines: [], coupons: [] };
+    var state = { cuisine: '', openOnly: false, cuisines: [], rows: [], coupons: [] };
     var listEl = $('#home-restaurants');
     var cuisinesEl = $('#home-cuisines');
     var countEl = $('#home-count');
@@ -739,15 +739,28 @@
       }
     }
 
-    function renderCuisines(cuisines) {
-      var all = [{ value: '', label: 'All' }].concat((cuisines || []).map(function (name) {
-        return { value: name, label: name };
-      }));
+    /* 口味宫格：每个分类用"该分类下第一家店的封面"当图标 —— 不额外画图，
+       数据里有什么就显示什么，将来加店会自动多一格。 */
+    function renderCuisines(cuisines, rows) {
+      var covers = {};
+      (rows || []).forEach(function (row) {
+        if (row.cuisine && !covers[row.cuisine] && row.cover_url) covers[row.cuisine] = row.cover_url;
+      });
+      var all = [{ value: '', label: 'All', cover: null }]
+        .concat((cuisines || []).map(function (name) {
+          return { value: name, label: name, cover: covers[name] || null };
+        }));
       cuisinesEl.innerHTML = all.map(function (row) {
         var active = row.value === state.cuisine;
-        return '<button class="c-filter' + (active ? ' is-active' : '') + '" type="button" ' +
+        var media = row.cover
+          ? '<span class="c-cuisinetile__media" style="background-image:url(\'' +
+            esc(row.cover) + '\')"></span>'
+          : '<span class="c-cuisinetile__media c-cuisinetile__media--all" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>';
+        return '<button class="c-cuisinetile' + (active ? ' is-active' : '') + '" type="button" ' +
           'data-cuisine="' + esc(row.value) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' +
-          esc(row.label) + '</button>';
+          media + '<span class="c-cuisinetile__label">' + esc(row.label) + '</span></button>';
       }).join('');
     }
 
@@ -795,8 +808,9 @@
         if (state.openOnly) params.set('open', '1');
         var data = await api('/api/customer/restaurants' + (params.toString() ? '?' + params.toString() : ''));
         state.cuisines = data.cuisines || [];
+        state.rows = data.restaurants || [];
         renderAddress(data.address);
-        renderCuisines(state.cuisines);
+        renderCuisines(state.cuisines, data.restaurants || []);
         renderRestaurants(data.restaurants || []);
       } catch (err) {
         listEl.innerHTML = '';
@@ -848,7 +862,7 @@
       var btn = ev.target.closest('[data-cuisine]');
       if (!btn) return;
       state.cuisine = btn.dataset.cuisine;
-      renderCuisines(state.cuisines);
+      renderCuisines(state.cuisines, state.rows || []);
       loadRestaurants();
     });
 

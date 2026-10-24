@@ -114,6 +114,20 @@ _DISH_IMAGES = {
     "Smoked Salmon Bowl": "dish-smoked.jpg",
     "Cold-pressed Orange": "dish-orange.jpg",
     "Green Detox Juice": "dish-detox.jpg",
+    # Sugar & Spoon
+    "Basque Cheesecake": "dish-basque.jpg",
+    "Strawberry Shortcake": "dish-shortcake.jpg",
+    "Lemon Tart": "dish-lemontart.jpg",
+    "Pistachio Gelato": "dish-gelato.jpg",
+    "Butter Croissant": "dish-croissant.jpg",
+    "Flat White": "dish-flatwhite.jpg",
+    # Boba Lab
+    "Brown Sugar Boba Milk": "dish-brownsugar.jpg",
+    "Matcha Milk Tea": "dish-matchalatte.jpg",
+    "Taro Smoothie": "dish-taro.jpg",
+    "Passion Fruit Green Tea": "dish-passiontea.jpg",
+    "Mango Sago": "dish-mangosago.jpg",
+    "Lychee Soda": "dish-lycheesoda.jpg",
 }
 
 _RESTAURANT_COVERS = {
@@ -121,6 +135,8 @@ _RESTAURANT_COVERS = {
     "Noodle Bar": "cover-noodlebar.jpg",
     "Sakura Sushi House": "cover-sakura.jpg",
     "Green Bowl Salad": "cover-greenbowl.jpg",
+    "Sugar & Spoon": "cover-sugarspoon.jpg",
+    "Boba Lab": "cover-bobalab.jpg",
 }
 
 

@@ -85,7 +85,13 @@ def main() -> int:
     print("\n=== browsing ===")
     status, body = call(customer, "get", "/api/customer/restaurants")
     cards = body["data"]["restaurants"]
-    check("restaurant list returns 4 stores", len(cards) == 4, len(cards))
+    check("restaurant list returns 6 stores", len(cards) == 6, len(cards))
+    check("every store has a cover and a 30-day order count",
+          all(c.get("cover_url") and isinstance(c.get("orders_30d"), int) for c in cards),
+          [c.get("name") for c in cards if not c.get("cover_url")])
+    check("cuisine list covers both new shops",
+          {"Dessert", "Drinks"} <= {c.get("cuisine") for c in cards},
+          [c.get("cuisine") for c in cards])
     distances = [c["distance_km"] for c in cards]
     check("sorted by distance", distances == sorted(distances), distances)
     check("every card has open state", all("state" in c for c in cards))

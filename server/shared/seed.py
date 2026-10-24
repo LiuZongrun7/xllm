@@ -133,6 +133,48 @@ RESTAURANTS = [
             ("Drinks", "Green Detox Juice", 18, 90, None, "Kale, cucumber, apple, ginger"),
         ],
     },
+    {
+        # 第五家：甜品店。画面语言和前面四家刻意相反 —— 高调、粉白、日光
+        "owner": ("sugarspoon", "Yuki Tan", "merchant5@xllm.cloud", "13600000005"),
+        "name": "Sugar & Spoon",
+        "phone": "021-5566-8805",
+        "address": "12 Anfu Road, Xuhui, Shanghai",
+        "lng": 121.4430000, "lat": 31.2130000,
+        "cuisine": "Dessert",
+        "description": "A small patisserie. Cake by the slice, coffee, and very little else.",
+        "min_order": 15, "fee": 4, "radius": 4, "capacity": 8, "prep": 10,
+        "is_open": True,
+        "hours": ("09:00", "21:00"),
+        "menu": [
+            ("Dessert", "Basque Cheesecake", 26, 420, 8, "Burnt top, custardy middle"),
+            ("Dessert", "Strawberry Shortcake", 32, 380, 6, "Cream and fresh strawberry"),
+            ("Dessert", "Lemon Tart", 24, 340, 10, "Torched meringue, lemon curd"),
+            ("Dessert", "Pistachio Gelato", 22, 260, None, "Two scoops, roasted pistachio"),
+            ("Dessert", "Butter Croissant", 12, 280, 20, "Baked at seven every morning"),
+            ("Drinks", "Flat White", 22, 120, None, "Double shot, steamed milk"),
+        ],
+    },
+    {
+        # 第六家：奶茶店。暗青瓷砖 + 霓虹，是六家里最暗的一间
+        "owner": ("bobalab", "Kenji Li", "merchant6@xllm.cloud", "13600000006"),
+        "name": "Boba Lab",
+        "phone": "021-5566-8806",
+        "address": "88 Jiaozhou Road, Jing'an, Shanghai",
+        "lng": 121.4450000, "lat": 31.2320000,
+        "cuisine": "Drinks",
+        "description": "Tea, ice, pearls. Shaken to order, sealed while you wait.",
+        "min_order": 12, "fee": 3, "radius": 5, "capacity": 15, "prep": 8,
+        "is_open": True,
+        "hours": ("10:00", "23:00"),
+        "menu": [
+            ("Drinks", "Brown Sugar Boba Milk", 20, 420, None, "Fresh milk, pearls still warm"),
+            ("Drinks", "Matcha Milk Tea", 22, 320, None, "Uji matcha, poured in layers"),
+            ("Drinks", "Taro Smoothie", 24, 460, 12, "Real taro, blended with ice"),
+            ("Drinks", "Passion Fruit Green Tea", 18, 180, None, "Jasmine tea, fresh passion fruit"),
+            ("Drinks", "Mango Sago", 26, 380, 9, "Mango, sago, coconut"),
+            ("Drinks", "Lychee Soda", 18, 150, None, "Lychee, mint, sparkling water"),
+        ],
+    },
 ]
 
 RIDERS = [
@@ -454,8 +496,9 @@ def seed(reset: bool = False) -> None:
         restaurants.append(restaurant)
 
     db.session.flush()
-    golden, noodle, sushi, green = restaurants
-    golden_menu, noodle_menu, sushi_menu, _ = menus
+    golden, noodle, sushi, green, sweet, boba = restaurants
+    (golden_menu, noodle_menu, sushi_menu, _green_menu,
+     sweet_menu, boba_menu) = menus
     now = datetime.now()
 
     # ---- 活跃订单：覆盖每一种"进行中"的状态 ----
@@ -482,6 +525,21 @@ def seed(reset: bool = False) -> None:
                         "delivering", now - timedelta(minutes=30), rider=chen)
     _location(chen, delivering, minutes_ago=2)
 
+    # ---- 新开的两家：一单在配送、一单待取、一单已完成（有评分才不是 "New"）----
+    boba_delivering = _order(mia, boba, address_alex,
+                             [(boba_menu[0], 2), (boba_menu[3], 1)],
+                             "delivering", now - timedelta(minutes=18), rider=zhao)
+    _location(zhao, boba_delivering, minutes_ago=1)
+    _order(alex, sweet, address_alex,
+           [(sweet_menu[1], 1), (sweet_menu[5], 1)],
+           "ready", now - timedelta(minutes=11))
+    _order(mia, sweet, address_alex,
+           [(sweet_menu[0], 1), (sweet_menu[4], 2)],
+           "delivered", now - timedelta(hours=3), rider=chen, rating=5)
+    _order(alex, boba, address_alex,
+           [(boba_menu[4], 1), (boba_menu[5], 1)],
+           "delivered", now - timedelta(hours=7), rider=liu, rating=4)
+
     # ---- 已完成 / 已取消 ----
     _order(mia, sushi, address_alex,
            [(sushi_menu[2], 1), (sushi_menu[8], 1)],
@@ -503,9 +561,7 @@ def seed(reset: bool = False) -> None:
                 hour=hour, minute=minute, second=0, microsecond=0)
             if now - created < timedelta(minutes=60):
                 continue
-            for restaurant, menu in ((golden, golden_menu),
-                                     (noodle, noodle_menu),
-                                     (sushi, sushi_menu)):
+            for restaurant, menu in zip(restaurants, menus):
                 for _ in range(random.choice((1, 1, 2))):
                     picks = random.sample(menu, k=min(2, len(menu)))
                     lines = [(item, random.randint(1, 2)) for item in picks]
@@ -515,14 +571,13 @@ def seed(reset: bool = False) -> None:
                            rating=random.choice((4, 4, 5, 5, 3)))
 
     # ---- 过去 14 天的历史单：商家端"营业分析"要有曲线 ----
-    all_menus = [golden_menu, noodle_menu, sushi_menu]
     for day in range(1, 15):
-        for index, restaurant in enumerate((golden, noodle, sushi)):
+        for index, restaurant in enumerate(restaurants):
             count = random.choice((0, 1, 2, 3))
             for n in range(count):
                 created = now - timedelta(days=day, hours=random.randint(0, 6),
                                           minutes=random.randint(0, 59))
-                menu = all_menus[index]
+                menu = menus[index]
                 picks = random.sample(menu, k=min(2, len(menu)))
                 lines = [(item, random.randint(1, 2)) for item in picks]
                 cancelled = random.random() < 0.08
@@ -563,12 +618,86 @@ def seed_coupons_only() -> None:
           f"{UserCoupon.query.count()} coupons issued")
 
 
+def seed_restaurants_only() -> None:
+    """只补建还不在库里的餐厅（店主账号 + 营业时间 + 菜单）。
+
+    生产库不能 --reset（会清掉真实订单），但又需要新店 —— 所以走这一条：
+    已经存在的店按名字跳过，只补齐缺的。可以反复跑。
+    """
+    created = 0
+    for spec in RESTAURANTS:
+        if Restaurant.query.filter_by(name=spec["name"]).first():
+            continue
+        username, owner_name, email, phone = spec["owner"]
+        owner = User.query.filter_by(username=username).first()
+        if owner is None:
+            owner = _user("restaurant", username, owner_name, email, phone)
+            db.session.flush()
+
+        restaurant = Restaurant(
+            owner_id=owner.id,
+            name=spec["name"],
+            phone=spec["phone"],
+            address_text=spec["address"],
+            lng=Decimal(str(spec["lng"])),
+            lat=Decimal(str(spec["lat"])),
+            description=spec["description"],
+            cover_url=restaurant_cover(spec["name"]),
+            cuisine=spec["cuisine"],
+            min_order_amount=Decimal(str(spec["min_order"])),
+            delivery_fee=Decimal(str(spec["fee"])),
+            delivery_radius_km=Decimal(str(spec["radius"])),
+            max_concurrent_orders=spec["capacity"],
+            avg_prep_minutes=spec["prep"],
+            is_open=spec["is_open"],
+        )
+        db.session.add(restaurant)
+        db.session.flush()
+
+        open_at, close_at = spec["hours"]
+        for weekday in range(1, 8):
+            db.session.add(OpeningHour(
+                restaurant_id=restaurant.id, weekday=weekday,
+                open_time=datetime.strptime(open_at, "%H:%M").time(),
+                close_time=datetime.strptime(close_at, "%H:%M").time(),
+                is_closed=False,
+            ))
+        items = _menu_rows(restaurant, spec["menu"])
+        created += 1
+
+        # 新店一上线，卡片上是 "New"、没有月售、没有评分 —— 演示时看着像没营业。
+        # 补一批过去两周的已完成订单（带评分），让它们一上线就有真实的样子。
+        # 只在"这家店是刚建的"时候跑，重复执行不会重复写单。
+        alex_user = User.query.filter_by(username="alex").first()
+        alex_addr = (CustomerAddress.query.filter_by(user_id=alex_user.id).first()
+                     if alex_user else None)
+        riders = User.query.filter_by(role="rider").order_by(User.id).all()
+        if alex_addr and riders and items:
+            for day in range(1, 15):
+                for _ in range(random.choice((0, 1, 1, 2))):
+                    created_at = (datetime.now() - timedelta(
+                        days=day, hours=random.randint(0, 5),
+                        minutes=random.randint(0, 59)))
+                    picks = random.sample(items, k=min(2, len(items)))
+                    _order(alex_user, restaurant, alex_addr,
+                           [(item, random.randint(1, 2)) for item in picks],
+                           "delivered", created_at,
+                           rider=random.choice(riders),
+                           rating=random.choice((4, 4, 5, 5)))
+
+    db.session.commit()
+    print(f"[seed] 新增餐厅 {created} 家，现在共 {Restaurant.query.count()} 家、"
+          f"{MenuItem.query.count()} 道菜")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed the xLLM demo dataset")
     parser.add_argument("--reset", action="store_true",
                         help="drop all tables first (destroys existing data!)")
     parser.add_argument("--coupons-only", action="store_true",
                         help="only create coupon templates/packs and new-member coupons")
+    parser.add_argument("--restaurants-only", action="store_true",
+                        help="only add restaurants that are missing from the database")
     args = parser.parse_args()
 
     from app import create_app            # 延迟 import：需要 config 已经生效
@@ -576,6 +705,8 @@ def main() -> None:
     with app.app_context():
         if args.coupons_only:
             seed_coupons_only()
+        elif args.restaurants_only:
+            seed_restaurants_only()
         else:
             seed(reset=args.reset)
 
