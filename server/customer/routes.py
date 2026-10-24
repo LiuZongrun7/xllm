@@ -37,7 +37,7 @@
 ================================================================================
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from flask import Blueprint, current_app, render_template, request
@@ -97,14 +97,32 @@ def _distance(restaurant: Restaurant, address: CustomerAddress | None):
                         float(address.lat), float(address.lng))
 
 
+def _orders_last_30d(restaurant_ids: list[int] | None = None) -> dict[int, int]:
+    """近 30 天每家店的成交单量（取消的不算）—— 卡片上那句"月售 xx"。
+
+    一次聚合查完所有店，不要在循环里按店查（4 家店看不出差别，
+    40 家店就是 40 次往返）。
+    """
+    cutoff = datetime.now() - timedelta(days=30)
+    query = (db.session.query(Order.restaurant_id, db.func.count(Order.id))
+             .filter(Order.created_at >= cutoff, Order.status != "cancelled"))
+    if restaurant_ids is not None:
+        if not restaurant_ids:
+            return {}
+        query = query.filter(Order.restaurant_id.in_(restaurant_ids))
+    return {rid: int(count) for rid, count in query.group_by(Order.restaurant_id).all()}
+
+
 def _restaurant_card(rest: Restaurant, address: CustomerAddress | None,
-                     with_menu: bool = False) -> dict:
+                     with_menu: bool = False,
+                     orders_30d: int | None = None) -> dict:
     distance = _distance(rest, address)
     data = rest.to_dict(with_menu=with_menu)
     data.update({
         "distance_km": distance,
         "rating": rating_summary("restaurant", rest.id)["rating"],
         "review_count": rating_summary("restaurant", rest.id)["review_count"],
+        "orders_30d": orders_30d if orders_30d is not None else 0,
         "state": restaurant_state(rest),
         "emoji": cuisine_emoji(rest.cuisine),
         "eta_minutes": int(rest.avg_prep_minutes or 20) + (
@@ -137,7 +155,10 @@ def _visible_restaurants(q: str = "", cuisine: str = "", only_open: bool = False
         query = query.filter(Restaurant.cuisine == cuisine)
 
     address = _my_address()
-    cards = [_restaurant_card(rest, address) for rest in query.all()]
+    rows = query.all()
+    counts = _orders_last_30d([rest.id for rest in rows])
+    cards = [_restaurant_card(rest, address, orders_30d=counts.get(rest.id, 0))
+             for rest in rows]
     if only_open:
         cards = [c for c in cards if c["state"]["accepting"]]
 
@@ -293,7 +314,8 @@ def restaurant_detail(restaurant_id: int):
         return err("Restaurant not found", 404)
     address = _my_address()
     distance = _distance(rest, address)
-    card = _restaurant_card(rest, address, with_menu=True)
+    card = _restaurant_card(rest, address, with_menu=True,
+                            orders_30d=_orders_last_30d([rest.id]).get(rest.id, 0))
     card["within_radius"] = (
         distance is not None and distance <= float(rest.delivery_radius_km)
     )

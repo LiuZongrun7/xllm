@@ -619,6 +619,59 @@
       '</span></a>';
   }
 
+  /* 首页的双列餐厅卡片。
+     和搜索页那张大卡不同：这里是"一眼比四家"，所以图在上（4:3），
+     下面三行分别放 店名 / 评分·月售·距离 / 时长·配送费，最后一行挂优惠。
+     所有决策信息都在卡面，不用点进去。 */
+  function couponChips(coupons, restaurantId) {
+    var usable = (coupons || []).filter(function (c) {
+      return !c.restaurant_id || c.restaurant_id === restaurantId;
+    });
+    if (!usable.length) return '';
+    var out = usable.slice(0, 2).map(function (c) {
+      var label = c.discount_type === 'percent'
+        ? Math.round(c.discount_value) + '%'
+        : '\u00A5' + compactAmount(c.discount_value);
+      return '<span class="c-tile__chip">\u2212' + esc(label) + ' off</span>';
+    });
+    if (usable.length > 2) {
+      out.push('<span class="c-tile__chip c-tile__chip--more">+' + (usable.length - 2) + '</span>');
+    }
+    return '<span class="c-tile__chips">' + out.join('') + '</span>';
+  }
+
+  function restaurantTileHtml(card, coupons) {
+    var distance = card.distance_km == null ? 'Nearby'
+      : Number(card.distance_km).toFixed(1) + ' km';
+    var rating = card.rating == null ? 'New' : Number(card.rating).toFixed(1);
+    var sales = card.orders_30d ? '(' + card.orders_30d + ')' : '';
+    var restState = card.state || {};
+    var media = card.cover_url
+      ? '<img class="c-photo" src="' + esc(card.cover_url) + '" alt="" loading="lazy" ' +
+        'decoding="async" onload="this.classList.add(\'is-loaded\')" onerror="this.remove()">'
+      : '<span class="c-tile__fallback" aria-hidden="true">' +
+        esc(card.emoji || '\uD83C\uDF7D\uFE0F') + '</span>';
+    var closed = restState.accepting === false
+      ? '<span class="c-tile__state">' + esc(restState.label || 'Closed') + '</span>'
+      : '';
+    return '<a class="c-tile" href="/customer/restaurant/' + card.id + '">' +
+      '<span class="c-tile__media" style="background:' + restaurantTint(card.id) + '">' +
+        media + closed +
+      '</span>' +
+      '<span class="c-tile__body">' +
+        '<span class="c-tile__name">' + esc(card.name) + '</span>' +
+        '<span class="c-tile__meta">' +
+          '<span class="c-tile__star" aria-hidden="true">' + ICON.starTiny + '</span>' +
+          '<b>' + esc(rating) + '</b>' +
+          (sales ? '<span class="c-tile__dim">' + esc(sales) + '</span>' : '') +
+          '<span class="c-tile__dot">\u00B7</span><span>' + esc(distance) + '</span>' +
+        '</span>' +
+        '<span class="c-tile__meta c-tile__dim">' + (card.eta_minutes || 25) + ' min \u00B7 ' +
+          money(card.delivery_fee) + ' delivery</span>' +
+        couponChips(coupons, card.id) +
+      '</span></a>';
+  }
+
   function starsHtml(rating) {
     var value = Math.round(Number(rating) || 0);
     var out = '<span class="c-stars c-stars--sm" aria-label="' + value + ' out of 5 stars">';
@@ -666,7 +719,7 @@
      HOME
      --------------------------------------------------------- */
   function initHome() {
-    var state = { cuisine: '', openOnly: false, cuisines: [] };
+    var state = { cuisine: '', openOnly: false, cuisines: [], coupons: [] };
     var listEl = $('#home-restaurants');
     var cuisinesEl = $('#home-cuisines');
     var countEl = $('#home-count');
@@ -728,7 +781,9 @@
         }
         return;
       }
-      listEl.innerHTML = rows.map(restaurantCardHtml).join('');
+      listEl.innerHTML = rows.map(function (card) {
+        return restaurantTileHtml(card, state.coupons);
+      }).join('');
     }
 
     async function loadRestaurants() {
@@ -819,6 +874,7 @@
           return Number(b.discount_value) - Number(a.discount_value);
         });
         rows = rows.slice(0, 6);
+        state.coupons = data.available || [];
         if (!rows.length) {
           wrap.hidden = false;
           track.innerHTML =
@@ -840,11 +896,11 @@
             : 'no minimum';
           var days = coupon.expires_in_hours == null ? null : Math.floor(coupon.expires_in_hours / 24);
           var expires = days == null ? '' : (days <= 0 ? 'last day' : days + (days === 1 ? ' day left' : ' days left'));
-          return '<a class="c-offertile" href="/customer/coupons">' +
-            '<span class="c-offertile__amount">' + amount + '</span>' +
-            '<span class="c-offertile__body">' +
-              '<span class="c-offertile__title">' + esc(coupon.title) + '</span>' +
-              '<span class="c-offertile__sub">' + esc(threshold) +
+          return '<a class="c-coupon c-coupon--sm" href="/customer/coupons">' +
+            '<span class="c-coupon__value">' + amount + '</span>' +
+            '<span class="c-coupon__main">' +
+              '<span class="c-coupon__title">' + esc(coupon.title) + '</span>' +
+              '<span class="c-coupon__meta">' + esc(threshold) +
                 (expires ? ' \u00B7 ' + esc(expires) : '') + '</span>' +
             '</span></a>';
         }).join('');
@@ -855,8 +911,9 @@
 
     loadGreeting();
     loadActiveOrder();
-    loadOffers();
-    loadRestaurants();
+    /* 顺序有意义：先拿券，卡片上的优惠标签才有东西可挂。
+       loadOffers 自己吞掉错误，所以券接口挂了也只是延后一点出列表。 */
+    loadOffers().then(loadRestaurants);
   }
 
   /* ---------------------------------------------------------
@@ -3102,6 +3159,7 @@
       var badge = coupon.status === 'unused' && coupon.source === 'new_user'
         ? '<span class="c-coupon__badge c-coupon__badge--new">New member</span>' : '';
       var muted = coupon.status === 'unused' ? '' : ' c-coupon--muted';
+      /* 票券底板是生成的一张空白券（左红右米白），文字按比例叠上去 */
       return '<div class="c-coupon' + muted + '">' +
         '<div class="c-coupon__value">' + amount +
           '<span class="c-coupon__threshold">' + esc(threshold) + '</span></div>' +
