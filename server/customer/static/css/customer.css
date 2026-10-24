@@ -849,6 +849,126 @@ body.c-body {
 .c-dishpick--sm { margin-left: 6px; padding: 1px 7px 1px 3px; font-size: 10px; vertical-align: 1px; }
 .c-dishpick--sm img { width: 14px; height: 14px; }
 
+/* ── 首页的优惠条 ──
+   横向滑动的小票券卡。左边一条虚线隔开面额，右边是标题和门槛，
+   和账户页里那张大券卡是同一套语言，只是压缩了。 */
+.c-offers { margin-top: 14px; }
+.c-offers .c-section__head { margin-bottom: 8px; }
+.c-offers .c-section__title { display: inline-flex; align-items: center; gap: 6px; }
+.c-offers__mark { width: 20px; height: 20px; object-fit: contain; }
+.c-offers__all {
+  font-size: var(--fs-6);
+  font-weight: 600;
+  color: var(--c-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.c-offers__track {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 2px 16px 4px;
+  margin: 0 -16px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.c-offers__track::-webkit-scrollbar { display: none; }
+
+.c-offertile {
+  position: relative;
+  flex: none;
+  scroll-snap-align: start;
+  display: flex;
+  align-items: stretch;
+  min-width: 176px;
+  max-width: 214px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #FFE1D8;
+  box-shadow: 0 6px 16px -10px rgba(38, 18, 10, .35);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+/* 票券左右两端的小缺口 */
+.c-offertile::before,
+.c-offertile::after {
+  content: "";
+  position: absolute;
+  left: 62px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-bg, #F7F7F7);
+  border: 1px solid #FFE1D8;
+}
+.c-offertile::before { top: -6px; }
+.c-offertile::after { bottom: -6px; }
+
+.c-offertile__amount {
+  flex: none;
+  width: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-primary-weak);
+  color: var(--c-primary);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  border-right: 1px dashed #FFD2C6;
+}
+.c-offertile__amount small { font-size: 12px; font-weight: 700; margin-right: 1px; }
+.c-offertile__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 12px;
+}
+.c-offertile__title {
+  font-size: var(--fs-6);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.c-offertile__sub {
+  font-size: 11px;
+  color: var(--c-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 没有券时的那张：占满一行，不打票券缺口 */
+.c-offertile--empty {
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  border-radius: 14px;
+}
+.c-offertile--empty::before,
+.c-offertile--empty::after { display: none; }
+.c-offertile--empty .c-offertile__badge {
+  flex: none;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--c-primary-weak);
+  color: var(--c-primary);
+  font-weight: 800;
+  font-size: 14px;
+}
+.c-offertile__chev { flex: none; color: var(--c-text-3); font-size: 20px; }
+
 /* ── 餐厅详情页 ── */
 .c-restpage { padding-bottom: 4px; }
 .c-hero {

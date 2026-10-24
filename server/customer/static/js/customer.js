@@ -804,8 +804,58 @@
       loadRestaurants();
     });
 
+    /* ---------------------------------------------------------
+       首页的优惠条：把"我手上有什么券"放到主路径上。
+       没有券时不显示这一块，改推一张"去领券包"的卡 —— 空着不如给个去处。
+       --------------------------------------------------------- */
+    async function loadOffers() {
+      var wrap = $('#home-offers');
+      var track = $('#home-offers-track');
+      if (!wrap || !track) return;
+      try {
+        var data = await api('/api/customer/coupons');
+        var rows = (data.available || []).slice();
+        rows.sort(function (a, b) {
+          return Number(b.discount_value) - Number(a.discount_value);
+        });
+        rows = rows.slice(0, 6);
+        if (!rows.length) {
+          wrap.hidden = false;
+          track.innerHTML =
+            '<a class="c-offertile c-offertile--empty" href="/customer/coupons/store">' +
+              '<span class="c-offertile__badge">%</span>' +
+              '<span class="c-offertile__body"><span class="c-offertile__title">No coupons yet</span>' +
+              '<span class="c-offertile__sub">Pay ¥9.90, get ¥30 of coupons</span></span>' +
+              '<span class="c-offertile__chev" aria-hidden="true">›</span></a>';
+          return;
+        }
+        wrap.hidden = false;
+        track.innerHTML = rows.map(function (coupon) {
+          var percent = coupon.discount_type === 'percent';
+          var amount = percent
+            ? Math.round(coupon.discount_value) + '<small>%</small>'
+            : '<small>¥</small>' + compactAmount(coupon.discount_value);
+          var threshold = Number(coupon.min_order_amount) > 0
+            ? 'over ¥' + compactAmount(coupon.min_order_amount)
+            : 'no minimum';
+          var days = coupon.expires_in_hours == null ? null : Math.floor(coupon.expires_in_hours / 24);
+          var expires = days == null ? '' : (days <= 0 ? 'last day' : days + (days === 1 ? ' day left' : ' days left'));
+          return '<a class="c-offertile" href="/customer/coupons">' +
+            '<span class="c-offertile__amount">' + amount + '</span>' +
+            '<span class="c-offertile__body">' +
+              '<span class="c-offertile__title">' + esc(coupon.title) + '</span>' +
+              '<span class="c-offertile__sub">' + esc(threshold) +
+                (expires ? ' \u00B7 ' + esc(expires) : '') + '</span>' +
+            '</span></a>';
+        }).join('');
+      } catch (err) {
+        wrap.hidden = true;   /* 券挂了不能拖垮首页 */
+      }
+    }
+
     loadGreeting();
     loadActiveOrder();
+    loadOffers();
     loadRestaurants();
   }
 
