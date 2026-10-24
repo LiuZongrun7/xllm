@@ -9,6 +9,7 @@
 | `site-mobile.png` | 官网首页（手机） | 430×900 |
 | `customer-home.png` | 顾客端首页 | 430×900 |
 | `customer-restaurant.png` | 餐厅菜单 | 430×900 |
+| `customer-cart.png` | 购物车（两家店各一辆） | 430×900 |
 | `customer-checkout.png` | 结算页 | 430×900 |
 | `customer-coupons.png` | 我的优惠券 | 430×900 |
 | `customer-coupon-store.png` | 券包商店 | 430×900 |
