@@ -76,6 +76,11 @@ def create_app(config_object: type = Config) -> Flask:
     @app.after_request
     def _static_cache(response):
         if "/static/" in request.path and response.status_code == 200:
+            # ⚠️ Flask 默认给静态文件加 no-cache；不清掉它，max_age 写了也白写
+            #    —— 响应头会变成 "no-cache, public, max-age=604800"，浏览器照样每次回来问。
+            response.cache_control.no_cache = None
+            response.cache_control.no_store = None
+            response.cache_control.must_revalidate = None
             if response.mimetype.startswith("image/"):
                 response.cache_control.public = True
                 response.cache_control.max_age = 7 * 24 * 3600
