@@ -43,7 +43,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
-from shared.catalog import dish_emoji
+from shared.catalog import dish_emoji, small_image
 from shared.extensions import db
 from shared.models import MenuItem, OpeningHour, Order, Restaurant
 from shared.order_flow import (FlowError, flag_delay, merchant_actions, money,
@@ -663,6 +663,7 @@ def list_menu():
     items = [i.to_dict(for_merchant=True) for i in restaurant.menu_items]
     for item in items:
         item["emoji"] = dish_emoji(item["name"], item["category"])
+        item["image_sm"] = small_image(item.get("image_url"))
     return ok({
         "items": items,
         "categories": sorted({i["category"] for i in items if i["category"]}),

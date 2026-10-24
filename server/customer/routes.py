@@ -42,7 +42,7 @@ from decimal import Decimal
 
 from flask import Blueprint, current_app, render_template, request
 
-from shared.catalog import cuisine_emoji, dish_emoji, dish_tag
+from shared.catalog import cuisine_emoji, dish_emoji, dish_tag, small_image
 from shared.extensions import db
 from shared.models import (CouponPackage, CouponPurchase, CustomerAddress,
                            MenuItem, Order, OrderItem, Restaurant, Review,
@@ -125,6 +125,7 @@ def _restaurant_card(rest: Restaurant, address: CustomerAddress | None,
         "orders_30d": orders_30d if orders_30d is not None else 0,
         "state": restaurant_state(rest),
         "emoji": cuisine_emoji(rest.cuisine),
+        "cover_sm": small_image(data.get("cover_url")),
         "eta_minutes": int(rest.avg_prep_minutes or 20) + (
             max(int((distance or 1) / 18 * 60), 5)),
         "delivery_fee": money(rest.delivery_fee),
@@ -135,6 +136,7 @@ def _restaurant_card(rest: Restaurant, address: CustomerAddress | None,
             row = item.to_dict()
             row["emoji"] = dish_emoji(item.name, item.category)
             row["tag"] = dish_tag(item.name)
+            row["image_sm"] = small_image(row.get("image_url"))
             grouped.setdefault(item.category or "Menu", []).append(row)
         data["menu"] = [{"category": name, "items": items}
                         for name, items in grouped.items()]
@@ -346,6 +348,7 @@ def search():
         dish = item.to_dict()
         dish["emoji"] = dish_emoji(item.name, item.category)
         dish["tag"] = dish_tag(item.name)
+        dish["image_sm"] = small_image(dish.get("image_url"))
         dish["restaurant_name"] = item.restaurant.name
         dishes.append(dish)
     return ok({

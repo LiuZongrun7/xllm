@@ -456,7 +456,8 @@
           price: Number(row.price) || 0,
           qty: Math.min(Math.round(qty), MAX_QTY),
           emoji: row.emoji || '\uD83C\uDF7D\uFE0F',
-          image_url: row.image_url || null
+          image_url: row.image_url || null,
+          image_sm: row.image_sm || null
         };
       });
       if (!Object.keys(items).length) return emptyCart();
@@ -547,7 +548,8 @@
       price: Number(item.price) || 0,
       qty: Math.min(nextQty, MAX_QTY),
       emoji: item.emoji || '\uD83C\uDF7D\uFE0F',
-      image_url: item.image_url || null
+      image_url: item.image_url || null,
+      image_sm: item.image_sm || null
     };
     writeCart(cart);
     return hasItems ? 'ok' : 'ok';
@@ -594,8 +596,9 @@
     /* 卡片是"图满版 + 底部渐变压字"：
        店名压在照片下缘的渐变上，价格和菜系留在白色页脚 ——
        照片不再是贴在卡片左边的一个小方块，整张卡就是那张图。 */
-    var media = card.cover_url
-      ? '<img class="c-photo" src="' + esc(card.cover_url) + '" alt="" loading="lazy" ' +
+    var coverSrc = card.cover_sm || card.cover_url;
+    var media = coverSrc
+      ? '<img class="c-photo" src="' + esc(coverSrc) + '" alt="" loading="lazy" ' +
         'decoding="async" onload="this.classList.add(\'is-loaded\')" onerror="this.remove()">'
       : '<span class="c-restcard__fallback" aria-hidden="true">' +
         esc(card.emoji || '\uD83C\uDF7D\uFE0F') + '</span>';
@@ -646,8 +649,9 @@
     var rating = card.rating == null ? 'New' : Number(card.rating).toFixed(1);
     var sales = card.orders_30d ? '(' + card.orders_30d + ')' : '';
     var restState = card.state || {};
-    var media = card.cover_url
-      ? '<img class="c-photo" src="' + esc(card.cover_url) + '" alt="" loading="lazy" ' +
+    var coverSrc = card.cover_sm || card.cover_url;
+    var media = coverSrc
+      ? '<img class="c-photo" src="' + esc(coverSrc) + '" alt="" loading="lazy" ' +
         'decoding="async" onload="this.classList.add(\'is-loaded\')" onerror="this.remove()">'
       : '<span class="c-tile__fallback" aria-hidden="true">' +
         esc(card.emoji || '\uD83C\uDF7D\uFE0F') + '</span>';
@@ -744,7 +748,8 @@
     function renderCuisines(cuisines, rows) {
       var covers = {};
       (rows || []).forEach(function (row) {
-        if (row.cuisine && !covers[row.cuisine] && row.cover_url) covers[row.cuisine] = row.cover_url;
+        var src = row.cover_sm || row.cover_url;
+        if (row.cuisine && !covers[row.cuisine] && src) covers[row.cuisine] = src;
       });
       var all = [{ value: '', label: 'All', cover: null }]
         .concat((cuisines || []).map(function (name) {
@@ -972,7 +977,7 @@
       var soldOut = dish.sold_out || dish.stock === 0;
       return '<div class="c-dishresult" data-dish-id="' + dish.id + '">' +
         '<span class="c-thumb c-thumb--md" style="background:' + tint('dish-' + dish.id + dish.name) + '">' +
-          photoOrEmoji(dish.image_url, dish.emoji) + '</span>' +
+          photoOrEmoji(dish.image_sm || dish.image_url, dish.emoji) + '</span>' +
         '<span class="c-dishresult__main">' +
           '<span class="c-dishresult__name">' + esc(dish.name) +
             (dish.tag === 'chef'
@@ -1097,7 +1102,8 @@
       try {
         var outcome = await addToCart(
           { id: dish.restaurant_id, name: dish.restaurant_name },
-          { id: dish.id, name: dish.name, price: dish.price, emoji: dish.emoji, image_url: dish.image_url, stock: dish.stock }
+          { id: dish.id, name: dish.name, price: dish.price, emoji: dish.emoji,
+          image_url: dish.image_url, image_sm: dish.image_sm, stock: dish.stock }
         );
         if (outcome === 'max') {
           toast('Only ' + dish.stock + ' of ' + dish.name + ' left today', 'error');
@@ -1163,7 +1169,7 @@
           '<div class="c-dishrow__thumbwrap">' +
             '<span class="c-thumb c-thumb--dish" style="background:' +
               tint('dish-' + item.id + item.name, 90, 76) + '">' +
-              photoOrEmoji(item.image_url, item.emoji) + '</span>' +
+              photoOrEmoji(item.image_sm || item.image_url, item.emoji) + '</span>' +
             (soldOut ? '' : '<button class="c-addbtn" type="button" data-add="' + item.id + '" ' +
               'aria-label="Add ' + esc(item.name) + '"' + disabledAttr + '>' + ICON.plus + '</button>') +
           '</div>' +
@@ -1428,7 +1434,7 @@
       var linesHtml = lines.map(function (row) {
         return '<li class="c-cartline">' +
           '<span class="c-thumb c-thumb--md" style="background:' + tint('dish-' + row.id + row.name) + '">' +
-            photoOrEmoji(row.image_url, row.emoji) + '</span>' +
+            photoOrEmoji(row.image_sm || row.image_url, row.emoji) + '</span>' +
           '<div class="c-cartline__main">' +
             '<div class="c-cartline__name">' + esc(row.name) + '</div>' +
             '<div class="c-cartline__unit num">' + money(row.price) + ' each</div>' +
@@ -1460,7 +1466,7 @@
       content.innerHTML =
         '<div class="c-carthead">' +
           '<span class="c-thumb c-thumb--md" style="background:' + restaurantTint(restaurant ? restaurant.id : cart.restaurant_id) + '">' +
-            photoOrEmoji(restaurant && restaurant.cover_url, restaurant && restaurant.emoji) + '</span>' +
+            photoOrEmoji(restaurant && (restaurant.cover_sm || restaurant.cover_url), restaurant && restaurant.emoji) + '</span>' +
           '<div class="c-carthead__main"><div class="c-carthead__name">' +
             esc(cart.restaurant_name || (restaurant && restaurant.name) || 'Your cart') + '</div>' +
             '<div class="c-carthead__meta num">' +

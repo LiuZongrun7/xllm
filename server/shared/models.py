@@ -499,10 +499,11 @@ def _item_row(item: "OrderItem") -> dict:
     图按**菜名快照**查，不按 menu_item_id —— 菜被商家删掉以后，历史订单里的
     那一行还得有图；反过来，改名之后旧订单显示旧名，也不该突然换一张新图。
     """
-    from shared.catalog import dish_emoji, dish_image
+    from shared.catalog import dish_emoji, dish_image, small_image
     row = item.to_dict()
     row["emoji"] = dish_emoji(item.name_snapshot)
     row["image_url"] = dish_image(item.name_snapshot)
+    row["image_sm"] = small_image(row["image_url"])
     return row
 
 

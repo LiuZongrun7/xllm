@@ -69,6 +69,23 @@ def create_app(config_object: type = Config) -> Flask:
     # --- 扩展 ---
     db.init_app(app)
 
+    # --- 静态资源的缓存策略 ---
+    # 图片文件名是固定的（重出图会同名覆盖），所以靠 catalog.small_image() 带的
+    # ?v=mtime 做失效；这里给一个长 max-age，让浏览器直接不再请求。
+    # CSS/JS 没有版本号，给 5 分钟：改完最多 5 分钟内生效。
+    @app.after_request
+    def _static_cache(response):
+        if "/static/" in request.path and response.status_code == 200:
+            if response.mimetype.startswith("image/"):
+                response.cache_control.public = True
+                response.cache_control.max_age = 7 * 24 * 3600
+            elif response.mimetype in ("text/css", "application/javascript",
+                                       "text/javascript", "application/json"):
+                response.cache_control.public = True
+                response.cache_control.max_age = 300
+                response.headers["Vary"] = "Accept-Encoding"
+        return response
+
     # --- 域名分流 ---
     # 三个端各有一个子域名（customer / restaurant / delivery.xllm.cloud）。
     # 这里只注册一个 before_request：根路径落到本端首页、跨端链接跳到对方的域名。

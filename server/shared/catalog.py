@@ -7,6 +7,8 @@
 否则商家改库存时会对不上顾客看到的那一项。
 """
 
+import os
+
 # 关键词 → emoji。按顺序匹配，越具体的放越前面。
 _DISH_EMOJI = (
     ("dumpling", "🥟"), ("wonton", "🥟"), ("bao", "🥟"),
@@ -153,6 +155,42 @@ _CHEF_PICKS = {
 def dish_tag(name: str | None) -> str | None:
     """菜品的标签：目前只有 'chef'（主厨推荐），没有就返回 None"""
     return "chef" if (name or "").strip() in _CHEF_PICKS else None
+
+
+# ---------------------------------------------------------------------------
+# 缩略图：页面上的小图一律走 -sm.jpg（长边 480，30KB 上下），原图只留给详情页头图
+# ---------------------------------------------------------------------------
+
+_ROLE_DIRS = ("customer", "merchant", "rider", "info", "admin")
+
+
+def _fs_path(url_path: str) -> str:
+    """把 /static/... 或 /customer/static/... 映射回磁盘路径"""
+    from flask import current_app
+
+    rel = url_path.lstrip("/")
+    head = rel.split("/", 1)[0]
+    if head in _ROLE_DIRS:
+        return os.path.join(current_app.root_path, rel)
+    return os.path.join(current_app.root_path, rel)
+
+
+def small_image(url_path: str | None) -> str | None:
+    """缩略图地址；没有对应的 -sm 文件就返回原图（不会出现 404）。
+
+    ⚠️ 末尾那个 ?v=mtime 是自带的缓存失效：
+       图片都是同名覆盖重出的，光靠 max-age 会让浏览器一直用旧图。
+       文件名不变、mtime 会变 —— 拿 mtime 当版本号，重出一次 URL 就变一次。
+    """
+    if not url_path:
+        return None
+    stem, ext = os.path.splitext(url_path)
+    candidate = f"{stem}-sm{ext}"
+    try:
+        mtime = int(os.path.getmtime(_fs_path(candidate)))
+    except OSError:
+        return url_path
+    return f"{candidate}?v={mtime}"
 
 
 def dish_image(name: str | None) -> str | None:
