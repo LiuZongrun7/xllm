@@ -853,7 +853,13 @@
         '<span class="c-thumb c-thumb--md" style="background:' + tint('dish-' + dish.id + dish.name) + '">' +
           photoOrEmoji(dish.image_url, dish.emoji) + '</span>' +
         '<span class="c-dishresult__main">' +
-          '<span class="c-dishresult__name">' + esc(dish.name) + '</span>' +
+          '<span class="c-dishresult__name">' + esc(dish.name) +
+            (dish.tag === 'chef'
+              ? '<span class="c-dishpick c-dishpick--sm">' +
+                '<img src="/customer/static/img/sticker-chef.webp" alt="" width="14" height="14" loading="lazy" decoding="async">' +
+                'Chef\u2019s pick</span>'
+              : '') +
+          '</span>' +
           '<span class="c-dishresult__sub">' + esc(dish.restaurant_name || '') + ' \u00B7 ' +
             (dish.calories != null ? dish.calories + ' kcal' : 'Freshly made') + '</span>' +
           '<span class="c-dishresult__price num">' + money(dish.price) + '</span>' +
@@ -1019,7 +1025,13 @@
       var disabledAttr = blocked ? ' disabled' : '';
       return '<div class="c-dishrow' + (soldOut ? ' is-soldout' : '') + '" data-item-id="' + item.id + '">' +
         '<div class="c-dishrow__main">' +
-          '<h3 class="c-dishrow__name">' + esc(item.name) + '</h3>' +
+          '<h3 class="c-dishrow__name">' + esc(item.name) +
+            (item.tag === 'chef'
+              ? '<span class="c-dishpick">' +
+                '<img src="/customer/static/img/sticker-chef.webp" alt="" width="16" height="16" loading="lazy" decoding="async">' +
+                'Chef\u2019s pick</span>'
+              : '') +
+          '</h3>' +
           (item.description ? '<p class="c-dishrow__desc">' + esc(item.description) + '</p>' : '') +
           '<div class="c-dishrow__meta">' +
             '<span class="c-dishrow__price num">' + money(item.price) + '</span>' +
@@ -3106,6 +3118,8 @@
         pack.per_user_limit + ' per account' +
         (pack.remaining != null ? ' \u00B7 ' + pack.remaining + ' left' : '');
       return '<div class="c-pack' + (pack.can_buy ? '' : ' c-pack--disabled') + '">' +
+        '<img class="c-pack__sticker" src="/customer/static/img/sticker-gift.webp" alt="" ' +
+          'width="54" height="54" loading="lazy" decoding="async" aria-hidden="true">' +
         '<div class="c-pack__head">' +
           '<div><div class="c-pack__title">' + esc(pack.title) + '</div>' +
             '<div class="c-pack__sub">' + esc(pack.subtitle || '') + '</div></div>' +

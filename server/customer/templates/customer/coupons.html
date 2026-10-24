@@ -37,13 +37,18 @@
   <div id="coupon-list" class="c-couponlist" hidden></div>
 
   <div id="coupon-empty" class="c-empty" hidden>
+    <img class="c-empty__sticker" src="/customer/static/img/sticker-gift.webp"
+         alt="" width="104" height="104" loading="lazy" decoding="async">
     <div class="c-empty__title" id="coupon-empty-title">No coupons here yet</div>
     <div class="c-empty__desc" id="coupon-empty-desc">Buy a coupon pack to get a stack of discounts.</div>
     <a class="c-btn c-btn--ghost c-btn--inline" href="/customer/coupons/store">Browse coupon packs</a>
   </div>
 
   <a class="c-storepromo" href="/customer/coupons/store">
-    <span class="c-storepromo__icon" aria-hidden="true">%</span>
+    <span class="c-storepromo__icon" aria-hidden="true">
+      <img src="/customer/static/img/sticker-coupon.webp" alt="" width="34" height="34"
+           loading="lazy" decoding="async">
+    </span>
     <span class="c-storepromo__text">
       <span class="c-storepromo__title">Coupon packs</span>
       <span class="c-storepromo__sub">Pay ¥9.90, get ¥30 of coupons</span>

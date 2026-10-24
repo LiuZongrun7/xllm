@@ -358,6 +358,14 @@
   color: var(--r-text-2);
 }
 .r-stat__unit { font-size: 13px; font-weight: 700; color: var(--r-text-2); }
+/* 今天送过单，数字旁边挂一枚小奖牌贴纸 */
+.r-stat--medal .r-big { display: inline-flex; align-items: center; gap: 5px; }
+.r-stat__medal {
+  width: 26px; height: 26px;
+  object-fit: contain;
+  transform: rotate(-10deg) translateY(-3px);
+  filter: drop-shadow(0 2px 4px rgba(40, 30, 20, .25));
+}
 
 /* ── 分段 Tab：未选灰底 / 选中白底 / 只有顶部圆角 ── */
 .r-tabs { margin-top: var(--sp-4); }

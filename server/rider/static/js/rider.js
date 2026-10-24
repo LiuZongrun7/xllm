@@ -973,8 +973,13 @@
       '</div>' +
       '<div class="r-divider"></div>' +
       '<div class="r-stats">' +
-        '<div class="r-stat">' +
-          '<div class="r-big">' + (stats.today_deliveries || 0) + '</div>' +
+        '<div class="r-stat r-stat--medal">' +
+          '<div class="r-big">' + (stats.today_deliveries || 0) +
+            ((stats.today_deliveries || 0) > 0
+              ? '<img class="r-stat__medal" src="/rider/static/img/sticker-medal.webp" ' +
+                'alt="" width="26" height="26" loading="lazy" decoding="async">'
+              : '') +
+          '</div>' +
           '<div class="r-stat__label">Deliveries today</div>' +
         '</div>' +
         '<div class="r-stat">' +

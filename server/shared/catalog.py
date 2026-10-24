@@ -124,6 +124,21 @@ _RESTAURANT_COVERS = {
 }
 
 
+# 主厨推荐：每店一道，菜单上挂一枚贴纸。
+# 不放进数据库 —— 它是"运营给的推荐"，不是菜品属性；换推荐不该改表结构。
+_CHEF_PICKS = {
+    "Crispy Spring Rolls (4 pcs)",
+    "Beef Noodle Soup",
+    "Salmon Nigiri (4 pcs)",
+    "Grilled Chicken Caesar",
+}
+
+
+def dish_tag(name: str | None) -> str | None:
+    """菜品的标签：目前只有 'chef'（主厨推荐），没有就返回 None"""
+    return "chef" if (name or "").strip() in _CHEF_PICKS else None
+
+
 def dish_image(name: str | None) -> str | None:
     """菜名 → 可直接放进 <img src> 的路径；没有就返回 None，前端退回 emoji"""
     filename = _DISH_IMAGES.get((name or "").strip())

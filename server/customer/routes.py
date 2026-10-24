@@ -42,7 +42,7 @@ from decimal import Decimal
 
 from flask import Blueprint, current_app, render_template, request
 
-from shared.catalog import cuisine_emoji, dish_emoji
+from shared.catalog import cuisine_emoji, dish_emoji, dish_tag
 from shared.extensions import db
 from shared.models import (CouponPackage, CouponPurchase, CustomerAddress,
                            MenuItem, Order, OrderItem, Restaurant, Review,
@@ -116,6 +116,7 @@ def _restaurant_card(rest: Restaurant, address: CustomerAddress | None,
         for item in rest.menu_items:
             row = item.to_dict()
             row["emoji"] = dish_emoji(item.name, item.category)
+            row["tag"] = dish_tag(item.name)
             grouped.setdefault(item.category or "Menu", []).append(row)
         data["menu"] = [{"category": name, "items": items}
                         for name, items in grouped.items()]
@@ -322,6 +323,7 @@ def search():
     for item in rows:
         dish = item.to_dict()
         dish["emoji"] = dish_emoji(item.name, item.category)
+        dish["tag"] = dish_tag(item.name)
         dish["restaurant_name"] = item.restaurant.name
         dishes.append(dish)
     return ok({
